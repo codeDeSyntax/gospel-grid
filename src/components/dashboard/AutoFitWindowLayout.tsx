@@ -1,7 +1,12 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { cleanWindowTitle, calculateGridLayout, calculateWindowCardSize } from '../../utils/windowUtils';
-import { WindowInfo } from '../dashboard/WindowList';
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import { X } from "lucide-react";
+import {
+  cleanWindowTitle,
+  calculateGridLayout,
+  calculateWindowCardSize,
+} from "../../utils/windowUtils";
+import { WindowInfo } from "../dashboard/WindowList";
+import { useThumbnails } from "../../hooks/useThumbnails";
 
 interface AutoFitWindowLayoutProps {
   selectedWindows: WindowInfo[];
@@ -16,10 +21,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   focusedWindowId,
   onWindowFocus,
   onWindowRemove,
-  maxDisplayWindows = 25 // Allow up to 25 windows
+  maxDisplayWindows = 25, // Allow up to 25 windows
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 400, height: 300 });
+  const [containerSize, setContainerSize] = useState({
+    width: 400,
+    height: 300,
+  });
 
   // Update container size when component mounts or resizes
   useEffect(() => {
@@ -41,11 +49,27 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     };
   }, []);
 
+  // Get window IDs for thumbnail capture
+  const windowIds = useMemo(() => {
+    const displayWindows = selectedWindows.slice(0, maxDisplayWindows);
+    return displayWindows.map((window) => window.id);
+  }, [selectedWindows, maxDisplayWindows]);
+
+  // Use thumbnail hook to capture live window previews
+  const { thumbnails, loading: thumbnailsLoading } = useThumbnails(windowIds, {
+    width: 1200,
+    height: 900,
+    scaleFactor: 2.0,
+    quality: 95,
+    refreshInterval: 3000, // Refresh every 3 seconds
+    autoRefresh: true,
+  });
+
   // Calculate layout and sizing
   const layoutInfo = useMemo(() => {
     const displayWindows = selectedWindows.slice(0, maxDisplayWindows);
     const windowCount = displayWindows.length;
-    
+
     if (windowCount === 0) {
       return null;
     }
@@ -60,23 +84,31 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     return {
       windows: displayWindows,
       gridLayout,
-      cardSize
+      cardSize,
     };
   }, [selectedWindows, containerSize, maxDisplayWindows]);
 
   // Clean window titles
   const cleanedWindows = useMemo(() => {
     if (!layoutInfo) return [];
-    
-    return layoutInfo.windows.map(window => ({
+
+    // Calculate title length based on card width
+    const maxTitleLength =
+      layoutInfo.cardSize.width < 80
+        ? 8
+        : layoutInfo.cardSize.width < 120
+        ? 12
+        : 20;
+
+    return layoutInfo.windows.map((window) => ({
       ...window,
-      cleanName: cleanWindowTitle(window.name, window.app)
+      cleanName: cleanWindowTitle(window.name, window.app, maxTitleLength),
     }));
   }, [layoutInfo]);
 
   if (!layoutInfo || selectedWindows.length === 0) {
     return (
-      <div 
+      <div
         ref={containerRef}
         className="flex items-center justify-center h-full text-slate-400 text-center"
       >
@@ -92,28 +124,31 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className="h-full w-full p-2 overflow-hidden"
-    >
-      <div 
-        className={`grid gap-2 h-full ${layoutInfo.gridLayout.className}`}
+    <div ref={containerRef} className="h-full w-full overflow-hidden">
+      <div
+        className={`grid gap-2 h-full w-full ${layoutInfo.gridLayout.className}`}
         style={{
-          gridTemplateRows: `repeat(${layoutInfo.gridLayout.rows}, 1fr)`
+          gridTemplateRows: `repeat(${layoutInfo.gridLayout.rows}, minmax(60px, 1fr))`,
+          gridTemplateColumns: `repeat(${layoutInfo.gridLayout.cols}, 1fr)`,
+          maxHeight: "100%",
+          maxWidth: "100%",
+          alignContent: "start", // Align grid content to the top
         }}
       >
         {cleanedWindows.map((window) => (
           <div
             key={window.id}
-            className={`backdrop-blur-xl bg-gradient-to-br from-primary-800/70 via-slate-800/80 to-primary-900/70 border border-primary-400/40 rounded-lg p-2 flex flex-col justify-between cursor-pointer transition-all hover:from-primary-700/80 hover:to-primary-800/80 shadow-md shadow-primary-500/20 relative group ${
+            className={`cursor-pointer transition-all hover:scale-105 relative group overflow-hidden rounded ${
               focusedWindowId === window.id
                 ? "ring-2 ring-primary-400/80 shadow-lg shadow-primary-400/30"
                 : ""
             }`}
             onClick={() => onWindowFocus(window.id)}
             style={{
-              minWidth: `${layoutInfo.cardSize.width}px`,
-              minHeight: `${layoutInfo.cardSize.height}px`
+              minHeight: "60px",
+              maxHeight: "100%",
+              minWidth: "80px",
+              maxWidth: "100%",
             }}
           >
             {/* Remove button - only visible on hover */}
@@ -122,47 +157,68 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 e.stopPropagation();
                 onWindowRemove(window.id);
               }}
-              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-600/90 text-white rounded-full p-1 text-xs z-10"
+              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-600/90 text-white rounded-full p-1 text-xs z-20"
               title="Remove from layout"
             >
               <X size={10} />
             </button>
 
-            {/* Window content */}
-            <div className="flex-1 flex flex-col justify-center text-center">
-              <div 
-                className={`text-white font-medium ${layoutInfo.cardSize.fontSize} mb-1 leading-tight`}
-                title={window.name} // Show full title on hover
-              >
-                {window.cleanName}
-              </div>
-              
-              {/* Show app name only if different from cleaned name */}
-              {window.app !== window.cleanName.toLowerCase() && (
-                <div className="text-slate-400 text-xs opacity-80">
-                  {window.app}
-                </div>
-              )}
-            </div>
+            {/* Live thumbnail preview - full container */}
+            {thumbnails[window.id] ? (
+              <div className="w-full h-full relative">
+                <img
+                  src={thumbnails[window.id].dataUrl}
+                  alt={`${window.name} preview`}
+                  className="w-full h-full object-cover rounded"
+                  style={{
+                    imageRendering: "auto",
+                    filter: "none",
+                    transform: "translateZ(0)", // GPU acceleration
+                  }}
+                />
 
-            {/* Window state indicators */}
-            <div className="flex justify-center gap-1 mt-1">
-              {window.isMinimized && (
-                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1 rounded">
-                  MIN
-                </span>
-              )}
-              {window.isMaximized && (
-                <span className="text-xs bg-green-500/20 text-green-400 px-1 rounded">
-                  MAX
-                </span>
-              )}
-              {!window.isVisible && (
-                <span className="text-xs bg-gray-500/20 text-gray-400 px-1 rounded">
-                  HIDDEN
-                </span>
-              )}
-            </div>
+                {/* Window name overlay directly on the thumbnail */}
+                <div className="absolute top-2 left-2 right-2">
+                  <div className="bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-white text-xs font-medium truncate">
+                    {window.cleanName}
+                  </div>
+                </div>
+
+                {/* Window state indicators in top right */}
+                {(window.isMinimized ||
+                  window.isMaximized ||
+                  !window.isVisible) && (
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {window.isMinimized && (
+                      <span className="text-xs bg-yellow-500/80 text-yellow-100 px-1 rounded">
+                        MIN
+                      </span>
+                    )}
+                    {window.isMaximized && (
+                      <span className="text-xs bg-green-500/80 text-green-100 px-1 rounded">
+                        MAX
+                      </span>
+                    )}
+                    {!window.isVisible && (
+                      <span className="text-xs bg-gray-500/80 text-gray-100 px-1 rounded">
+                        HID
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-800 rounded">
+                <div className="text-center">
+                  <div className="text-slate-400 text-xs mb-1">
+                    {thumbnailsLoading ? "Loading..." : "No preview"}
+                  </div>
+                  <div className="text-white text-xs font-medium px-2">
+                    {window.cleanName}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

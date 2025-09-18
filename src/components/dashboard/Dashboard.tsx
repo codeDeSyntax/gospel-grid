@@ -6,6 +6,7 @@ import { CosmicBackground } from "./CosmicBackground";
 import { RightPanel } from "./RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
+import { PublishedLayout } from "./PublishedLayout";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -186,6 +187,75 @@ export const Dashboard: React.FC = () => {
     }));
   }, []);
 
+  const handlePublishLayout = useCallback(async () => {
+    const selectedWindows = state.windows.filter((w) => w.isSelected);
+
+    console.log("Publish Layout clicked:", {
+      selectedWindowsCount: selectedWindows.length,
+      selectedWindows,
+      currentLayout: state.currentLayout,
+      focusedWindowId: state.focusedWindowId,
+    });
+
+    if (selectedWindows.length === 0) {
+      console.warn("No windows selected for publishing");
+      alert("Please select at least one window to publish");
+      return;
+    }
+
+    try {
+      console.log("Calling electronAPI.publishLayout...");
+
+      // Show immediate feedback
+      const publishingToast = document.createElement("div");
+      publishingToast.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: #059669; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
+          🚀 Publishing layout...
+        </div>
+      `;
+      document.body.appendChild(publishingToast);
+
+      // Call the Electron API to open a new window with the layout
+      const result = await window.electronAPI.publishLayout({
+        windows: selectedWindows,
+        layout: state.currentLayout,
+        focusedWindowId: state.focusedWindowId,
+      });
+      console.log("publishLayout result:", result);
+
+      // Update toast with success message
+      publishingToast.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
+          ✅ Layout published successfully!
+        </div>
+      `;
+
+      // Remove toast after 3 seconds
+      setTimeout(() => {
+        if (publishingToast.parentNode) {
+          publishingToast.parentNode.removeChild(publishingToast);
+        }
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to publish layout:", error);
+
+      // Show error toast
+      const errorToast = document.createElement("div");
+      errorToast.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: #dc2626; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
+          ❌ Failed to publish layout
+        </div>
+      `;
+      document.body.appendChild(errorToast);
+
+      setTimeout(() => {
+        if (errorToast.parentNode) {
+          errorToast.parentNode.removeChild(errorToast);
+        }
+      }, 3000);
+    }
+  }, [state.windows, state.currentLayout, state.focusedWindowId]);
+
   return (
     <div className="h-screen w-screen overflow-hidden relative p-3 flex items-center justify-center no-scrollbar">
       {/* Cosmic Background */}
@@ -231,7 +301,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Content Container with rounded corners - 95% height */}
       <div className="relative z-10 h-[95%] w-full backdrop-blur-sm bg-slate-900/20 border-1 border-primary-600  border-dashed rounded-3xl flex overflow-hidden">
-        <div className="w-80 bg-slate-900/60 backdrop-blur-sm border-r border-slate-600/30 p-6 overflow-y-auto no-scrollbar">
+        <div className="w-80 bg-slate-900/60 backdrop-blur-sm border-r border-slate-600/30 p-6 flex flex-col overflow-hidden">
           <WindowList
             windows={state.windows}
             onWindowSelect={handleWindowSelect}
@@ -257,14 +327,15 @@ export const Dashboard: React.FC = () => {
             onPresetSelect={handlePresetSelect}
             onWindowFocus={handleWindowFocus}
             onWindowRemove={handleWindowRemove}
+            onPublishLayout={handlePublishLayout}
           />
         </div>
       </div>
 
       {/* Live Mode Badge */}
       {state.windows.length > 0 ? (
-        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-green-600/80 text-white px-4 py-2 rounded-full text-sm font-bold border border-green-400/30 shadow-lg shadow-green-500/25 z-20 flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-blue-400 text-white px-4 py-2 rounded-full text-sm font-bold border border-blue-400/30 shadow-lg shadow-blue-500/25 z-20 flex items-center gap-2">
+          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
           LIVE MODE - {state.windows.length} windows detected
         </div>
       ) : isLoadingWindows ? (

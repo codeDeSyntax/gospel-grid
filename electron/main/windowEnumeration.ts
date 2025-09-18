@@ -163,7 +163,7 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
     // Filter for common GUI applications
     const guiApps = [
       "chrome.exe",
-      "firefox.exe", 
+      "firefox.exe",
       "msedge.exe",
       "Code.exe",
       "notepad.exe",
@@ -174,7 +174,7 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
       "Discord.exe",
       "Slack.exe",
       "WhatsApp.exe",
-      "Telegram.exe"
+      "Telegram.exe",
     ];
 
     for (const line of lines) {
@@ -194,11 +194,11 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
           ) {
             // Normalize app name to avoid duplicates (e.g., chrome.exe -> chrome)
             let processName = imageName.replace(/\.exe$/i, "").toLowerCase();
-            
+
             // Handle special cases for better naming
             if (processName === "ms-teams") processName = "teams";
             if (processName === "code") processName = "vscode";
-            
+
             // Skip if we've already seen this app type
             if (seenApps.has(processName)) {
               continue;
@@ -208,14 +208,30 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
             // Create a more descriptive title
             let displayName = processName;
             switch (processName) {
-              case "chrome": displayName = "Google Chrome"; break;
-              case "firefox": displayName = "Mozilla Firefox"; break;
-              case "msedge": displayName = "Microsoft Edge"; break;
-              case "vscode": displayName = "Visual Studio Code"; break;
-              case "teams": displayName = "Microsoft Teams"; break;
-              case "explorer": displayName = "File Explorer"; break;
-              case "calc": displayName = "Calculator"; break;
-              case "notepad": displayName = "Notepad"; break;
+              case "chrome":
+                displayName = "Google Chrome";
+                break;
+              case "firefox":
+                displayName = "Mozilla Firefox";
+                break;
+              case "msedge":
+                displayName = "Microsoft Edge";
+                break;
+              case "vscode":
+                displayName = "Visual Studio Code";
+                break;
+              case "teams":
+                displayName = "Microsoft Teams";
+                break;
+              case "explorer":
+                displayName = "File Explorer";
+                break;
+              case "calc":
+                displayName = "Calculator";
+                break;
+              case "notepad":
+                displayName = "Notepad";
+                break;
             }
 
             // Try to get real window bounds for this process
@@ -234,11 +250,14 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
                 $rect = New-Object System.Drawing.Rectangle; 
                 [System.Windows.Forms.Screen]::FromHandle($handle).Bounds | Select-Object X,Y,Width,Height | ConvertTo-Json 
               }`;
-              
-              const { stdout: boundsOutput } = await execAsync(`powershell -Command "${boundsScript}"`, {
-                timeout: 2000,
-              });
-              
+
+              const { stdout: boundsOutput } = await execAsync(
+                `powershell -Command "${boundsScript}"`,
+                {
+                  timeout: 2000,
+                }
+              );
+
               if (boundsOutput.trim()) {
                 const boundsData = JSON.parse(boundsOutput.trim());
                 if (boundsData.X !== undefined) {
@@ -252,7 +271,10 @@ async function enumerateTasklistWindows(): Promise<WindowInfo[]> {
               }
             } catch (boundsError) {
               // If bounds detection fails, use default mock bounds
-              console.log(`Could not get bounds for ${processName}:`, (boundsError as Error).message);
+              console.log(
+                `Could not get bounds for ${processName}:`,
+                (boundsError as Error).message
+              );
             }
 
             windows.push({

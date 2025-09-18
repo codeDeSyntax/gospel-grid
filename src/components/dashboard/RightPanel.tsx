@@ -1,5 +1,5 @@
 import React from "react";
-import { Plus, Sparkles, Users, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Users, Trash2, ExternalLink } from "lucide-react";
 import { type WindowInfo } from "./WindowList";
 import { type PresetInfo } from "./PresetsList";
 import { DashboardHeader } from "./DashboardHeader";
@@ -20,6 +20,7 @@ interface RightPanelProps {
   onPresetSelect: (presetId: string) => void;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
+  onPublishLayout: () => void;
 }
 
 export const RightPanel: React.FC<RightPanelProps> = ({
@@ -37,6 +38,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   onPresetSelect,
   onWindowFocus,
   onWindowRemove,
+  onPublishLayout,
 }) => {
   const selectedWindows = windows.filter((w) => w.isSelected);
 
@@ -51,14 +53,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({
           onClearAll={onClearAll}
           selectedPreset={selectedPreset}
           onPresetChange={onPresetChange}
-          currentLayout={currentLayout}
-          onLayoutChange={onLayoutChange}
           presets={presets}
+          onPublishLayout={onPublishLayout}
+          selectedWindowsCount={selectedWindows.length}
         />
 
         {/* Main Window Grid Card - Large center area */}
-        <div className="col-span-7 row-span-7 backdrop-blur-md  bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadowlg shadow-primary-500/30">
-          <div className="flex items-center justify-between mb-4">
+        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadowlg shadow-primary-500/30 flex flex-col">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 className="text-lg font-semibold text-white">Window Layout</h3>
             <select
               value={currentLayout}
@@ -72,25 +74,28 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             </select>
           </div>
 
-          {selectedWindows.length > 0 ? (
-            <AutoFitWindowLayout
-              selectedWindows={selectedWindows}
-              focusedWindowId={focusedWindowId}
-              onWindowFocus={onWindowFocus}
-              onWindowRemove={onWindowRemove}
-              maxDisplayWindows={25}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-slate-400 text-center">
-              <div>
-                <div className="text-4xl mb-2">📱</div>
-                <div>No windows selected</div>
-                <div className="text-sm">
-                  Click on windows in the sidebar to add them to the grid
+          {/* Fixed height container that never overflows */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {selectedWindows.length > 0 ? (
+              <AutoFitWindowLayout
+                selectedWindows={selectedWindows}
+                focusedWindowId={focusedWindowId}
+                onWindowFocus={onWindowFocus}
+                onWindowRemove={onWindowRemove}
+                maxDisplayWindows={25}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-400 text-center">
+                <div>
+                  <div className="text-4xl mb-2">📱</div>
+                  <div>No windows selected</div>
+                  <div className="text-sm">
+                    Click on windows in the sidebar to add them to the layout
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* AI Speech-to-Text Card */}
@@ -136,7 +141,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         </div>
 
         {/* Saved Presets Card */}
-        <div className="col-span-5 row-span-4 backdrop-blur-2xl bg-gradient-to-b from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadowlg shadow-primary-500/30 flex flex-col">
+        <div className="col-span-5 row-span-4 backdrop-blur-2xl bg-gradient-to-b from-transparent via-transparent to-primary-800/20 border border-solid border-primary-400/50 rounded-2xl p-4 shadowlg shadow-primary-500/30 flex flex-col">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-blue-400">📋</span>

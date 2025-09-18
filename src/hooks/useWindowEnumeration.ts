@@ -33,10 +33,12 @@ export const useWindowEnumeration = (
 
       if (result?.success) {
         // Add isSelected property to each window (defaulting to false)
-        const windowsWithSelection = (result.windows || []).map((window) => ({
-          ...window,
-          isSelected: false,
-        }));
+        const windowsWithSelection = (result.windows || []).map(
+          (window: WindowInfo) => ({
+            ...window,
+            isSelected: false,
+          })
+        );
         setWindows(windowsWithSelection);
       } else {
         setError(result?.error || "Failed to enumerate windows");
@@ -69,7 +71,9 @@ export const useWindowEnumeration = (
   const getWindowThumbnail = useCallback(
     async (handle: number): Promise<string | null> => {
       try {
-        const result = await window.electronAPI?.getWindowThumbnail(handle);
+        const result = await window.electronAPI?.getWindowThumbnail(
+          handle.toString()
+        );
         return result?.success ? result.thumbnail || null : null;
       } catch (err) {
         console.error("Failed to get window thumbnail:", err);

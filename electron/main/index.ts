@@ -11,6 +11,13 @@ import {
   getWindowIcon as getWindowIconNative,
   moveWindow as moveWindowNative,
 } from "./windowEnumeration";
+import {
+  captureWindowThumbnail,
+  captureMultipleWindowThumbnails,
+  getAllWindowThumbnails,
+  ThumbnailOptions,
+} from "./thumbnailCapture";
+import { getWindowsWithThumbnails } from "./windowMapper";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -183,7 +190,10 @@ ipcMain.handle("enumerate-windows", async (event, options) => {
       "Main process: enumerate-windows called with options:",
       options
     );
-    const windows = await enumerateWindows(options);
+
+    // Use the new window mapper that provides direct thumbnail access
+    const windows = await getWindowsWithThumbnails();
+
     console.log("Main process: enumerated windows count:", windows.length);
     console.log("Main process: first few windows:", windows.slice(0, 3));
     return { success: true, windows };
@@ -248,17 +258,61 @@ ipcMain.handle("move-window-external", async (event, handle, bounds) => {
   }
 });
 
-ipcMain.handle("get-window-thumbnail", async (event, handle) => {
-  try {
-    // Placeholder implementation - would capture window screenshot
-    return { success: false, error: "Not implemented yet" };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
+ipcMain.handle(
+  "get-window-thumbnail",
+  async (event, windowId: string, options?: ThumbnailOptions) => {
+    try {
+      const thumbnail = await captureWindowThumbnail(windowId, options);
+      if (thumbnail) {
+        return { success: true, thumbnail };
+      } else {
+        return { success: false, error: "Failed to capture thumbnail" };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   }
-});
+);
+
+// New handler for multiple window thumbnails
+ipcMain.handle(
+  "get-multiple-window-thumbnails",
+  async (event, windowIds: string[], options?: ThumbnailOptions) => {
+    try {
+      const thumbnails = await captureMultipleWindowThumbnails(
+        windowIds,
+        options
+      );
+      return { success: true, thumbnails };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        thumbnails: [],
+      };
+    }
+  }
+);
+
+// New handler for all window thumbnails
+ipcMain.handle(
+  "get-all-window-thumbnails",
+  async (event, options?: ThumbnailOptions) => {
+    try {
+      const results = await getAllWindowThumbnails(options);
+      return { success: true, results };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        results: [],
+      };
+    }
+  }
+);
 
 ipcMain.handle("maximize-window-external", async (event, handle) => {
   try {
@@ -301,6 +355,80 @@ ipcMain.handle("hide-window-external", async (event, handle) => {
     // Placeholder - would hide window
     return { success: false, error: "Not implemented yet" };
   } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+// Publish layout handler - creates a new fullscreen window with the layout
+ipcMain.handle("publish-layout", async (event, layoutData) => {
+  try {
+    console.log("Received publish-layout request:", layoutData);
+    const { windows: selectedWindows, layout, focusedWindowId } = layoutData;
+
+    console.log("Creating new publish window...");
+    // Create a new fullscreen window for the published layout
+    const publishWindow = new BrowserWindow({
+      title: "StreamSpire - Published Layout",
+      width: 1920,
+      height: 1080,
+      fullscreen: true,
+      frame: false,
+      show: true, // Show immediately instead of waiting
+      backgroundColor: "#000000", // Black background for immediate display
+      webPreferences: {
+        preload,
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+
+    // Load the same app but pass layout data via query params
+    const layoutQuery = encodeURIComponent(
+      JSON.stringify({
+        windows: selectedWindows,
+        layout,
+        focusedWindowId,
+        isPublished: true,
+      })
+    );
+
+    console.log("Loading window with layout data...", { layoutQuery });
+
+    // Focus the window immediately
+    publishWindow.focus();
+    publishWindow.setAlwaysOnTop(true, "screen-saver");
+
+    if (VITE_DEV_SERVER_URL) {
+      await publishWindow.loadURL(
+        `${VITE_DEV_SERVER_URL}?layout=${layoutQuery}`
+      );
+    } else {
+      await publishWindow.loadFile(indexHtml, {
+        query: { layout: layoutQuery },
+      });
+    } // Handle window ready and closed events
+    publishWindow.once("ready-to-show", () => {
+      console.log("Published window ready, ensuring focus...");
+      publishWindow.setAlwaysOnTop(false); // Remove always on top after loading
+      publishWindow.focus();
+    });
+
+    publishWindow.webContents.once("did-finish-load", () => {
+      console.log("Published window content loaded");
+    });
+
+    // Handle window closed
+    publishWindow.on("closed", () => {
+      console.log("Published layout window closed");
+    });
+
+    console.log("Published window created successfully");
+    return { success: true, windowId: publishWindow.id };
+  } catch (error) {
+    console.error("Failed to publish layout:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

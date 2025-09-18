@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, Trash2 } from "lucide-react";
+import { Users, Trash2, ExternalLink } from "lucide-react";
 
 interface DashboardHeaderProps {
   onRefreshWindows: () => void;
@@ -7,9 +7,9 @@ interface DashboardHeaderProps {
   onClearAll: () => void;
   selectedPreset: string;
   onPresetChange: (preset: string) => void;
-  currentLayout: string;
-  onLayoutChange: (layout: string) => void;
   presets: Array<{ id: string; name: string; windowCount: number }>;
+  onPublishLayout: () => void;
+  selectedWindowsCount: number;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -18,9 +18,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onClearAll,
   selectedPreset,
   onPresetChange,
-  currentLayout,
-  onLayoutChange,
   presets,
+  onPublishLayout,
+  selectedWindowsCount,
 }) => {
   return (
     <div className="col-span-12 row-span-1 backdrop-blur-sm bg-gradient-to-r from-primary-900/80 via-slate-900/70 to-primary-900/80 border border-primary-400/50 rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-primary-500/10">
@@ -73,48 +73,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <Trash2 className="w-4 h-4 flex-shrink-0" />
           Clear
         </button>
-      </div>
 
-      <div className="flex gap-2">
         <button
-          onClick={() => onLayoutChange("auto")}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-            currentLayout === "auto"
-              ? "bg-blue-600/80 text-white border border-blue-400/50"
-              : "bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-600/50"
-          }`}
+          onClick={onPublishLayout}
+          disabled={selectedWindowsCount === 0}
+          className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-emerald-600/90 to-emerald-500/90 hover:from-emerald-500 hover:to-emerald-400 disabled:from-slate-600/90 disabled:to-slate-500/90 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-all backdrop-blur-md border border-emerald-400/40 disabled:border-slate-400/40 shadow-lg shadow-emerald-500/30 disabled:shadow-slate-500/30 whitespace-nowrap"
+          title="Publish layout to full-screen window"
         >
-          Auto
-        </button>
-        <button
-          onClick={() => onLayoutChange("2x2")}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-            currentLayout === "2x2"
-              ? "bg-blue-600/80 text-white border border-blue-400/50"
-              : "bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-600/50"
-          }`}
-        >
-          2×2
-        </button>
-        <button
-          onClick={() => onLayoutChange("3x2")}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-            currentLayout === "3x2"
-              ? "bg-blue-600/80 text-white border border-blue-400/50"
-              : "bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-600/50"
-          }`}
-        >
-          3×2
-        </button>
-        <button
-          onClick={() => onLayoutChange("focus")}
-          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-            currentLayout === "focus"
-              ? "bg-blue-600/80 text-white border border-blue-400/50"
-              : "bg-slate-700/50 text-slate-300 border border-slate-600/30 hover:bg-slate-600/50"
-          }`}
-        >
-          Focus
+          <ExternalLink className="w-4 h-4 flex-shrink-0" />
+          Publish
         </button>
       </div>
     </div>

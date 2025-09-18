@@ -40,8 +40,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("enumerate-windows", options),
   getWindowIcon: (handle: number) =>
     ipcRenderer.invoke("get-window-icon", handle),
-  getWindowThumbnail: (handle: number) =>
-    ipcRenderer.invoke("get-window-thumbnail", handle),
+  getWindowThumbnail: (windowId: string, options?: any) =>
+    ipcRenderer.invoke("get-window-thumbnail", windowId, options),
+  getMultipleWindowThumbnails: (windowIds: string[], options?: any) =>
+    ipcRenderer.invoke("get-multiple-window-thumbnails", windowIds, options),
+  getAllWindowThumbnails: (options?: any) =>
+    ipcRenderer.invoke("get-all-window-thumbnails", options),
   focusWindow: (handle: number) => ipcRenderer.invoke("focus-window", handle),
   minimizeWindow: (handle: number) =>
     ipcRenderer.invoke("minimize-window-external", handle),
@@ -55,6 +59,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("hide-window-external", handle),
   moveWindow: (handle: number, bounds: any) =>
     ipcRenderer.invoke("move-window-external", handle, bounds),
+  publishLayout: (layoutData: any) =>
+    ipcRenderer.invoke("publish-layout", layoutData),
 });
 
 // --------- Preload scripts loading ---------
