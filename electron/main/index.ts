@@ -156,50 +156,58 @@ ipcMain.handle("open-win", (_, arg) => {
 });
 
 // Window control IPC handlers
-ipcMain.handle("window-minimize", () => {
-  if (win) {
-    win.minimize();
-  }
-});
+ipcMain.handle("window-minimize", (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  if (currentWindow) {
+    currentWindow.minimize();
 
-ipcMain.handle("window-maximize", () => {
-  if (win) {
-    if (win.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win.maximize();
+    // If this is a published window being minimized, bring main window into focus
+    if (currentWindow !== win && win && !win.isDestroyed()) {
+      setTimeout(() => {
+        if (win && !win.isDestroyed()) {
+          win.focus();
+          win.show(); // Ensure main window is visible
+        }
+      }, 100); // Small delay to ensure minimize completes first
     }
   }
 });
 
-ipcMain.handle("window-close", () => {
-  if (win) {
-    win.close();
+ipcMain.handle("window-maximize", (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  if (currentWindow) {
+    if (currentWindow.isMaximized()) {
+      currentWindow.unmaximize();
+    } else {
+      currentWindow.maximize();
+    }
+  }
+});
+
+ipcMain.handle("window-close", (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  if (currentWindow) {
+    currentWindow.close();
   }
 });
 
 // Get window state
-ipcMain.handle("window-is-maximized", () => {
-  return win ? win.isMaximized() : false;
+ipcMain.handle("window-is-maximized", (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  return currentWindow ? currentWindow.isMaximized() : false;
 });
 
-ipcMain.handle("window-is-minimized", () => {
-  return win ? win.isMinimized() : false;
+ipcMain.handle("window-is-minimized", (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  return currentWindow ? currentWindow.isMinimized() : false;
 });
 
 // Window enumeration IPC handlers
 ipcMain.handle("enumerate-windows", async (event, options) => {
   try {
-    console.log(
-      "Main process: enumerate-windows called with options:",
-      options
-    );
-
     // Use the new window mapper that provides direct thumbnail access
     const windows = await getWindowsWithThumbnails();
 
-    console.log("Main process: enumerated windows count:", windows.length);
-    console.log("Main process: first few windows:", windows.slice(0, 3));
     return { success: true, windows };
   } catch (error) {
     console.error("Failed to enumerate windows:", error);

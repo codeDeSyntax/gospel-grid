@@ -59,8 +59,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         />
 
         {/* Main Window Grid Card - Large center area */}
-        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadowlg shadow-primary-500/30 flex flex-col">
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadow-inner shadow-primary-500/30 flex flex-col">
+          {/* <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 className="text-lg font-semibold text-white">Window Layout</h3>
             <select
               value={currentLayout}
@@ -72,7 +72,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
               <option value="3x2">3x2 Grid</option>
               <option value="focus">Focus Mode</option>
             </select>
-          </div>
+          </div> */}
 
           {/* Fixed height container that never overflows */}
           <div className="flex-1 min-h-0 overflow-hidden">
@@ -86,11 +86,41 @@ export const RightPanel: React.FC<RightPanelProps> = ({
               />
             ) : (
               <div className="flex items-center justify-center h-full text-slate-400 text-center">
-                <div>
-                  <div className="text-4xl mb-2">📱</div>
-                  <div>No windows selected</div>
-                  <div className="text-sm">
-                    Click on windows in the sidebar to add them to the layout
+                <div className="relative">
+                  {/* Animated background circles */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full border-2 border-slate-600/30 animate-pulse"></div>
+                    <div className="absolute w-16 h-16 rounded-full border border-slate-500/20 animate-ping"></div>
+                  </div>
+
+                  {/* Main icon with floating animation */}
+                  <div className="relative z-10 bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-slate-600/30">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-bounce">
+                      <ExternalLink className="w-6 h-6 text-blue-400 animate-pulse" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-lg font-medium text-slate-300">
+                        No windows selected
+                      </div>
+                      <div className="text-sm text-slate-500 max-w-48">
+                        Click on windows in the sidebar to add them to the
+                        layout
+                      </div>
+                    </div>
+
+                    {/* Decorative elements */}
+                    <div className="flex justify-center mt-4 gap-1">
+                      <div className="w-1 h-1 rounded-full bg-blue-500/60 animate-ping"></div>
+                      <div
+                        className="w-1 h-1 rounded-full bg-purple-500/60 animate-ping"
+                        style={{ animationDelay: "0.2s" }}
+                      ></div>
+                      <div
+                        className="w-1 h-1 rounded-full bg-blue-500/60 animate-ping"
+                        style={{ animationDelay: "0.4s" }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>

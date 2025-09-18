@@ -175,9 +175,9 @@ export const WindowList: React.FC<WindowListProps> = ({
                         before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
                       `
                       : `
-                        bg-gradient-to-br from-slate-800/50 via-slate-700/30 to-slate-600/20
+                        
                         border border-slate-600/30 hover:border-blue-400/40
-                        backdrop-blur-md hover:bg-gradient-to-br hover:from-blue-900/20 hover:via-purple-800/15 hover:to-slate-700/25
+                        backdrop-blur-md bg-gradient-to-br from-blue-900/20 via-purple-800/15 to-slate-700/25
                       
                         before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent 
                         before:rounded-2xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
@@ -196,7 +196,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                 />
 
                 {/* App Icon with glow effect */}
-                <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center z-10">
+                <div className="relative flex-shrink-0  flex items-center justify-center z-10">
                   <div
                     className={`
                     absolute inset-0 rounded-lg bg-gradient-to-br opacity-20 group-hover:opacity-40 transition-opacity duration-300
@@ -207,7 +207,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                     }
                   `}
                   />
-                  <div className="relative">{getAppIcon(window.app, 22)}</div>
+                  <div className="relative">{getAppIcon(window.app, 40)}</div>
                 </div>
 
                 {/* App Content */}

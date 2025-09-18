@@ -49,13 +49,6 @@ export const Dashboard: React.FC = () => {
 
   // Update state when enumerated windows change
   useEffect(() => {
-    console.log("Enumerated windows changed:", {
-      count: enumeratedWindows.length,
-      windows: enumeratedWindows,
-      isLoading: isLoadingWindows,
-      error: windowError,
-    });
-
     if (enumeratedWindows.length > 0) {
       setState((prev) => ({
         ...prev,
@@ -191,13 +184,6 @@ export const Dashboard: React.FC = () => {
   const handlePublishLayout = useCallback(async () => {
     const selectedWindows = state.windows.filter((w) => w.isSelected);
 
-    console.log("Publish Layout clicked:", {
-      selectedWindowsCount: selectedWindows.length,
-      selectedWindows,
-      currentLayout: state.currentLayout,
-      focusedWindowId: state.focusedWindowId,
-    });
-
     if (selectedWindows.length === 0) {
       console.warn("No windows selected for publishing");
       alert("Please select at least one window to publish");
@@ -205,8 +191,6 @@ export const Dashboard: React.FC = () => {
     }
 
     try {
-      console.log("Calling electronAPI.publishLayout...");
-
       // Show immediate feedback
       const publishingToast = document.createElement("div");
       publishingToast.innerHTML = `

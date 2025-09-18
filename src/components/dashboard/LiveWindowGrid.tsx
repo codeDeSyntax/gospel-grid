@@ -21,8 +21,6 @@ export function LiveWindowGrid({
     Record<string, LiveWindowThumbnail>
   >({});
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingWindows, setLoadingWindows] = useState<Set<string>>(new Set());
-  const [failedWindows, setFailedWindows] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -63,9 +61,9 @@ export function LiveWindowGrid({
       case "dual":
         // Two windows side by side, centered - landscape format
         availableWidth = containerWidth - gap; // Gap between windows
-        windowWidth = Math.floor(availableWidth / 2);
-        // Use 60% of container height for landscape feel
-        windowHeight = Math.floor(containerHeight * 0.6);
+        windowWidth = Math.max(Math.floor(availableWidth / 2), 300); // Ensure minimum width
+        // Use 60% of container height for landscape feel, with minimum height
+        windowHeight = Math.max(Math.floor(containerHeight * 0.6), 200);
         break;
       case "triple":
         // Two on top, one bottom-left
@@ -93,16 +91,36 @@ export function LiveWindowGrid({
   const captureThumbnails = useCallback(async () => {
     if (gridWindows.length === 0) return;
 
-    // Mark windows as loading
-    const windowIds = gridWindows.map(w => w.id);
-    setLoadingWindows(new Set(windowIds));
     setIsLoading(true);
-    
     const { width, height } = calculateDimensions();
 
+    // Ensure minimum dimensions for dual layout
+    const minWidth = 300;
+    const minHeight = 200;
+
     // Calculate higher resolution for capture while maintaining aspect ratio
-    const captureWidth = Math.min(width * 1.5, 1200); // Cap at reasonable size
-    const captureHeight = Math.min(height * 1.5, 800);
+    const captureWidth = Math.max(Math.min(width * 1.5, 1200), minWidth);
+    const captureHeight = Math.max(Math.min(height * 1.5, 800), minHeight);
+
+    // Add specific debugging for dual layout
+    if (type === "dual") {
+      systemLogger.thumbnail(
+        "dual-layout-debug",
+        `DUAL LAYOUT DEBUG: gridWindows.length=${gridWindows.length}`,
+        {
+          gridWindowsLength: gridWindows.length,
+          gridWindowsIds: gridWindows.map((w) => w.id),
+          gridWindows0: gridWindows[0]
+            ? { id: gridWindows[0].id, name: gridWindows[0].name }
+            : null,
+          gridWindows1: gridWindows[1]
+            ? { id: gridWindows[1].id, name: gridWindows[1].name }
+            : null,
+          layoutType: type,
+          dimensions: { width: captureWidth, height: captureHeight },
+        }
+      );
+    }
 
     try {
       systemLogger.thumbnail(
@@ -110,8 +128,9 @@ export function LiveWindowGrid({
         `Capturing ${gridWindows.length} live windows (${type} layout)`,
         {
           dimensions: { width: captureWidth, height: captureHeight },
-          quality: 98,
+          originalDimensions: { width, height },
           layoutType: type,
+          quality: 98,
         }
       );
 
@@ -129,8 +148,6 @@ export function LiveWindowGrid({
 
       if (result?.success && result.thumbnails) {
         const newThumbnails: Record<string, LiveWindowThumbnail> = {};
-        const successfulWindows = new Set<string>();
-        const failedWindowIds = new Set<string>();
 
         result.thumbnails.forEach((thumbnail: any, index: number) => {
           if (thumbnail && gridWindows[index]) {
@@ -139,52 +156,73 @@ export function LiveWindowGrid({
               dataUrl: thumbnail.dataUrl,
               timestamp: thumbnail.timestamp || Date.now(),
             };
-            successfulWindows.add(gridWindows[index].id);
-          } else if (gridWindows[index]) {
-            failedWindowIds.add(gridWindows[index].id);
           }
         });
 
-        setThumbnails(prev => ({ ...prev, ...newThumbnails }));
-        setFailedWindows(failedWindowIds);
+        setThumbnails(newThumbnails);
+
+        // Special debug logging for dual layout
+        if (type === "dual") {
+          systemLogger.thumbnail(
+            "dual-success-debug",
+            `DUAL SUCCESS: Set ${Object.keys(newThumbnails).length} thumbnails`,
+            {
+              newThumbnailsKeys: Object.keys(newThumbnails),
+              newThumbnailsDetails: Object.values(newThumbnails).map((t) => ({
+                windowId: t.windowId,
+                hasDataUrl: !!t.dataUrl,
+              })),
+              gridWindowsIds: gridWindows.map((w) => w.id),
+            }
+          );
+        }
 
         systemLogger.thumbnail(
           "batch-success",
-          `Captured ${Object.keys(newThumbnails).length}/${gridWindows.length} thumbnails (${type} layout)`,
+          `Captured ${
+            Object.keys(newThumbnails).length
+          } thumbnails for ${type} layout`,
           {
-            successful: Object.keys(newThumbnails).length,
-            failed: failedWindowIds.size,
-            total: gridWindows.length,
+            count: Object.keys(newThumbnails).length,
             dimensions: { width: captureWidth, height: captureHeight },
             layoutType: type,
+            windowIds: gridWindows.map((w) => w.id),
           }
         );
       } else {
-        systemLogger.thumbnail("batch-failed", `Batch capture failed for ${type} layout`, {
-          error: result?.error,
-          layoutType: type,
-          windowCount: gridWindows.length,
-        });
-        
-        // Mark all windows as failed
-        setFailedWindows(new Set(windowIds));
+        systemLogger.thumbnail(
+          "batch-failed",
+          `Batch capture failed for ${type} layout`,
+          {
+            error: result?.error,
+            layoutType: type,
+            windowCount: gridWindows.length,
+            windowIds: gridWindows.map((w) => w.id),
+          }
+        );
+
+        // Clear any existing thumbnails on failure to avoid stale loading states
+        setThumbnails({});
       }
     } catch (error) {
-      systemLogger.thumbnail("capture-error", `Capture failed for ${type} layout`, {
-        error: error instanceof Error ? error.message : String(error),
-        layoutType: type,
-        windowCount: gridWindows.length,
-      });
-      
-      // Mark all windows as failed
-      const windowIds = gridWindows.map(w => w.id);
-      setFailedWindows(new Set(windowIds));
+      systemLogger.thumbnail(
+        "batch-error",
+        `Capture error for ${type} layout: ${error}`,
+        {
+          error,
+          layoutType: type,
+          windowCount: gridWindows.length,
+          windowIds: gridWindows.map((w) => w.id),
+          dimensions: { width: captureWidth, height: captureHeight },
+        }
+      );
+
+      // Clear thumbnails on error to prevent stuck loading states
+      setThumbnails({});
     } finally {
-      // Clear loading states
-      setLoadingWindows(new Set());
       setIsLoading(false);
     }
-  }, [gridWindows, calculateDimensions, type]);
+  }, [gridWindows, calculateDimensions]);
 
   // Start live updates when component mounts
   useEffect(() => {
@@ -196,10 +234,16 @@ export function LiveWindowGrid({
       captureThumbnails();
     }, 2000);
 
+    // Safety timeout to clear loading state if it gets stuck
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 10000); // 10 second timeout
+
     return () => {
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
+      clearTimeout(loadingTimeout);
     };
   }, [captureThumbnails]);
 
@@ -236,15 +280,44 @@ export function LiveWindowGrid({
   ) => {
     const thumbnail = thumbnails[window.id];
 
+    // Debug logging for dual layout
+    if (type === "dual") {
+      systemLogger.thumbnail(
+        "dual-render-debug",
+        `DUAL RENDER: Window ${window.id}`,
+        {
+          windowId: window.id,
+          windowName: window.name,
+          hasThumbnail: !!thumbnail,
+          thumbnailDataUrl: thumbnail?.dataUrl
+            ? thumbnail.dataUrl.substring(0, 50) + "..."
+            : null,
+          isLoading,
+          layoutType: type,
+        }
+      );
+    }
+
     return (
       <div
         key={window.id}
-        className="relative bg-gray-900 rounded-lg overflow-hidden border border-gray-700 flex items-center justify-center flex-shrink-0"
+        className="relative bg-gray-900 rounded-lg overflow-hidden border-2 border-blue-400 shadow-lg flex items-center justify-center flex-shrink-0"
         style={{
           ...customStyle,
           boxSizing: "border-box",
+          borderWidth: "3px",
+          borderStyle: "solid",
+          borderColor: "#60a5fa", // Blue-400
+          boxShadow:
+            "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(96, 165, 250, 0.3)",
         }}
       >
+        {/* Window title overlay */}
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 text-xs font-medium z-10 flex items-center justify-between">
+          <span className="truncate">{window.app}</span>
+          <span className="text-blue-100 ml-2 flex-shrink-0">📺</span>
+        </div>
+
         {/* Live thumbnail */}
         {thumbnail ? (
           <img
@@ -255,22 +328,18 @@ export function LiveWindowGrid({
               imageRendering: "auto",
               filter: "contrast(1.3) brightness(1.5)",
               display: "block",
+              marginTop: "28px", // Account for title bar
             }}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center text-gray-400 h-full">
-            {loadingWindows.has(window.id) ? (
+          <div
+            className="flex flex-col items-center justify-center text-gray-400 h-full"
+            style={{ marginTop: "28px" }}
+          >
+            {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
                 <div className="text-sm">Loading window...</div>
-              </>
-            ) : failedWindows.has(window.id) ? (
-              <>
-                <div className="text-4xl mb-2">⚠️</div>
-                <div className="text-sm text-center">
-                  <div className="font-medium">Capture Failed</div>
-                  <div className="opacity-75">{window.app}</div>
-                </div>
               </>
             ) : (
               <>
@@ -308,12 +377,16 @@ export function LiveWindowGrid({
             className="w-full h-full flex justify-center items-center"
             style={{ gap: "16px" }}
           >
-            {gridWindows.map((window) =>
-              renderWindow(window, {
+            {gridWindows[0] &&
+              renderWindow(gridWindows[0], {
                 width: `${width}px`,
                 height: `${height}px`,
-              })
-            )}
+              })}
+            {gridWindows[1] &&
+              renderWindow(gridWindows[1], {
+                width: `${width}px`,
+                height: `${height}px`,
+              })}
           </div>
         );
 

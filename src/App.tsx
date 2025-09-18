@@ -91,11 +91,11 @@ function App() {
       "app",
       "info",
       "Published",
-      "🗙 Closing published layout window"
+      "⬇️ Minimizing published layout window"
     );
-    // Close this window - it's a published layout window
-    if (window.electronAPI) {
-      window.close();
+    // Minimize this window instead of closing it
+    if (window.windowControls) {
+      window.windowControls.minimize();
     }
   };
 

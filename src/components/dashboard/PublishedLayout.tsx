@@ -27,7 +27,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
     }
   }, []);
 
-  // Handle escape key to close
+  // Handle escape key to minimize
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Escape") {

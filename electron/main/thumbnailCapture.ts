@@ -23,6 +23,8 @@ export async function captureWindowThumbnail(
   options: ThumbnailOptions = {}
 ): Promise<WindowThumbnail | null> {
   try {
+    console.log(`Capturing thumbnail for window: ${windowId}`, { options });
+
     const {
       width = 300,
       height = 200,
@@ -31,14 +33,24 @@ export async function captureWindowThumbnail(
       forceRefresh = false,
     } = options;
 
-    console.log(`Capturing thumbnail for window: ${windowId}`);
+    // Validate and sanitize dimensions
+    const validWidth = Math.max(Math.floor(Number(width) || 300), 50);
+    const validHeight = Math.max(Math.floor(Number(height) || 200), 50);
+    const validScaleFactor = Math.max(
+      Math.min(Number(scaleFactor) || 1.0, 3.0),
+      0.1
+    );
+
+    console.log(
+      `Validated dimensions: ${validWidth}x${validHeight}, scale: ${validScaleFactor}`
+    );
 
     // Get all available window sources with optimized resolution
     const sources = await desktopCapturer.getSources({
       types: ["window"],
       thumbnailSize: {
-        width: Math.min(width * scaleFactor, 1920), // Cap at 1920 for performance
-        height: Math.min(height * scaleFactor, 1080), // Cap at 1080 for performance
+        width: Math.min(Math.floor(validWidth * validScaleFactor), 1920), // Cap at 1920 for performance
+        height: Math.min(Math.floor(validHeight * validScaleFactor), 1080), // Cap at 1080 for performance
       },
       fetchWindowIcons: false,
     });

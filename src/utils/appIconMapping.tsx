@@ -285,12 +285,12 @@ export const APP_ICON_MAP: Record<string, AppIconData> = {
 
   // Code Editors & IDEs
   "visual studio code": {
-    icon: <FaFileCode />,
+    icon: <DiVisualstudio />,
     gradient: "from-blue-500 to-cyan-400",
     color: "text-blue-500",
   },
   vscode: {
-    icon: <FaFileCode />,
+    icon: <DiVisualstudio />,
     gradient: "from-blue-500 to-cyan-400",
     color: "text-blue-500",
   },
