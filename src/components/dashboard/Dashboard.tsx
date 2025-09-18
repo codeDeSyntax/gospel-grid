@@ -7,7 +7,6 @@ import { RightPanel } from "./RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
-import { PerformanceControlPanel } from "../performance/PerformanceControlPanel";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -332,11 +331,6 @@ export const Dashboard: React.FC = () => {
             onPublishLayout={handlePublishLayout}
           />
         </div>
-      </div>
-
-      {/* Performance Control Panel */}
-      <div className="fixed top-6 right-6 z-30">
-        <PerformanceControlPanel />
       </div>
 
       {/* Live Mode Badge */}

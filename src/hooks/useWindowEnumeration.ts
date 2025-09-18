@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { WindowInfo } from "@/components/dashboard/WindowList";
 import { useActivityMonitor } from "./useActivityMonitor";
+import { systemLogger } from "./useSystemLogger";
 
 export interface WindowEnumerationOptions {
   includeMinimized?: boolean;
@@ -31,15 +32,23 @@ export const useWindowEnumeration = (
   });
 
   const enumerateWindows = useCallback(async () => {
+    const startTime = Date.now();
     try {
       setIsLoading(true);
       setError(null);
+
+      systemLogger.window("enumerate", "Starting window enumeration", {
+        includeMinimized,
+        includeSystemWindows,
+      });
 
       // Call the main process to enumerate windows
       const result = await window.electronAPI?.enumerateWindows({
         includeMinimized,
         includeSystemWindows,
       });
+
+      const duration = Date.now() - startTime;
 
       if (result?.success) {
         // Add isSelected property to each window (defaulting to false)
@@ -49,17 +58,70 @@ export const useWindowEnumeration = (
             isSelected: false,
           })
         );
+
         setWindows(windowsWithSelection);
+
+        systemLogger.window(
+          "enumerate-success",
+          `Found ${windowsWithSelection.length} windows in ${duration}ms`,
+          {
+            count: windowsWithSelection.length,
+            duration,
+            includeMinimized,
+            includeSystemWindows,
+          }
+        );
+
+        // Update system stats
+        systemLogger.updateStats("windows", {
+          enumerated: windowsWithSelection.length,
+          refreshInterval: smartRefresh
+            ? activityState.isActive
+              ? 3000
+              : activityState.isIdle
+              ? 15000
+              : 60000
+            : refreshInterval,
+          activityState: activityState.isActive
+            ? "active"
+            : activityState.isIdle
+            ? "idle"
+            : "paused",
+        });
       } else {
-        setError(result?.error || "Failed to enumerate windows");
+        const errorMsg = result?.error || "Failed to enumerate windows";
+        setError(errorMsg);
+        systemLogger.log(
+          "window",
+          "error",
+          "WindowEnumeration",
+          `Enumeration failed: ${errorMsg}`,
+          { duration }
+        );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      const duration = Date.now() - startTime;
+      const errorMsg =
+        err instanceof Error ? err.message : "Unknown error occurred";
+      setError(errorMsg);
+      systemLogger.log(
+        "window",
+        "error",
+        "WindowEnumeration",
+        `Exception during enumeration: ${errorMsg}`,
+        { err, duration }
+      );
       console.error("Window enumeration error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [includeMinimized, includeSystemWindows]);
+  }, [
+    includeMinimized,
+    includeSystemWindows,
+    smartRefresh,
+    activityState,
+    refreshInterval,
+  ]);
 
   const refreshWindows = useCallback(() => {
     enumerateWindows();

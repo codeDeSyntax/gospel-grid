@@ -4,6 +4,8 @@ import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { PublishedLayout } from "./components/dashboard/PublishedLayout";
 import { WindowInfo } from "./components/dashboard/WindowList";
+import SecretTerminal from "./components/SecretTerminal";
+import { systemLogger } from "./hooks/useSystemLogger";
 
 type AppScreen = "welcome" | "dashboard" | "settings" | "published";
 
@@ -17,7 +19,10 @@ function App() {
 
   // Initialize theme on app start and check for published layout
   useEffect(() => {
+    systemLogger.log("app", "info", "App", "🚀 Application starting up");
+
     ThemeManager.initialize();
+    systemLogger.log("app", "info", "Theme", "🎨 Theme manager initialized");
 
     // Check if this is a published layout window
     const urlParams = new URLSearchParams(window.location.search);
@@ -33,22 +38,61 @@ function App() {
             focusedWindowId: layoutData.focusedWindowId,
           });
           setCurrentScreen("published");
+          systemLogger.log(
+            "app",
+            "info",
+            "Layout",
+            `📊 Published layout loaded with ${layoutData.windows.length} windows`
+          );
         }
       } catch (error) {
+        systemLogger.log(
+          "app",
+          "error",
+          "Layout",
+          "Failed to parse layout data",
+          { error }
+        );
         console.error("Failed to parse layout data:", error);
       }
     }
+
+    // Log app initialization complete
+    systemLogger.log(
+      "app",
+      "success",
+      "App",
+      "✅ Application initialization complete"
+    );
   }, []);
 
   const handleGetStarted = () => {
+    systemLogger.log(
+      "app",
+      "info",
+      "Navigation",
+      "🎯 User navigated to dashboard"
+    );
     setCurrentScreen("dashboard");
   };
 
   const handleBackToWelcome = () => {
+    systemLogger.log(
+      "app",
+      "info",
+      "Navigation",
+      "🏠 User navigated back to welcome"
+    );
     setCurrentScreen("welcome");
   };
 
   const handleClosePublished = () => {
+    systemLogger.log(
+      "app",
+      "info",
+      "Published",
+      "🗙 Closing published layout window"
+    );
     // Close this window - it's a published layout window
     if (window.electronAPI) {
       window.close();
@@ -92,7 +136,12 @@ function App() {
     }
   };
 
-  return <div className="app no-scrollbar">{renderScreen()}</div>;
+  return (
+    <div className="app no-scrollbar">
+      {renderScreen()}
+      <SecretTerminal />
+    </div>
+  );
 }
 
 export default App;

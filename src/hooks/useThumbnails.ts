@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useActivityMonitor } from "./useActivityMonitor";
+import { systemLogger } from "./useSystemLogger";
 
 export interface WindowThumbnail {
   windowId: string;
@@ -58,6 +59,12 @@ export function useThumbnails(
       return;
     }
 
+    const startTime = Date.now();
+    systemLogger.thumbnail(
+      "batch-capture-start",
+      `Starting batch capture for ${windowIds.length} windows`
+    );
+
     try {
       setLoading(true);
       setError(null);
@@ -73,19 +80,56 @@ export function useThumbnails(
         }
       );
 
+      const duration = Date.now() - startTime;
+
       if (result?.success && result.thumbnails) {
         const newThumbnails: Record<string, WindowThumbnail> = {};
+        let successCount = 0;
 
         result.thumbnails.forEach(
           (thumbnail: WindowThumbnail | null, index: number) => {
             if (thumbnail) {
               newThumbnails[windowIds[index]] = thumbnail;
+              successCount++;
+              systemLogger.thumbnail("capture-success", windowIds[index], {
+                size: thumbnail.dataUrl.length,
+                timestamp: thumbnail.timestamp,
+              });
+            } else {
+              systemLogger.thumbnail("capture-failed", windowIds[index]);
             }
           }
         );
 
         setThumbnails(newThumbnails);
+
+        systemLogger.performance(
+          "thumbnail-batch",
+          `Batch capture completed: ${successCount}/${windowIds.length} in ${duration}ms`,
+          {
+            total: windowIds.length,
+            successful: successCount,
+            failed: windowIds.length - successCount,
+            duration,
+            avgTime: duration / windowIds.length,
+            width,
+            height,
+            quality,
+          }
+        );
+
+        // Update system stats
+        systemLogger.updateStats("windows", {
+          thumbnailsLoaded: successCount,
+        });
       } else {
+        systemLogger.log(
+          "thumbnail",
+          "warn",
+          "BatchCapture",
+          "Batch thumbnail capture failed, falling back to legacy method"
+        );
+
         console.warn(
           "Batch thumbnail capture failed, falling back to legacy method"
         );
@@ -99,18 +143,47 @@ export function useThumbnails(
             quality,
           });
 
+        const legacyDuration = Date.now() - startTime;
+
         if (legacyResult.success && legacyResult.thumbnails) {
           const thumbnailMap: Record<string, WindowThumbnail> = {};
           legacyResult.thumbnails.forEach((thumbnail: WindowThumbnail) => {
             thumbnailMap[thumbnail.windowId] = thumbnail;
           });
           setThumbnails(thumbnailMap);
+
+          systemLogger.performance(
+            "thumbnail-legacy",
+            `Legacy capture completed: ${legacyResult.thumbnails.length} thumbnails in ${legacyDuration}ms`,
+            {
+              count: legacyResult.thumbnails.length,
+              duration: legacyDuration,
+              method: "legacy",
+            }
+          );
         } else {
-          setError(legacyResult.error || "Failed to capture thumbnails");
+          const errorMsg = legacyResult.error || "Failed to capture thumbnails";
+          setError(errorMsg);
+          systemLogger.log(
+            "thumbnail",
+            "error",
+            "LegacyCapture",
+            `Legacy capture failed: ${errorMsg}`,
+            { duration: legacyDuration }
+          );
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const duration = Date.now() - startTime;
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMsg);
+      systemLogger.log(
+        "thumbnail",
+        "error",
+        "ThumbnailCapture",
+        `Exception during capture: ${errorMsg}`,
+        { err, duration, windowCount: windowIds.length }
+      );
       console.error("Failed to capture thumbnails:", err);
     } finally {
       setLoading(false);

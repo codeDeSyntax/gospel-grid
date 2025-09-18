@@ -1,8 +1,5 @@
 import React, { useMemo, useRef } from "react";
-import {
-  OptimizedThumbnailGrid,
-  ThumbnailPerformanceMonitor,
-} from "./OptimizedThumbnailGrid";
+import { OptimizedThumbnailGrid } from "./OptimizedThumbnailGrid";
 import { WindowInfo } from "../dashboard/WindowList";
 
 interface AutoFitWindowLayoutProps {
@@ -18,7 +15,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   focusedWindowId,
   onWindowFocus,
   onWindowRemove,
-  maxDisplayWindows = 25,
+  maxDisplayWindows = 4, // Changed from 25 to 4
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +27,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative"
+      className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative"
     >
       {displayWindows.length === 0 ? (
         <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 text-center">
@@ -53,17 +50,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
             }}
             onWindowFocus={onWindowFocus}
             className="w-full h-full p-2"
-            itemClassName="min-h-[120px]"
+            itemClassName=""
             enableLazyLoading={true}
-            enableHighQuality={false}
+            enableHighQuality={true}
           />
-
-          {/* Performance monitoring in development */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="absolute top-2 right-2 z-10">
-              <ThumbnailPerformanceMonitor />
-            </div>
-          )}
 
           {/* Window count indicator */}
           {selectedWindows.length > maxDisplayWindows && (

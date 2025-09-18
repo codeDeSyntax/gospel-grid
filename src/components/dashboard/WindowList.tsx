@@ -10,6 +10,7 @@ import {
   MdRemoveRedEye,
 } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { getAppIcon, getAppGradient } from "@/utils/appIconMapping";
 
 export interface WindowInfo {
   id: string;
@@ -162,43 +163,101 @@ export const WindowList: React.FC<WindowListProps> = ({
               <div
                 key={window.id}
                 onClick={() => onWindowSelect(window.id)}
-                className={`backdrop-blur-md border rounded-xl p-4 cursor-pointer transition-all duration-300 flex justify-between items-center group hover:scale-105 ${
-                  window.isSelected
-                    ? "border-blue-400/60 bg-blue-500/20 shadow-lg shadow-blue-500/20"
-                    : "border-slate-600/40 bg-slate-800/30 hover:border-blue-500/40 hover:bg-slate-700/40"
-                }`}
+                className={`
+                  relative overflow-hidden cursor-pointer transition-all duration-500 
+                  flex items-center gap-3 p-4 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
+                  ${
+                    window.isSelected
+                      ? `
+                        bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-cyan-500/30
+                        border border-blue-400/50 shadow shadow-blue-500/25
+                        backdrop-blur-lg before:absolute before:inset-0 
+                        before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
+                      `
+                      : `
+                        bg-gradient-to-br from-slate-800/50 via-slate-700/30 to-slate-600/20
+                        border border-slate-600/30 hover:border-blue-400/40
+                        backdrop-blur-md hover:bg-gradient-to-br hover:from-blue-900/20 hover:via-purple-800/15 hover:to-slate-700/25
+                      
+                        before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent 
+                        before:rounded-2xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
+                      `
+                  }
+                `}
               >
-                <div className="flex-1">
-                  <div className="font-medium text-sm text-white mb-1">
-                    {window.name}
-                  </div>
-                  <div className="text-xs text-blue-200/70 flex items-center gap-2">
-                    <span>{window.app}</span>
-                    {window.processId && (
-                      <span className="text-slate-400">
-                        PID: {window.processId}
-                      </span>
-                    )}
+                {/* Magical shimmer effect */}
+                <div
+                  className="
+                    absolute inset-0 opacity-0 group-hover:opacity-100
+                    bg-gradient-to-r from-transparent via-white/10 to-transparent
+                    transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] 
+                    transition-all duration-1000 ease-out
+                  "
+                />
+
+                {/* App Icon with glow effect */}
+                <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center z-10">
+                  <div
+                    className={`
+                    absolute inset-0 rounded-lg bg-gradient-to-br opacity-20 group-hover:opacity-40 transition-opacity duration-300
+                    ${
+                      window.isSelected
+                        ? "from-blue-400 to-purple-500"
+                        : "from-slate-500 to-slate-600"
+                    }
+                  `}
+                  />
+                  <div className="relative">{getAppIcon(window.app, 22)}</div>
+                </div>
+
+                {/* App Content */}
+                <div className="flex-1 min-w-0 relative z-10">
+                  {/* Window State Indicators */}
+                  <div className="flex items-center gap-1 mb-1">
                     {window.isMinimized && (
-                      <span className="text-yellow-400 text-xs px-1 py-0.5 bg-yellow-400/20 rounded">
+                      <span className="text-yellow-300 text-xs px-2 py-0.5 bg-gradient-to-r from-yellow-500/30 to-amber-500/20 rounded-full border border-yellow-400/30 backdrop-blur-sm">
                         MIN
                       </span>
                     )}
                     {window.isMaximized && (
-                      <span className="text-green-400 text-xs px-1 py-0.5 bg-green-400/20 rounded">
+                      <span className="text-green-300 text-xs px-2 py-0.5 bg-gradient-to-r from-green-500/30 to-emerald-500/20 rounded-full border border-green-400/30 backdrop-blur-sm">
                         MAX
                       </span>
                     )}
+                    {window.processId && (
+                      <span className="text-slate-300 text-xs opacity-70">
+                        PID: {window.processId}
+                      </span>
+                    )}
                   </div>
+
+                  {/* App Name with Enhanced Gradient */}
+                  <div
+                    className={`
+                    text-sm font-medium bg-gradient-to-r ${getAppGradient(
+                      window.app
+                    )} 
+                    bg-clip-text text-transparent group-hover:brightness-110 transition-all duration-300
+                  `}
+                  >
+                    {window.app}
+                  </div>
+
+                  {/* Window Title/Description - Small at bottom */}
+                  <div className="text-xs text-slate-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                    {window.name}
+                  </div>
+
+                  {/* Window Dimensions (if available) */}
                   {window.bounds && (
-                    <div className="text-xs text-slate-500 mt-1">
-                      {window.bounds.width}×{window.bounds.height} at (
-                      {window.bounds.x}, {window.bounds.y})
+                    <div className="text-xs text-slate-400 mt-1 opacity-60">
+                      {window.bounds.width}×{window.bounds.height}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Action Buttons with Magical Effects */}
+                <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
                   {/* Focus Window Button */}
                   {onWindowFocus && window.handle && (
                     <button
@@ -206,25 +265,49 @@ export const WindowList: React.FC<WindowListProps> = ({
                         e.stopPropagation();
                         onWindowFocus(window.handle!);
                       }}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs transition-all duration-200 bg-purple-500 hover:bg-purple-600 shadow-lg shadow-purple-500/30"
+                      className="
+                        relative w-8 h-8 rounded-xl flex items-center justify-center text-white 
+                        transition-all duration-300 group/btn overflow-hidden
+                        bg-gradient-to-br from-purple-500 to-indigo-600
+                        hover:from-purple-400 hover:to-indigo-500 hover:scale-110 hover:rotate-6
+                        shadow-lg shadow-purple-500/30 hover:shadow-purple-400/50
+                        border border-purple-400/30 hover:border-purple-300/50
+                      "
                       title="Focus Window"
                     >
-                      <MdRemoveRedEye size={14} />
+                      {/* Button glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-xl" />
+                      <MdRemoveRedEye size={14} className="relative z-10" />
                     </button>
                   )}
 
                   {/* Select Window Button */}
                   <button
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold transition-all duration-200 ${
-                      window.isSelected
-                        ? "bg-blue-500 shadow-lg shadow-blue-500/30"
-                        : "bg-blue-400 group-hover:bg-blue-400 shadow-lg shadow-green-500/30"
-                    }`}
+                    className={`
+                      relative w-8 h-8 cursor-pointer rounded-xl flex items-center justify-center text-white 
+                      transition-all duration-300 group/btn overflow-hidden
+                      ${
+                        window.isSelected
+                          ? `
+                            bg-gradient-to-br from-blue-500 to-cyan-600
+                            shadow-lg shadow-blue-500/40 border border-blue-400/50
+                            hover:from-blue-400 hover:to-cyan-500 hover:scale-110
+                          `
+                          : `
+                            bg-gradient-to-br from-emerald-500 to-blue-600
+                            hover:from-emerald-400 hover:to-blue-500 hover:scale-110 hover:rotate-6
+                            shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/50
+                            border border-emerald-400/30 hover:border-emerald-300/50
+                          `
+                      }
+                    `}
                   >
+                    {/* Button glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-xl" />
                     {window.isSelected ? (
-                      <MdCheck size={16} />
+                      <MdCheck size={14} className="relative z-10" />
                     ) : (
-                      <MdAdd size={16} />
+                      <MdAdd size={14} className="relative z-10" />
                     )}
                   </button>
                 </div>
