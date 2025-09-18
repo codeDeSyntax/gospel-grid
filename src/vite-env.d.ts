@@ -20,5 +20,17 @@ interface Window {
     hideWindow: (handle: number) => Promise<any>;
     moveWindow: (handle: number, bounds: any) => Promise<any>;
     publishLayout: (layoutData: any) => Promise<any>;
+
+    // Cache management
+    clearThumbnailCache?: () => Promise<any>;
+    getCacheStats?: () => Promise<any>;
+
+    // High-quality and batch thumbnail capture
+    captureHighQualityThumbnail?: (windowId: string) => Promise<any>;
+    batchCaptureThumbnails?: (
+      windowIds: string[],
+      options?: any
+    ) => Promise<any>;
+    captureWindowThumbnail?: (windowId: string, options?: any) => Promise<any>;
   };
 }

@@ -15,6 +15,10 @@ import {
   captureWindowThumbnail,
   captureMultipleWindowThumbnails,
   getAllWindowThumbnails,
+  captureHighQualityThumbnail,
+  batchCaptureThumbnails,
+  clearThumbnailCache,
+  getThumbnailCacheStats,
   ThumbnailOptions,
 } from "./thumbnailCapture";
 import { getWindowsWithThumbnails } from "./windowMapper";
@@ -435,3 +439,66 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
     };
   }
 });
+
+// Cache management handlers
+ipcMain.handle("clear-thumbnail-cache", async () => {
+  try {
+    clearThumbnailCache();
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+ipcMain.handle("get-cache-stats", async () => {
+  try {
+    const stats = getThumbnailCacheStats();
+    return { success: true, stats };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+// High-quality thumbnail capture for published layouts
+ipcMain.handle(
+  "capture-high-quality-thumbnail",
+  async (event, windowId: string) => {
+    try {
+      const thumbnail = await captureHighQualityThumbnail(windowId);
+      return {
+        success: true,
+        thumbnail,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+);
+
+// Batch thumbnail capture with throttling
+ipcMain.handle(
+  "batch-capture-thumbnails",
+  async (event, windowIds: string[], options: ThumbnailOptions = {}) => {
+    try {
+      const thumbnails = await batchCaptureThumbnails(windowIds, options);
+      return {
+        success: true,
+        thumbnails,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+);

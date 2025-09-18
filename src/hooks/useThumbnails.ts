@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useActivityMonitor } from "./useActivityMonitor";
 
 export interface WindowThumbnail {
   windowId: string;
@@ -11,11 +12,14 @@ export interface ThumbnailOptions {
   height?: number;
   scaleFactor?: number;
   quality?: number;
+  forceRefresh?: boolean;
 }
 
 interface UseThumbnailsOptions extends ThumbnailOptions {
   refreshInterval?: number;
   autoRefresh?: boolean;
+  smartRefresh?: boolean;
+  batchSize?: number; // Number of thumbnails to capture in parallel
 }
 
 export function useThumbnails(
@@ -29,15 +33,24 @@ export function useThumbnails(
   const [error, setError] = useState<string | null>(null);
 
   const {
-    width = 800,
-    height = 600,
-    scaleFactor = 2.0,
-    quality = 90,
-    refreshInterval = 2000,
+    width = 300, // Reduced from 800
+    height = 200, // Reduced from 600
+    scaleFactor = 1.0, // Reduced from 2.0
+    quality = 85, // Reduced from 90
+    refreshInterval = 5000, // Increased from 2000
     autoRefresh = true,
+    smartRefresh = true,
+    batchSize = 3,
   } = options;
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Activity monitoring for smart refresh
+  const { activityState } = useActivityMonitor({
+    fastInterval: 3000, // 3 seconds when active
+    slowInterval: 10000, // 10 seconds when idle
+    pausedInterval: 30000, // 30 seconds when paused
+  });
 
   const captureThumbnails = useCallback(async () => {
     if (windowIds.length === 0) {
@@ -49,19 +62,52 @@ export function useThumbnails(
       setLoading(true);
       setError(null);
 
-      const result = await window.electronAPI.getMultipleWindowThumbnails(
+      // Use batch capture for better performance if available
+      const result = await window.electronAPI?.batchCaptureThumbnails?.(
         windowIds,
-        { width, height, scaleFactor, quality }
+        {
+          width,
+          height,
+          scaleFactor,
+          quality,
+        }
       );
 
-      if (result.success && result.thumbnails) {
-        const thumbnailMap: Record<string, WindowThumbnail> = {};
-        result.thumbnails.forEach((thumbnail: WindowThumbnail) => {
-          thumbnailMap[thumbnail.windowId] = thumbnail;
-        });
-        setThumbnails(thumbnailMap);
+      if (result?.success && result.thumbnails) {
+        const newThumbnails: Record<string, WindowThumbnail> = {};
+
+        result.thumbnails.forEach(
+          (thumbnail: WindowThumbnail | null, index: number) => {
+            if (thumbnail) {
+              newThumbnails[windowIds[index]] = thumbnail;
+            }
+          }
+        );
+
+        setThumbnails(newThumbnails);
       } else {
-        setError(result.error || "Failed to capture thumbnails");
+        console.warn(
+          "Batch thumbnail capture failed, falling back to legacy method"
+        );
+
+        // Fallback to legacy method
+        const legacyResult =
+          await window.electronAPI.getMultipleWindowThumbnails(windowIds, {
+            width,
+            height,
+            scaleFactor,
+            quality,
+          });
+
+        if (legacyResult.success && legacyResult.thumbnails) {
+          const thumbnailMap: Record<string, WindowThumbnail> = {};
+          legacyResult.thumbnails.forEach((thumbnail: WindowThumbnail) => {
+            thumbnailMap[thumbnail.windowId] = thumbnail;
+          });
+          setThumbnails(thumbnailMap);
+        } else {
+          setError(legacyResult.error || "Failed to capture thumbnails");
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -69,7 +115,7 @@ export function useThumbnails(
     } finally {
       setLoading(false);
     }
-  }, [windowIds, width, height]);
+  }, [windowIds, width, height, scaleFactor, quality]);
 
   const captureSingleThumbnail = useCallback(
     async (windowId: string) => {
@@ -100,12 +146,26 @@ export function useThumbnails(
     [width, height]
   );
 
-  // Initial capture and setup auto-refresh
+  // Initial capture and setup auto-refresh with smart intervals
   useEffect(() => {
     captureThumbnails();
 
     if (autoRefresh && refreshInterval > 0) {
-      intervalRef.current = setInterval(captureThumbnails, refreshInterval);
+      const currentInterval = smartRefresh
+        ? activityState.currentInterval
+        : refreshInterval;
+
+      console.log(
+        `Setting thumbnail refresh interval: ${currentInterval}ms (${
+          activityState.isActive
+            ? "active"
+            : activityState.isIdle
+            ? "idle"
+            : "paused"
+        })`
+      );
+
+      intervalRef.current = setInterval(captureThumbnails, currentInterval);
     }
 
     return () => {
@@ -114,7 +174,13 @@ export function useThumbnails(
         intervalRef.current = null;
       }
     };
-  }, [captureThumbnails, autoRefresh, refreshInterval]);
+  }, [
+    captureThumbnails,
+    autoRefresh,
+    refreshInterval,
+    smartRefresh,
+    activityState.currentInterval,
+  ]);
 
   // Stop auto-refresh when component unmounts or windowIds become empty
   useEffect(() => {

@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { WindowInfo } from "@/components/dashboard/WindowList";
+import { useActivityMonitor } from "./useActivityMonitor";
 
 export interface WindowEnumerationOptions {
   includeMinimized?: boolean;
   includeSystemWindows?: boolean;
   refreshInterval?: number; // Auto-refresh interval in ms (0 = disabled)
+  smartRefresh?: boolean; // Use activity-based refresh intervals
 }
 
 export const useWindowEnumeration = (
@@ -17,8 +19,16 @@ export const useWindowEnumeration = (
   const {
     includeMinimized = false,
     includeSystemWindows = false,
-    refreshInterval = 0,
+    refreshInterval = 5000,
+    smartRefresh = true,
   } = options;
+
+  // Activity monitoring for smart refresh
+  const { activityState } = useActivityMonitor({
+    fastInterval: 3000, // 3 seconds when active
+    slowInterval: 15000, // 15 seconds when idle
+    pausedInterval: 60000, // 1 minute when paused
+  });
 
   const enumerateWindows = useCallback(async () => {
     try {
@@ -178,13 +188,32 @@ export const useWindowEnumeration = (
     enumerateWindows();
   }, [enumerateWindows]);
 
-  // Auto-refresh setup
+  // Auto-refresh setup with smart intervals
   useEffect(() => {
     if (refreshInterval > 0) {
-      const interval = setInterval(enumerateWindows, refreshInterval);
+      const currentInterval = smartRefresh
+        ? activityState.currentInterval
+        : refreshInterval;
+
+      console.log(
+        `Setting window enumeration interval: ${currentInterval}ms (${
+          activityState.isActive
+            ? "active"
+            : activityState.isIdle
+            ? "idle"
+            : "paused"
+        })`
+      );
+
+      const interval = setInterval(enumerateWindows, currentInterval);
       return () => clearInterval(interval);
     }
-  }, [enumerateWindows, refreshInterval]);
+  }, [
+    enumerateWindows,
+    refreshInterval,
+    smartRefresh,
+    activityState.currentInterval,
+  ]);
 
   return {
     windows,

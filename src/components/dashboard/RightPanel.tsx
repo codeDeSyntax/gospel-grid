@@ -3,7 +3,7 @@ import { Plus, Sparkles, Users, Trash2, ExternalLink } from "lucide-react";
 import { type WindowInfo } from "./WindowList";
 import { type PresetInfo } from "./PresetsList";
 import { DashboardHeader } from "./DashboardHeader";
-import { AutoFitWindowLayout } from "./AutoFitWindowLayout";
+import { AutoFitWindowLayout } from "./AutoFitWindowLayoutOptimized";
 
 interface RightPanelProps {
   windows: WindowInfo[];

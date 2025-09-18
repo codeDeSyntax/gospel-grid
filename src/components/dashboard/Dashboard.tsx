@@ -7,6 +7,7 @@ import { RightPanel } from "./RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
+import { PerformanceControlPanel } from "../performance/PerformanceControlPanel";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -34,7 +35,8 @@ export const Dashboard: React.FC = () => {
   } = useWindowEnumeration({
     includeMinimized: false,
     includeSystemWindows: false,
-    refreshInterval: 5000, // Refresh every 5 seconds
+    refreshInterval: 10000, // Reduced frequency (was 5000)
+    smartRefresh: true, // Enable smart refresh
   });
 
   const [state, setState] = useState<DashboardState>({
@@ -330,6 +332,11 @@ export const Dashboard: React.FC = () => {
             onPublishLayout={handlePublishLayout}
           />
         </div>
+      </div>
+
+      {/* Performance Control Panel */}
+      <div className="fixed top-6 right-6 z-30">
+        <PerformanceControlPanel />
       </div>
 
       {/* Live Mode Badge */}

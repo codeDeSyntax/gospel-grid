@@ -61,6 +61,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("move-window-external", handle, bounds),
   publishLayout: (layoutData: any) =>
     ipcRenderer.invoke("publish-layout", layoutData),
+
+  // Cache management
+  clearThumbnailCache: () => ipcRenderer.invoke("clear-thumbnail-cache"),
+  getCacheStats: () => ipcRenderer.invoke("get-cache-stats"),
+
+  // High-quality and batch thumbnail capture
+  captureHighQualityThumbnail: (windowId: string) =>
+    ipcRenderer.invoke("capture-high-quality-thumbnail", windowId),
+  batchCaptureThumbnails: (windowIds: string[], options?: any) =>
+    ipcRenderer.invoke("batch-capture-thumbnails", windowIds, options),
+
+  // Wrapper for compatibility
+  captureWindowThumbnail: (windowId: string, options?: any) =>
+    ipcRenderer.invoke("get-window-thumbnail", windowId, options),
 });
 
 // --------- Preload scripts loading ---------
