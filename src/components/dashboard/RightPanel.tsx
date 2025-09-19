@@ -59,7 +59,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         />
 
         {/* Main Window Grid Card - Large center area */}
-        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl p-4 shadow-inner shadow-primary-500/30 flex flex-col">
+        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-primary-800/20 border border-primary-400/50 rounded-2xl py-4 px-2 shadow-inner shadow-primary-500/30 flex flex-col">
           {/* <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h3 className="text-lg font-semibold text-white">Window Layout</h3>
             <select
@@ -82,7 +82,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
                 focusedWindowId={focusedWindowId}
                 onWindowFocus={onWindowFocus}
                 onWindowRemove={onWindowRemove}
-                maxDisplayWindows={25}
+                maxDisplayWindows={4}
               />
             ) : (
               <div className="flex items-center justify-center h-full text-slate-400 text-center">

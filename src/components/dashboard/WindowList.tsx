@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MdMonitor,
   MdSearch,
@@ -159,32 +160,53 @@ export const WindowList: React.FC<WindowListProps> = ({
           </div>
         ) : (
           <div className="space-y-3 pb-4">
-            {filteredWindows.map((window) => (
-              <div
-                key={window.id}
-                onClick={() => onWindowSelect(window.id)}
-                className={`
-                  relative overflow-hidden cursor-pointer transition-all duration-500 
-                  flex items-center gap-3 p-4 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
-                  ${
-                    window.isSelected
-                      ? `
-                        bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-cyan-500/30
-                        border border-blue-400/50 shadow shadow-blue-500/25
-                        backdrop-blur-lg before:absolute before:inset-0 
-                        before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
-                      `
-                      : `
+            <AnimatePresence mode="popLayout">
+              {filteredWindows.map((window, index) => (
+                <motion.div
+                  key={window.id}
+                  initial={{
+                    opacity: 0,
+                    y: 20,
+                    scale: 0.95,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -10,
+                    scale: 0.98,
+                  }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05, // Stagger animation
+                    ease: "easeOut",
+                  }}
+                  onClick={() => onWindowSelect(window.id)}
+                  className={`
+                    relative overflow-hidden cursor-pointer transition-all duration-500 
+                    flex items-center gap-3 p-4 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
+                    ${
+                      window.isSelected
+                        ? `
+                          bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-cyan-500/30
+                          border border-blue-400/50 shadow shadow-blue-500/25
+                          backdrop-blur-lg before:absolute before:inset-0 
+                          before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
+                        `
+                        : `
+                          
+                          border border-slate-600/30 hover:border-blue-400/40
+                          backdrop-blur-md bg-gradient-to-br from-blue-900/20 via-purple-800/15 to-slate-700/25
                         
-                        border border-slate-600/30 hover:border-blue-400/40
-                        backdrop-blur-md bg-gradient-to-br from-blue-900/20 via-purple-800/15 to-slate-700/25
-                      
-                        before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent 
-                        before:rounded-2xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
-                      `
-                  }
-                `}
-              >
+                          before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent 
+                          before:rounded-2xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
+                        `
+                    }
+                  `}
+                >
                 {/* Magical shimmer effect */}
                 <div
                   className="
@@ -311,8 +333,9 @@ export const WindowList: React.FC<WindowListProps> = ({
                     )}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

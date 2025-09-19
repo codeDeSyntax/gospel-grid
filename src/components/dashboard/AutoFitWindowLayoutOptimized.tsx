@@ -27,7 +27,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden relative"
+      className="w-full h-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden relative"
     >
       {displayWindows.length === 0 ? (
         <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400 text-center">
@@ -49,7 +49,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
               }
             }}
             onWindowFocus={onWindowFocus}
-            className="w-full h-full p-2"
+            className="w-full h-full "
             itemClassName=""
             enableLazyLoading={true}
             enableHighQuality={true}
