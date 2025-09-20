@@ -9,19 +9,60 @@ export async function getWindowSourceMapping() {
     const sources = await desktopCapturer.getSources({
       types: ["window"],
       thumbnailSize: { width: 300, height: 200 },
-      fetchWindowIcons: false,
+      fetchWindowIcons: true, // Enable fetching window icons!
     });
 
-    console.log(`Found ${sources.length} window sources from desktopCapturer`);
+    // console.log(`Found ${sources.length} window sources from desktopCapturer`);
 
-    return sources.map((source, index) => ({
-      sourceId: source.id,
-      title: source.name,
-      index: index,
-      // Create a simple mapping ID
-      mappingId: `window-${index}`,
-      thumbnail: source.thumbnail,
-    }));
+    // Log detailed information about what desktopCapturer provides
+    console.log("=== DESKTOP CAPTURER SOURCES DETAILS ===");
+    sources.forEach((source, index) => {
+      // Extract window handle from ID format: window:XX:YY
+      const handleMatch = source.id.match(/window:(\d+):/);
+      const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
+
+      console.log(`📱 Source ${index + 1}:`);
+      console.log(`   ID: ${source.id}`);
+      console.log(`   Extracted Handle: ${windowHandle || "N/A"}`);
+      console.log(`   Name: ${source.name}`);
+      console.log(`   Display ID: ${source.display_id || "undefined"}`);
+      console.log(`   Has App Icon: ${source.appIcon ? "YES" : "NO"}`);
+      console.log(
+        `   App Icon Size: ${
+          source.appIcon
+            ? `${source.appIcon.getSize().width}x${
+                source.appIcon.getSize().height
+              }`
+            : "N/A"
+        }`
+      );
+      console.log(
+        `   Thumbnail size: ${source.thumbnail?.getSize().width}x${
+          source.thumbnail?.getSize().height
+        }`
+      );
+      console.log(`   All properties:`, Object.keys(source));
+      console.log(`   ---`);
+    });
+    console.log("=== END DESKTOP CAPTURER DETAILS ===");
+
+    return sources.map((source, index) => {
+      // Extract window handle from ID format: window:XX:YY
+      const handleMatch = source.id.match(/window:(\d+):/);
+      const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
+
+      return {
+        sourceId: source.id,
+        title: source.name,
+        index: index,
+        windowHandle: windowHandle, // Add the actual window handle!
+        hasIcon: !!source.appIcon, // Whether app icon is available
+        // Create a simple mapping ID
+        mappingId: `window-${index}`,
+        thumbnail: source.thumbnail,
+        appIcon: source.appIcon, // Include the app icon
+      };
+    });
   } catch (error) {
     console.error("Failed to get window source mapping:", error);
     return [];
@@ -40,6 +81,7 @@ export async function getWindowsWithThumbnails() {
       id: source.mappingId, // Use our mapping ID instead of process ID
       name: source.title, // UI expects 'name' property
       app: extractProcessName(source.title), // UI expects 'app' property
+      handle: source.windowHandle, // Add the actual window handle
       x: 0, // Desktop capturer doesn't provide position
       y: 0,
       width: 800, // Default size
@@ -48,6 +90,8 @@ export async function getWindowsWithThumbnails() {
       isMinimized: false,
       isMaximized: false,
       sourceId: source.sourceId, // Keep the original source ID for thumbnail capture
+      icon: source.appIcon ? source.appIcon.toDataURL() : null, // Convert app icon to base64 data URL
+      hasNativeIcon: source.hasIcon, // Flag to indicate if native icon is available
     }));
   } catch (error) {
     console.error("Failed to get windows with thumbnails:", error);

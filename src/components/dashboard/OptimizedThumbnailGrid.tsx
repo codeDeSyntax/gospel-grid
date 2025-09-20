@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LazyThumbnail } from "@/components/common/LazyThumbnail";
 import { WindowInfo } from "@/components/dashboard/WindowList";
 import { WindowThumbnail } from "@/hooks/useThumbnails";
+import { CosmicGridBackground } from "@/components/dashboard/CosmicGridBackground";
 
 interface OptimizedThumbnailGridProps {
   windows: WindowInfo[];
   onWindowSelect?: (windowId: string, selected: boolean) => void;
   onWindowFocus?: (windowId: string) => void;
+  onWindowDrop?: (windowInfo: WindowInfo) => void;
   className?: string;
   itemClassName?: string;
   enableLazyLoading?: boolean;
@@ -18,6 +20,7 @@ export function OptimizedThumbnailGrid({
   windows,
   onWindowSelect,
   onWindowFocus,
+  onWindowDrop,
   className = "",
   itemClassName = "",
   enableLazyLoading = true,
@@ -30,13 +33,14 @@ export function OptimizedThumbnailGrid({
   const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(
     new Set()
   );
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Clear stale thumbnail states when window list changes
   React.useEffect(() => {
-    const currentWindowIds = new Set(windows.map(w => w.id));
-    
+    const currentWindowIds = new Set(windows.map((w) => w.id));
+
     // Clear loaded thumbnails for windows that no longer exist
-    setLoadedThumbnails(prev => {
+    setLoadedThumbnails((prev) => {
       const filtered = Object.keys(prev).reduce((acc, windowId) => {
         if (currentWindowIds.has(windowId)) {
           acc[windowId] = prev[windowId];
@@ -47,8 +51,10 @@ export function OptimizedThumbnailGrid({
     });
 
     // Clear failed thumbnails for windows that no longer exist
-    setFailedThumbnails(prev => {
-      const filtered = new Set([...prev].filter(windowId => currentWindowIds.has(windowId)));
+    setFailedThumbnails((prev) => {
+      const filtered = new Set(
+        [...prev].filter((windowId) => currentWindowIds.has(windowId))
+      );
       return filtered;
     });
   }, [windows]);
@@ -281,7 +287,7 @@ export function OptimizedThumbnailGrid({
   const renderLayout = () => {
     // Ensure we only work with first 4 windows to prevent duplication
     const displayWindows = windows.slice(0, 4);
-    
+
     const windowStyle = {
       width: `${windowWidth}px`,
       height: `${windowHeight}px`,
@@ -292,7 +298,8 @@ export function OptimizedThumbnailGrid({
         return (
           <div className="w-full h-full flex items-center justify-center">
             <AnimatePresence mode="wait">
-              {displayWindows[0] && renderWindow(displayWindows[0], windowStyle)}
+              {displayWindows[0] &&
+                renderWindow(displayWindows[0], windowStyle)}
             </AnimatePresence>
           </div>
         );
@@ -304,8 +311,10 @@ export function OptimizedThumbnailGrid({
             style={{ gap: "8px" }}
           >
             <AnimatePresence mode="wait">
-              {displayWindows[0] && renderWindow(displayWindows[0], windowStyle)}
-              {displayWindows[1] && renderWindow(displayWindows[1], windowStyle)}
+              {displayWindows[0] &&
+                renderWindow(displayWindows[0], windowStyle)}
+              {displayWindows[1] &&
+                renderWindow(displayWindows[1], windowStyle)}
             </AnimatePresence>
           </div>
         );
@@ -316,15 +325,28 @@ export function OptimizedThumbnailGrid({
             className="w-full h-full flex flex-col justify-center items-center"
             style={{ gap: "8px" }}
           >
-            <AnimatePresence mode="wait">
-              {/* Top row - 2 windows */}
-              <div key="triple-top-row" className="flex" style={{ gap: "8px" }}>
-                {displayWindows[0] && renderWindow(displayWindows[0], windowStyle)}
-                {displayWindows[1] && renderWindow(displayWindows[1], windowStyle)}
-              </div>
-              {/* Bottom row - 1 window positioned left */}
-              <div key="triple-bottom-row" className="flex" style={{ width: `${windowWidth * 2 + 8}px` }}>
-                {displayWindows[2] && renderWindow(displayWindows[2], windowStyle)}
+            <AnimatePresence>
+              <div key="triple-layout" className="contents">
+                {/* Top row - 2 windows */}
+                <div
+                  key="triple-top-row"
+                  className="flex"
+                  style={{ gap: "8px" }}
+                >
+                  {displayWindows[0] &&
+                    renderWindow(displayWindows[0], windowStyle)}
+                  {displayWindows[1] &&
+                    renderWindow(displayWindows[1], windowStyle)}
+                </div>
+                {/* Bottom row - 1 window positioned left */}
+                <div
+                  key="triple-bottom-row"
+                  className="flex"
+                  style={{ width: `${windowWidth * 2 + 8}px` }}
+                >
+                  {displayWindows[2] &&
+                    renderWindow(displayWindows[2], windowStyle)}
+                </div>
               </div>
             </AnimatePresence>
           </div>
@@ -336,16 +358,30 @@ export function OptimizedThumbnailGrid({
             className="w-full h-full flex flex-col justify-center"
             style={{ gap: "8px" }}
           >
-            <AnimatePresence mode="wait">
-              {/* Top row */}
-              <div key="quad-top-row" className="flex justify-center" style={{ gap: "8px" }}>
-                {displayWindows[0] && renderWindow(displayWindows[0], windowStyle)}
-                {displayWindows[1] && renderWindow(displayWindows[1], windowStyle)}
-              </div>
-              {/* Bottom row */}
-              <div key="quad-bottom-row" className="flex justify-center" style={{ gap: "8px" }}>
-                {displayWindows[2] && renderWindow(displayWindows[2], windowStyle)}
-                {displayWindows[3] && renderWindow(displayWindows[3], windowStyle)}
+            <AnimatePresence>
+              <div key="quad-layout" className="contents">
+                {/* Top row */}
+                <div
+                  key="quad-top-row"
+                  className="flex justify-center"
+                  style={{ gap: "8px" }}
+                >
+                  {displayWindows[0] &&
+                    renderWindow(displayWindows[0], windowStyle)}
+                  {displayWindows[1] &&
+                    renderWindow(displayWindows[1], windowStyle)}
+                </div>
+                {/* Bottom row */}
+                <div
+                  key="quad-bottom-row"
+                  className="flex justify-center"
+                  style={{ gap: "8px" }}
+                >
+                  {displayWindows[2] &&
+                    renderWindow(displayWindows[2], windowStyle)}
+                  {displayWindows[3] &&
+                    renderWindow(displayWindows[3], windowStyle)}
+                </div>
               </div>
             </AnimatePresence>
           </div>
@@ -358,21 +394,91 @@ export function OptimizedThumbnailGrid({
     }
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    // Only hide drag over when leaving the main container, not child elements
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      try {
+        const dragDataStr = e.dataTransfer.getData("text/plain");
+        const dragData = JSON.parse(dragDataStr);
+
+        if (dragData.windowId && dragData.windowInfo) {
+          const windowInfo = JSON.parse(dragData.windowInfo);
+          onWindowDrop?.(windowInfo);
+        }
+      } catch (error) {
+        console.error("Error parsing drop data:", error);
+      }
+    },
+    [onWindowDrop]
+  );
+
   if (windows.length === 0) {
     return (
-      <div
-        className={`${className} flex items-center justify-center min-h-[200px]`}
+      <CosmicGridBackground
+        className={`${className} flex items-center justify-center min-h-[200px] border-2 border-dashed transition-colors duration-200 ${
+          isDragOver ? "border-blue-400 bg-blue-500/10" : "border-gray-600/30"
+        }`}
       >
-        <p className="text-gray-500 dark:text-gray-400">No windows available</p>
-      </div>
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <div className="text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              {isDragOver
+                ? "Drop window here to add to layout"
+                : "No windows in layout"}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-500">
+              Drag windows from the left panel to add them
+            </p>
+          </div>
+        </div>
+      </CosmicGridBackground>
     );
   }
 
   return (
-    <div className={`${className} overflow-hidden`}>
-      <div className="w-full h-full overflow-hidden scrollbar-hide p-2">
-        {renderLayout()}
+    <CosmicGridBackground
+      className={`${className} overflow-hidden transition-all duration-200 ${
+        isDragOver ? "ring-2 ring-blue-400 ring-opacity-50" : ""
+      }`}
+    >
+      <div
+        className="w-full h-full"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragOver && (
+          <div className="absolute inset-0 bg-blue-500/10 backdrop-blur-sm z-10 flex items-center justify-center">
+            <div className="text-blue-400 text-lg font-medium">
+              Drop window to add to layout
+            </div>
+          </div>
+        )}
+        <div className="w-full h-full overflow-hidden scrollbar-hide p-2 relative z-[1]">
+          {renderLayout()}
+        </div>
       </div>
-    </div>
+    </CosmicGridBackground>
   );
 }

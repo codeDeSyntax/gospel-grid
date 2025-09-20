@@ -8,10 +8,11 @@ import {
   MdVisibility,
   MdAdd,
   MdCheck,
-  MdRemoveRedEye,
+  MdRefresh,
 } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { getAppIcon, getAppGradient } from "@/utils/appIconMapping";
+import { CircularCountdown } from "@/components/ui/CircularCountdown";
 
 export interface WindowInfo {
   id: string;
@@ -36,6 +37,7 @@ export interface WindowInfo {
   };
   // Visual properties
   icon?: string; // Base64 encoded icon or icon path
+  hasNativeIcon?: boolean; // Whether the window has a native app icon available
   thumbnail?: string; // Base64 encoded thumbnail
   // Additional metadata
   parentHandle?: number;
@@ -47,19 +49,30 @@ interface WindowListProps {
   windows: WindowInfo[];
   onWindowSelect: (windowId: string) => void;
   onWindowFocus?: (windowHandle: number) => void;
+  onWindowDragStart?: (window: WindowInfo) => void;
+  onWindowDragEnd?: () => void;
   isLoading?: boolean;
   error?: string | null;
+  countdownTime?: number;
+  totalRefreshTime?: number;
+  onManualRefresh?: () => void;
 }
 
 export const WindowList: React.FC<WindowListProps> = ({
   windows,
   onWindowSelect,
   onWindowFocus,
+  onWindowDragStart,
+  onWindowDragEnd,
   isLoading = false,
   error = null,
+  countdownTime = 0,
+  totalRefreshTime = 60,
+  onManualRefresh,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showOnlyVisible, setShowOnlyVisible] = useState(true);
+  const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
 
   const filteredWindows = useMemo(() => {
     return windows.filter((window) => {
@@ -87,15 +100,43 @@ export const WindowList: React.FC<WindowListProps> = ({
     <div className="h-full flex flex-col">
       {/* Fixed Header Section */}
       <div className="flex-shrink-0 mb-4">
-        <h3 className="text-base font-semibold text-blue-200 mb-4 flex items-center gap-2">
-          <MdMonitor size={18} />
-          <span>Available Windows</span>
-          {isLoading && (
-            <AiOutlineLoading3Quarters
-              size={14}
-              className="animate-spin text-blue-400"
-            />
-          )}
+        <h3 className="text-base font-semibold text-blue-200 mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MdMonitor size={18} />
+            <span>Available Windows</span>
+            {isLoading && (
+              <AiOutlineLoading3Quarters
+                size={14}
+                className="animate-spin text-blue-400"
+              />
+            )}
+          </div>
+
+          {/* Countdown Timer and Manual Refresh */}
+          <div className="flex items-center gap-3">
+            {countdownTime > 0 && (
+              <div className="flex items-center gap-2">
+                <CircularCountdown
+                  remainingTime={countdownTime}
+                  totalTime={totalRefreshTime}
+                  size={24}
+                  isLoading={isLoading}
+                />
+                {/* <span className="text-xs text-slate-400">
+                  {countdownTime}s
+                </span> */}
+              </div>
+            )}
+            {onManualRefresh && (
+              <button
+                onClick={onManualRefresh}
+                className=" rounded-lg bg-transparent hover:scale-105 cursor-pointer hover:rotate-45 duration-100  border border-slate-600/40 text-slate-400 hover:text-blue-400 hover:border-blue-500/50 transition-all"
+                title="Refresh now"
+              >
+                <MdRefresh size={24} />
+              </button>
+            )}
+          </div>
         </h3>
 
         {/* Search and Filter Controls */}
@@ -159,7 +200,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-3 pb-4">
+          <div className="space-y-2 pb-4">
             <AnimatePresence mode="popLayout">
               {filteredWindows.map((window, index) => (
                 <motion.div
@@ -184,14 +225,30 @@ export const WindowList: React.FC<WindowListProps> = ({
                     delay: index * 0.05, // Stagger animation
                     ease: "easeOut",
                   }}
-                  onClick={() => onWindowSelect(window.id)}
+                  onClick={(e) => {
+                    // Prevent click when dragging or clicking on drag handle
+                    if (
+                      draggedWindow ||
+                      (e.target as HTMLElement).closest('[draggable="true"]')
+                    ) {
+                      e.preventDefault();
+                      return;
+                    }
+                    onWindowSelect(window.id);
+                  }}
                   className={`
-                    relative overflow-hidden cursor-pointer transition-all duration-500 
-                    flex items-center gap-3 p-4 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
+                    relative overflow-hidden transition-all duration-500 
+                    flex items-center gap-3 pl-8 pr-8 py-2 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
+                    cursor-pointer
+                    ${
+                      draggedWindow?.id === window.id
+                        ? "opacity-50 scale-95"
+                        : ""
+                    }
                     ${
                       window.isSelected
                         ? `
-                          bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-cyan-500/30
+                          bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-blue-500/30
                           border border-blue-400/50 shadow shadow-blue-500/25
                           backdrop-blur-lg before:absolute before:inset-0 
                           before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
@@ -207,20 +264,73 @@ export const WindowList: React.FC<WindowListProps> = ({
                     }
                   `}
                 >
-                {/* Magical shimmer effect */}
-                <div
-                  className="
+                  {/* Drag Handle - Left side with dotted grip icon */}
+                  <div
+                    draggable="true"
+                    onDragStart={(e: React.DragEvent) => {
+                      const dragData = {
+                        windowId: window.id,
+                        windowInfo: JSON.stringify(window),
+                      };
+                      e.dataTransfer.setData(
+                        "text/plain",
+                        JSON.stringify(dragData)
+                      );
+                      e.dataTransfer.effectAllowed = "copy";
+                      setDraggedWindow(window);
+                      onWindowDragStart?.(window);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedWindow(null);
+                      onWindowDragEnd?.();
+                    }}
+                    className={`
+                      absolute left-0 top-0 w-6 h-full 
+                      flex items-center justify-center
+                      cursor-grab active:cursor-grabbing
+                      transition-all duration-200
+                      hover:bg-white/10 active:bg-white/20
+                      border-r border-slate-600/30 hover:border-blue-400/50
+                      backdrop-blur-sm
+                      ${
+                        draggedWindow?.id === window.id
+                          ? "cursor-grabbing bg-white/20"
+                          : ""
+                      }
+                    `}
+                    title="Drag to reorder or move window"
+                  >
+                    {/* Dotted grip icon */}
+                    <div className="flex flex-col gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
+                      <div className="flex gap-0.5">
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                      </div>
+                      <div className="flex gap-0.5">
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                      </div>
+                      <div className="flex gap-0.5">
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Magical shimmer effect */}
+                  <div
+                    className="
                     absolute inset-0 opacity-0 group-hover:opacity-100
                     bg-gradient-to-r from-transparent via-white/10 to-transparent
                     transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] 
                     transition-all duration-1000 ease-out
                   "
-                />
+                  />
 
-                {/* App Icon with glow effect */}
-                <div className="relative flex-shrink-0  flex items-center justify-center z-10">
-                  <div
-                    className={`
+                  {/* App Icon with glow effect */}
+                  <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center z-10">
+                    <div
+                      className={`
                     absolute inset-0 rounded-lg bg-gradient-to-br opacity-20 group-hover:opacity-40 transition-opacity duration-300
                     ${
                       window.isSelected
@@ -228,113 +338,134 @@ export const WindowList: React.FC<WindowListProps> = ({
                         : "from-slate-500 to-slate-600"
                     }
                   `}
-                  />
-                  <div className="relative">{getAppIcon(window.app, 40)}</div>
-                </div>
-
-                {/* App Content */}
-                <div className="flex-1 min-w-0 relative z-10">
-                  {/* Window State Indicators */}
-                  <div className="flex items-center gap-1 mb-1">
-                    {window.isMinimized && (
-                      <span className="text-yellow-300 text-xs px-2 py-0.5 bg-gradient-to-r from-yellow-500/30 to-amber-500/20 rounded-full border border-yellow-400/30 backdrop-blur-sm">
-                        MIN
-                      </span>
-                    )}
-                    {window.isMaximized && (
-                      <span className="text-green-300 text-xs px-2 py-0.5 bg-gradient-to-r from-green-500/30 to-emerald-500/20 rounded-full border border-green-400/30 backdrop-blur-sm">
-                        MAX
-                      </span>
-                    )}
-                    {window.processId && (
-                      <span className="text-slate-300 text-xs opacity-70">
-                        PID: {window.processId}
-                      </span>
-                    )}
+                    />
+                    <div className="relative w-10 h-10 flex items-center justify-center">
+                      {window.icon ? (
+                        // Use actual app icon from desktopCapturer
+                        <img
+                          src={window.icon}
+                          alt={`${window.app} icon`}
+                          className="w-10 h-10 object-contain "
+                          style={{
+                            filter: "contrast(1.2) brightness(1.1) ",
+                          }}
+                          onError={(e) => {
+                            console.warn(
+                              `Failed to load native icon for ${window.app}, falling back to React icon`
+                            );
+                            // Fallback to React icon if image fails to load
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget
+                              .nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      {/* Fallback React icon - shown if no native icon or if image fails */}
+                      <div
+                        style={{ display: window.icon ? "none" : "flex" }}
+                        className="w-full h-full items-center justify-center"
+                        title={
+                          window.hasNativeIcon === false
+                            ? "No native icon available"
+                            : "Using fallback icon"
+                        }
+                      >
+                        {getAppIcon(window.app, 24)}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* App Name with Enhanced Gradient */}
-                  <div
-                    className={`
+                  {/* App Content */}
+                  <div className="flex-1 min-w-0 relative z-10">
+                    {/* Window State Indicators */}
+                    <div className="flex items-center gap-1 mb-1">
+                      {window.isMinimized && (
+                        <span className="text-yellow-300 text-xs px-2 py-0.5 bg-gradient-to-r from-yellow-500/30 to-amber-500/20 rounded-full border border-yellow-400/30 backdrop-blur-sm">
+                          MIN
+                        </span>
+                      )}
+                      {window.isMaximized && (
+                        <span className="text-green-300 text-xs px-2 py-0.5 bg-gradient-to-r from-green-500/30 to-blue-500/20 rounded-full border border-green-400/30 backdrop-blur-sm">
+                          MAX
+                        </span>
+                      )}
+                      {window.processId && (
+                        <span className="text-slate-300 text-xs opacity-70">
+                          PID: {window.processId}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* App Name with Enhanced Gradient */}
+                    <div
+                      className={`
                     text-sm font-medium bg-gradient-to-r ${getAppGradient(
                       window.app
                     )} 
                     bg-clip-text text-transparent group-hover:brightness-110 transition-all duration-300
                   `}
-                  >
-                    {window.app}
-                  </div>
-
-                  {/* Window Title/Description - Small at bottom */}
-                  <div className="text-xs text-slate-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
-                    {window.name}
-                  </div>
-
-                  {/* Window Dimensions (if available) */}
-                  {window.bounds && (
-                    <div className="text-xs text-slate-400 mt-1 opacity-60">
-                      {window.bounds.width}×{window.bounds.height}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons with Magical Effects */}
-                <div className="flex items-center gap-2 flex-shrink-0 relative z-10">
-                  {/* Focus Window Button */}
-                  {onWindowFocus && window.handle && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onWindowFocus(window.handle!);
-                      }}
-                      className="
-                        relative w-8 h-8 rounded-xl flex items-center justify-center text-white 
-                        transition-all duration-300 group/btn overflow-hidden
-                        bg-gradient-to-br from-purple-500 to-indigo-600
-                        hover:from-purple-400 hover:to-indigo-500 hover:scale-110 hover:rotate-6
-                        shadow-lg shadow-purple-500/30 hover:shadow-purple-400/50
-                        border border-purple-400/30 hover:border-purple-300/50
-                      "
-                      title="Focus Window"
                     >
-                      {/* Button glow effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-xl" />
-                      <MdRemoveRedEye size={14} className="relative z-10" />
-                    </button>
-                  )}
+                      {window.app}
+                    </div>
 
-                  {/* Select Window Button */}
-                  <button
+                    {/* Window Title/Description - Small at bottom */}
+                    <div className="text-xs text-slate-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                      {window.name}
+                    </div>
+
+                    {/* Window Dimensions (if available) */}
+                    {window.bounds && (
+                      <div className="text-xs text-slate-400 mt-1 opacity-60">
+                        {window.bounds.width}×{window.bounds.height}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Select/Check Handle - Right side */}
+                  <div
                     className={`
-                      relative w-8 h-8 cursor-pointer rounded-xl flex items-center justify-center text-white 
-                      transition-all duration-300 group/btn overflow-hidden
+                      absolute right-0 top-0 w-6 h-full 
+                      flex items-center justify-center
+                      transition-all duration-200
+                      border-l border-slate-600/30 hover:border-blue-400/50
+                      backdrop-blur-sm
                       ${
                         window.isSelected
-                          ? `
-                            bg-gradient-to-br from-blue-500 to-cyan-600
-                            shadow-lg shadow-blue-500/40 border border-blue-400/50
-                            hover:from-blue-400 hover:to-cyan-500 hover:scale-110
-                          `
-                          : `
-                            bg-gradient-to-br from-emerald-500 to-blue-600
-                            hover:from-emerald-400 hover:to-blue-500 hover:scale-110 hover:rotate-6
-                            shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/50
-                            border border-emerald-400/30 hover:border-emerald-300/50
-                          `
+                          ? "opacity-100 bg-blue-500/20 hover:bg-blue-500/30"
+                          : "opacity-0 group-hover:opacity-100 hover:bg-white/10"
                       }
                     `}
                   >
-                    {/* Button glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 rounded-xl" />
-                    {window.isSelected ? (
-                      <MdCheck size={14} className="relative z-10" />
-                    ) : (
-                      <MdAdd size={14} className="relative z-10" />
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card selection
+                        onWindowSelect(window.id);
+                      }}
+                      className={`
+                        w-4 h-4 rounded-md flex items-center justify-center
+                        transition-all duration-200
+                        ${
+                          window.isSelected
+                            ? " hover:bg-blue-400 text-white scale-100"
+                            : " hover:bg-blue-500 text-white hover:scale-110"
+                        }
+                      `}
+                      title={
+                        window.isSelected
+                          ? "Remove from selection"
+                          : "Add to selection"
+                      }
+                    >
+                      {window.isSelected ? (
+                        <MdCheck size={14} />
+                      ) : (
+                        <MdAdd size={14} />
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </AnimatePresence>
           </div>
         )}

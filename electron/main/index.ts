@@ -58,6 +58,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let win: BrowserWindow | null = null;
+let publishedWindows: BrowserWindow[] = []; // Track published layout windows
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
@@ -374,6 +375,38 @@ ipcMain.handle("hide-window-external", async (event, handle) => {
   }
 });
 
+// Check for existing published windows
+ipcMain.handle("check-published-windows", async () => {
+  // Clean up destroyed windows
+  publishedWindows = publishedWindows.filter(w => !w.isDestroyed());
+  
+  return {
+    hasActivePublications: publishedWindows.length > 0,
+    count: publishedWindows.length,
+  };
+});
+
+// Close all published windows
+ipcMain.handle("close-published-windows", async () => {
+  try {
+    const windowsToClose = [...publishedWindows];
+    publishedWindows = [];
+    
+    windowsToClose.forEach(window => {
+      if (!window.isDestroyed()) {
+        window.close();
+      }
+    });
+    
+    return { success: true, closedCount: windowsToClose.length };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
 // Publish layout handler - creates a new fullscreen window with the layout
 ipcMain.handle("publish-layout", async (event, layoutData) => {
   try {
@@ -435,7 +468,12 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
     // Handle window closed
     publishWindow.on("closed", () => {
       console.log("Published layout window closed");
+      // Remove from tracking array
+      publishedWindows = publishedWindows.filter(w => w !== publishWindow);
     });
+
+    // Add to tracking array
+    publishedWindows.push(publishWindow);
 
     console.log("Published window created successfully");
     return { success: true, windowId: publishWindow.id };

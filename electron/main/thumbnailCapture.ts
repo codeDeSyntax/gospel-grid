@@ -23,7 +23,7 @@ export async function captureWindowThumbnail(
   options: ThumbnailOptions = {}
 ): Promise<WindowThumbnail | null> {
   try {
-    console.log(`Capturing thumbnail for window: ${windowId}`, { options });
+    // console.log(`Capturing thumbnail for window: ${windowId}`, { options });
 
     const {
       width = 300,
@@ -41,9 +41,9 @@ export async function captureWindowThumbnail(
       0.1
     );
 
-    console.log(
-      `Validated dimensions: ${validWidth}x${validHeight}, scale: ${validScaleFactor}`
-    );
+    // console.log(
+    //   `Validated dimensions: ${validWidth}x${validHeight}, scale: ${validScaleFactor}`
+    // );
 
     // Get all available window sources with optimized resolution
     const sources = await desktopCapturer.getSources({
@@ -52,10 +52,10 @@ export async function captureWindowThumbnail(
         width: Math.min(Math.floor(validWidth * validScaleFactor), 1920), // Cap at 1920 for performance
         height: Math.min(Math.floor(validHeight * validScaleFactor), 1080), // Cap at 1080 for performance
       },
-      fetchWindowIcons: false,
+      fetchWindowIcons: true, // Enable fetching window icons for consistent icon availability
     });
 
-    console.log(`Available sources: ${sources.length}`);
+    // console.log(`Available sources: ${sources.length}`);
 
     let targetSource = null;
     let windowTitle = "";
@@ -66,7 +66,7 @@ export async function captureWindowThumbnail(
       if (index >= 0 && index < sources.length) {
         targetSource = sources[index];
         windowTitle = targetSource.name;
-        console.log(`Using window at index ${index}: "${windowTitle}"`);
+        // console.log(`Using window at index ${index}: "${windowTitle}"`);
       }
     }
     // For any other format, just use the first available window as a fallback
@@ -99,7 +99,7 @@ export async function captureWindowThumbnail(
       );
 
       if (cachedThumbnail) {
-        console.log(`Using cached thumbnail for: "${windowTitle}"`);
+        // console.log(`Using cached thumbnail for: "${windowTitle}"`);
         return cachedThumbnail;
       }
     }
@@ -117,7 +117,7 @@ export async function captureWindowThumbnail(
     // Cache the thumbnail
     thumbnailCache.set(windowId, windowTitle, thumbnail, options);
 
-    console.log(`Successfully captured thumbnail for: "${windowTitle}"`);
+    // console.log(`Successfully captured thumbnail for: "${windowTitle}"`);
     return thumbnail;
   } catch (error) {
     console.error(`Failed to capture thumbnail for window ${windowId}:`, error);
@@ -182,7 +182,7 @@ export async function getAllWindowThumbnails(
     const sources = await desktopCapturer.getSources({
       types: ["window"],
       thumbnailSize: { width, height },
-      fetchWindowIcons: false,
+      fetchWindowIcons: true, // Enable fetching window icons for consistent icon availability
     });
 
     const results = [];

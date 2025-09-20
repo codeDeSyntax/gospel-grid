@@ -44,6 +44,15 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% { 
+    transform: translateX(-100%) skewX(-12deg); 
+  }
+  100% { 
+    transform: translateX(200%) skewX(-12deg); 
+  }
+}
+
 @keyframes float-delayed {
   0%,
   100% {
@@ -64,6 +73,15 @@ body {
   }
   50% {
     transform: translateY(-15px) scale(1.1);
+  }
+}
+
+@keyframes gridShift {
+  0% {
+    background-position: 0px 0px, 0px 0px;
+  }
+  100% {
+    background-position: 60px 60px, -60px -60px;
   }
 }
 

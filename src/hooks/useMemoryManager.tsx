@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from "react";
 
 interface MemoryManagerOptions {
   maxMemoryMB?: number; // Maximum memory usage in MB
@@ -29,7 +29,7 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
 
   // Get current memory usage
   const getMemoryStats = useCallback((): MemoryStats | null => {
-    if (!('memory' in performance)) {
+    if (!("memory" in performance)) {
       return null;
     }
 
@@ -46,12 +46,12 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
 
   // Force garbage collection (only works in development with --enable-precise-memory-info)
   const forceGarbageCollection = useCallback(() => {
-    if (enableGarbageCollection && 'gc' in window) {
+    if (enableGarbageCollection && "gc" in window) {
       try {
         (window as any).gc();
-        console.log('🗑️ Forced garbage collection');
+        console.log("🗑️ Forced garbage collection");
       } catch (error) {
-        console.warn('Failed to force garbage collection:', error);
+        console.warn("Failed to force garbage collection:", error);
       }
     }
   }, [enableGarbageCollection]);
@@ -61,11 +61,11 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
     try {
       const result = await window.electronAPI?.clearThumbnailCache?.();
       if (result?.success) {
-        console.log('🧹 Cleared thumbnail cache');
+        // console.log('🧹 Cleared thumbnail cache');
         return true;
       }
     } catch (error) {
-      console.error('Failed to clear thumbnail cache:', error);
+      console.error("Failed to clear thumbnail cache:", error);
     }
     return false;
   }, []);
@@ -76,10 +76,14 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
     let cleanedCount = 0;
 
     images.forEach((img) => {
-      const dataUrl = img.getAttribute('src');
-      if (dataUrl && dataUrl.length > 50000) { // Clean up large data URLs (>50KB)
+      const dataUrl = img.getAttribute("src");
+      if (dataUrl && dataUrl.length > 50000) {
+        // Clean up large data URLs (>50KB)
         // Replace with placeholder
-        img.setAttribute('src', 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23f0f0f0"/></svg>');
+        img.setAttribute(
+          "src",
+          'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23f0f0f0"/></svg>'
+        );
         cleanedCount++;
       }
     });
@@ -92,37 +96,50 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
   }, []);
 
   // Main cleanup function
-  const performCleanup = useCallback(async (force = false) => {
-    const now = Date.now();
-    const timeSinceLastCleanup = now - lastCleanupRef.current;
+  const performCleanup = useCallback(
+    async (force = false) => {
+      const now = Date.now();
+      const timeSinceLastCleanup = now - lastCleanupRef.current;
 
-    // Skip if recently cleaned up and not forced
-    if (!force && timeSinceLastCleanup < cleanupInterval / 2) {
-      return;
-    }
+      // Skip if recently cleaned up and not forced
+      if (!force && timeSinceLastCleanup < cleanupInterval / 2) {
+        return;
+      }
 
-    const stats = getMemoryStats();
-    console.log('🧹 Starting memory cleanup...', stats);
+      const stats = getMemoryStats();
+      console.log("🧹 Starting memory cleanup...", stats);
 
-    // Clear thumbnail cache
-    await clearThumbnailCache();
+      // Clear thumbnail cache
+      await clearThumbnailCache();
 
-    // Clean up DOM data URLs
-    cleanupDataUrls();
+      // Clean up DOM data URLs
+      cleanupDataUrls();
 
-    // Force garbage collection if memory is high
-    if (stats && (stats.usedJSHeapSizeMB > maxMemoryMB || force)) {
-      forceGarbageCollection();
-    }
+      // Force garbage collection if memory is high
+      if (stats && (stats.usedJSHeapSizeMB > maxMemoryMB || force)) {
+        forceGarbageCollection();
+      }
 
-    lastCleanupRef.current = now;
+      lastCleanupRef.current = now;
 
-    const newStats = getMemoryStats();
-    if (stats && newStats) {
-      const memoryFreed = stats.usedJSHeapSizeMB - newStats.usedJSHeapSizeMB;
-      console.log(`💾 Memory cleanup complete. Freed: ${memoryFreed}MB`, newStats);
-    }
-  }, [maxMemoryMB, cleanupInterval, getMemoryStats, clearThumbnailCache, cleanupDataUrls, forceGarbageCollection]);
+      const newStats = getMemoryStats();
+      if (stats && newStats) {
+        const memoryFreed = stats.usedJSHeapSizeMB - newStats.usedJSHeapSizeMB;
+        console.log(
+          `💾 Memory cleanup complete. Freed: ${memoryFreed}MB`,
+          newStats
+        );
+      }
+    },
+    [
+      maxMemoryMB,
+      cleanupInterval,
+      getMemoryStats,
+      clearThumbnailCache,
+      cleanupDataUrls,
+      forceGarbageCollection,
+    ]
+  );
 
   // Monitor memory usage and trigger cleanup
   const checkMemoryUsage = useCallback(() => {
@@ -131,7 +148,9 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
 
     // Force cleanup if memory usage is too high
     if (stats.usedJSHeapSizeMB > forceCleanupThreshold) {
-      console.warn(`⚠️ High memory usage detected: ${stats.usedJSHeapSizeMB}MB. Forcing cleanup...`);
+      console.warn(
+        `⚠️ High memory usage detected: ${stats.usedJSHeapSizeMB}MB. Forcing cleanup...`
+      );
       performCleanup(true);
     }
     // Regular cleanup if over normal threshold
@@ -173,17 +192,16 @@ export function useMemoryManager(options: MemoryManagerOptions = {}) {
 
 // Memory monitoring component
 export function MemoryMonitor() {
-  const {
-    getMemoryStats,
-    performCleanup,
-    forceGarbageCollection,
-  } = useMemoryManager({
-    maxMemoryMB: 150,
-    cleanupInterval: 20000, // 20 seconds
-    forceCleanupThreshold: 250,
-  });
+  const { getMemoryStats, performCleanup, forceGarbageCollection } =
+    useMemoryManager({
+      maxMemoryMB: 150,
+      cleanupInterval: 20000, // 20 seconds
+      forceCleanupThreshold: 250,
+    });
 
-  const [memoryStats, setMemoryStats] = React.useState<MemoryStats | null>(null);
+  const [memoryStats, setMemoryStats] = React.useState<MemoryStats | null>(
+    null
+  );
 
   React.useEffect(() => {
     const updateStats = () => {
@@ -204,7 +222,8 @@ export function MemoryMonitor() {
     );
   }
 
-  const usagePercentage = (memoryStats.usedJSHeapSize / memoryStats.jsHeapSizeLimit) * 100;
+  const usagePercentage =
+    (memoryStats.usedJSHeapSize / memoryStats.jsHeapSizeLimit) * 100;
   const isHighUsage = memoryStats.usedJSHeapSizeMB > 150;
 
   return (
@@ -212,14 +231,14 @@ export function MemoryMonitor() {
       <div className="flex justify-between items-center">
         <span className="font-medium">Memory Usage</span>
         <div className="flex space-x-1">
-          <button 
+          <button
             onClick={performCleanup}
             className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
             title="Force cleanup"
           >
             🧹 Clean
           </button>
-          <button 
+          <button
             onClick={forceGarbageCollection}
             className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
             title="Force garbage collection"
@@ -228,9 +247,13 @@ export function MemoryMonitor() {
           </button>
         </div>
       </div>
-      
+
       <div className="space-y-1">
-        <div className={`font-medium ${isHighUsage ? 'text-red-600' : 'text-green-600'}`}>
+        <div
+          className={`font-medium ${
+            isHighUsage ? "text-red-600" : "text-green-600"
+          }`}
+        >
           Used: {memoryStats.usedJSHeapSizeMB}MB ({usagePercentage.toFixed(1)}%)
         </div>
         <div>Total: {memoryStats.totalJSHeapSizeMB}MB</div>
@@ -241,7 +264,11 @@ export function MemoryMonitor() {
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div
           className={`h-2 rounded-full transition-all duration-300 ${
-            isHighUsage ? 'bg-red-500' : usagePercentage > 70 ? 'bg-yellow-500' : 'bg-green-500'
+            isHighUsage
+              ? "bg-red-500"
+              : usagePercentage > 70
+              ? "bg-yellow-500"
+              : "bg-green-500"
           }`}
           style={{ width: `${Math.min(usagePercentage, 100)}%` }}
         />

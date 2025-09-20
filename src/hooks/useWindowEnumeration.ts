@@ -16,20 +16,30 @@ export const useWindowEnumeration = (
   const [windows, setWindows] = useState<WindowInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [countdownTime, setCountdownTime] = useState<number>(0);
 
   const {
     includeMinimized = false,
     includeSystemWindows = false,
-    refreshInterval = 5000,
+    refreshInterval = 60000, // Default to 1 minute auto-refresh
     smartRefresh = true,
   } = options;
 
-  // Activity monitoring for smart refresh
-  const { activityState } = useActivityMonitor({
-    fastInterval: 3000, // 3 seconds when active
-    slowInterval: 15000, // 15 seconds when idle
-    pausedInterval: 60000, // 1 minute when paused
-  });
+  // Activity monitoring for smart refresh - only when enabled
+  const activityMonitor = smartRefresh
+    ? useActivityMonitor({
+        fastInterval: 60000, // 1 minute when active
+        slowInterval: 300000, // 5 minutes when idle
+        pausedInterval: 600000, // 10 minutes when paused
+      })
+    : null;
+
+  const activityState = activityMonitor?.activityState || {
+    currentInterval: refreshInterval,
+    isActive: true,
+    isPaused: false,
+    isIdle: false,
+  };
 
   const enumerateWindows = useCallback(async () => {
     const startTime = Date.now();
@@ -60,6 +70,32 @@ export const useWindowEnumeration = (
         );
 
         setWindows(windowsWithSelection);
+
+        // Log each enumerated window
+        systemLogger.window(
+          "enumerate-windows-detail",
+          `Logging all ${windowsWithSelection.length} enumerated windows`,
+          { count: windowsWithSelection.length }
+        );
+
+        windowsWithSelection.forEach((window: any, index: number) => {
+          systemLogger.window(
+            "enumerate-window-item",
+            `Window ${index + 1}: ${window.name} (${window.app})`,
+            {
+              id: window.id,
+              name: window.name,
+              app: window.app,
+              processId: window.processId,
+              executablePath: window.executablePath || "NOT_FOUND",
+              bounds: `${window.bounds?.x || 0}, ${window.bounds?.y || 0}, ${
+                window.bounds?.width || 0
+              }x${window.bounds?.height || 0}`,
+              isVisible: window.isVisible,
+              handle: window.handle,
+            }
+          );
+        });
 
         systemLogger.window(
           "enumerate-success",
@@ -115,17 +151,13 @@ export const useWindowEnumeration = (
     } finally {
       setIsLoading(false);
     }
-  }, [
-    includeMinimized,
-    includeSystemWindows,
-    smartRefresh,
-    activityState,
-    refreshInterval,
-  ]);
+  }, [includeMinimized, includeSystemWindows, smartRefresh, refreshInterval]);
 
   const refreshWindows = useCallback(() => {
     enumerateWindows();
-  }, [enumerateWindows]);
+    // Reset countdown on manual refresh
+    setCountdownTime(Math.floor(refreshInterval / 1000));
+  }, [enumerateWindows, refreshInterval]);
 
   const getWindowIcon = useCallback(
     async (handle: number): Promise<string | null> => {
@@ -253,35 +285,53 @@ export const useWindowEnumeration = (
   // Auto-refresh setup with smart intervals
   useEffect(() => {
     if (refreshInterval > 0) {
-      const currentInterval = smartRefresh
-        ? activityState.currentInterval
-        : refreshInterval;
+      // Use a fixed interval for simplicity and stability
+      const fixedInterval = refreshInterval; // Always use the base 60-second interval
 
-      console.log(
-        `Setting window enumeration interval: ${currentInterval}ms (${
-          activityState.isActive
-            ? "active"
-            : activityState.isIdle
-            ? "idle"
-            : "paused"
-        })`
+      systemLogger.window(
+        "enumerate-interval",
+        `Setting fixed window enumeration interval: ${fixedInterval}ms`,
+        {
+          interval: fixedInterval,
+          smartRefresh: false, // Disabled for stability
+        }
       );
 
-      const interval = setInterval(enumerateWindows, currentInterval);
+      // Initialize countdown
+      setCountdownTime(Math.floor(fixedInterval / 1000));
+
+      const interval = setInterval(() => {
+        enumerateWindows();
+        // Reset countdown after enumeration
+        setCountdownTime(Math.floor(fixedInterval / 1000));
+      }, fixedInterval);
+
       return () => clearInterval(interval);
     }
   }, [
     enumerateWindows,
     refreshInterval,
-    smartRefresh,
-    activityState.currentInterval,
+    // Removed smartRefresh and activityState dependencies for stability
   ]);
+
+  // Countdown timer - updates every second
+  useEffect(() => {
+    if (refreshInterval > 0 && countdownTime > 0) {
+      const countdownInterval = setInterval(() => {
+        setCountdownTime((prev) => Math.max(0, prev - 1));
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    }
+  }, [refreshInterval, countdownTime]);
 
   return {
     windows,
     isLoading,
     error,
     refreshWindows,
+    countdownTime,
+    totalRefreshTime: Math.floor(refreshInterval / 1000), // in seconds
     // Window manipulation methods
     getWindowIcon,
     getWindowThumbnail,

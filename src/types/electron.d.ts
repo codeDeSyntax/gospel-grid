@@ -65,6 +65,9 @@ export interface ElectronAPI {
     handle: number,
     bounds: WindowBounds
   ) => Promise<WindowOperationResult>;
+  publishLayout: (layoutData: any) => Promise<{ success: boolean; windowId?: number; error?: string }>;
+  checkPublishedWindows: () => Promise<{ hasActivePublications: boolean; count: number }>;
+  closePublishedWindows: () => Promise<{ success: boolean; closedCount?: number; error?: string }>;
 }
 
 // Extend the global Window interface to include our APIs

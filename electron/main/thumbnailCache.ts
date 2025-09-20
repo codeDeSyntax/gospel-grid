@@ -171,7 +171,7 @@ class ThumbnailCache {
     this.cache.set(key, entry);
     this.stats.totalSize = this.cache.size;
 
-    console.log(`Cached thumbnail for ${windowId} (${windowTitle})`);
+    // console.log(`Cached thumbnail for ${windowId} (${windowTitle})`);
   }
 
   /**
@@ -227,7 +227,7 @@ class ThumbnailCache {
       evictions: 0,
       totalSize: 0,
     };
-    console.log("Thumbnail cache cleared");
+    // console.log("Thumbnail cache cleared");
   }
 
   /**

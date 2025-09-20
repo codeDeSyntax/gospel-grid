@@ -61,6 +61,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("move-window-external", handle, bounds),
   publishLayout: (layoutData: any) =>
     ipcRenderer.invoke("publish-layout", layoutData),
+  checkPublishedWindows: () =>
+    ipcRenderer.invoke("check-published-windows"),
+  closePublishedWindows: () =>
+    ipcRenderer.invoke("close-published-windows"),
 
   // Cache management
   clearThumbnailCache: () => ipcRenderer.invoke("clear-thumbnail-cache"),

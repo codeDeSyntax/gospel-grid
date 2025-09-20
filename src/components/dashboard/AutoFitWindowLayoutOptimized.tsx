@@ -7,6 +7,7 @@ interface AutoFitWindowLayoutProps {
   focusedWindowId: string | null;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
+  onWindowAdd?: (window: WindowInfo) => void;
   maxDisplayWindows?: number;
 }
 
@@ -15,6 +16,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   focusedWindowId,
   onWindowFocus,
   onWindowRemove,
+  onWindowAdd,
   maxDisplayWindows = 4, // Changed from 25 to 4
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,6 +51,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
               }
             }}
             onWindowFocus={onWindowFocus}
+            onWindowDrop={onWindowAdd}
             className="w-full h-full "
             itemClassName=""
             enableLazyLoading={true}

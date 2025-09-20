@@ -153,84 +153,19 @@ import {
 
 // Bootstrap Icons
 import {
-  BsWindows,
-  BsApple,
-  BsAndroid2,
-  BsBrowserChrome,
+
   BsBrowserEdge,
-  BsBrowserFirefox,
-  BsBrowserSafari,
-  BsFiletypePdf,
-  BsFiletypeDocx,
-  BsFiletypeXlsx,
-  BsFiletypePptx,
-  BsFiletypeJpg,
-  BsFiletypePng,
-  BsFiletypeMp4,
-  BsFiletypeMp3,
+
   BsTerminal,
   BsGear,
-  BsController,
-  BsMusicNote,
-  BsCameraVideo,
-  BsCamera,
-  BsPalette,
-  BsPencil,
-  BsBook,
-  BsDatabase,
-  BsServer,
-  BsCloud,
-  BsLock,
-  BsKey,
-  BsWifi,
-  BsEthernet,
-  BsDeviceHdd,
-  BsMemory,
-  BsCpu,
-  BsPlug,
-  BsLightning,
-  BsThermometer,
-  BsFan,
-  BsKeyboard,
-  BsMouse,
-  BsHeadphones,
-  BsMic,
-  BsPrinter,
-  BsDownload,
-  BsUpload,
-  BsArrowRepeat,
-  BsCloudDownload,
-  BsCloudUpload,
+ 
+ 
 } from "react-icons/bs";
 
 // Devicons
 import {
   DiVisualstudio,
-  DiSublime,
-  DiVim,
-  DiLinux,
-  DiUbuntu,
-  DiWindows,
-  DiApple,
-  DiAndroid,
-  DiGit,
-  DiGithubBadge,
-  DiMysql,
-  DiPostgresql,
-  DiMongodb,
-  DiRedis,
-  DiDocker,
-  DiReact,
-  DiNodejs,
-  DiPython,
-  DiJavascript1,
-  DiJava,
-  DiDotnet,
-  DiPhp,
-  DiRuby,
-  DiGo,
-  DiRust,
-  DiSwift,
+  DiChrome,
 } from "react-icons/di";
 
 export interface AppIconData {
@@ -243,14 +178,14 @@ export interface AppIconData {
 export const APP_ICON_MAP: Record<string, AppIconData> = {
   // Web Browsers
   chrome: {
-    icon: <SiGooglechrome />,
-    gradient: "from-blue-500 via-green-400 to-red-400",
-    color: "text-blue-500",
+    icon: <DiChrome />,
+    gradient: "from-yellow-500 via-green-400 to-red-400",
+    color: "text-green-500",
   },
   "google chrome": {
     icon: <SiGooglechrome />,
-    gradient: "from-blue-500 via-green-400 to-red-400",
-    color: "text-blue-500",
+    gradient: "from-yellow-500 via-green-400 to-red-400",
+    color: "text-green-500",
   },
   edge: {
     icon: <BsBrowserEdge />,
@@ -332,12 +267,12 @@ export const APP_ICON_MAP: Record<string, AppIconData> = {
   "notepad++": {
     icon: <FaFileAlt />,
     gradient: "from-green-500 to-blue-400",
-    color: "text-green-500",
+    color: "text-blue-500",
   },
   notepad: {
     icon: <FaFileAlt />,
     gradient: "from-gray-500 to-blue-400",
-    color: "text-gray-500",
+    color: "text-yellow-500",
   },
   atom: {
     icon: <FaFileCode />,

@@ -1,3 +1,7 @@
 onlyBuiltDependencies:
   - electron
   - esbuild
+
+ignoredBuiltDependencies:
+  - extract-file-icon
+  - node-window-manager

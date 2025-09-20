@@ -7,6 +7,12 @@ import { RightPanel } from "./RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
+import { SimpleThemeToggle } from "../ThemeToggle";
+import { 
+  NotificationModal, 
+  useNotifications,
+  NotificationAction 
+} from "@/components/ui/NotificationModal";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -31,12 +37,16 @@ export const Dashboard: React.FC = () => {
     error: windowError,
     refreshWindows,
     focusWindow: focusWindowNative,
+    countdownTime,
+    totalRefreshTime,
   } = useWindowEnumeration({
     includeMinimized: false,
     includeSystemWindows: false,
-    refreshInterval: 10000, // Reduced frequency (was 5000)
-    smartRefresh: true, // Enable smart refresh
+    refreshInterval: 60000, // 1 minute auto-refresh
+    smartRefresh: false, // Disable smart refresh to prevent frequent updates
   });
+
+  const { notifications, showNotification, closeNotification } = useNotifications();
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
@@ -143,6 +153,33 @@ export const Dashboard: React.FC = () => {
     });
   }, []);
 
+  const handleWindowAdd = useCallback((windowInfo: WindowInfo) => {
+    setState((prev) => {
+      // Find if the window exists in our current windows list
+      const windowExists = prev.windows.some((w) => w.id === windowInfo.id);
+
+      if (windowExists) {
+        // If window exists, just mark it as selected
+        const updatedWindows = prev.windows.map((w) =>
+          w.id === windowInfo.id ? { ...w, isSelected: true } : w
+        );
+
+        return {
+          ...prev,
+          windows: updatedWindows,
+        };
+      } else {
+        // If window doesn't exist, add it to the list and mark as selected
+        const newWindow = { ...windowInfo, isSelected: true };
+
+        return {
+          ...prev,
+          windows: [...prev.windows, newWindow],
+        };
+      }
+    });
+  }, []);
+
   const handlePresetSelect = useCallback((presetId: string) => {
     loadPreset(presetId);
   }, []);
@@ -185,20 +222,89 @@ export const Dashboard: React.FC = () => {
     const selectedWindows = state.windows.filter((w) => w.isSelected);
 
     if (selectedWindows.length === 0) {
-      console.warn("No windows selected for publishing");
-      alert("Please select at least one window to publish");
+      showNotification({
+        type: "warning",
+        title: "No Windows Selected",
+        message: "Please select at least one window to publish to the layout.",
+        autoClose: 4000,
+      });
       return;
     }
 
     try {
-      // Show immediate feedback
-      const publishingToast = document.createElement("div");
-      publishingToast.innerHTML = `
-        <div style="position: fixed; top: 20px; right: 20px; background: #059669; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
-          🚀 Publishing layout...
-        </div>
-      `;
-      document.body.appendChild(publishingToast);
+      // Check for existing published windows
+      const { hasActivePublications, count } = await (window.electronAPI as any).checkPublishedWindows();
+      
+      if (hasActivePublications) {
+        // Show confirmation modal to close existing publication
+        showNotification({
+          type: "question",
+          title: "Active Publication Detected",
+          message: `There ${count === 1 ? 'is' : 'are'} ${count} active published layout${count === 1 ? '' : 's'}. To create a new publication, the existing one${count === 1 ? '' : 's'} must be closed first. Do you want to continue?`,
+          persistent: true,
+          buttons: [
+            {
+              text: "Cancel",
+              action: "cancel",
+              variant: "secondary",
+            },
+            {
+              text: "Close & Publish",
+              action: "confirm",
+              variant: "danger",
+            },
+          ],
+          onAction: async (action: NotificationAction) => {
+            if (action === "confirm") {
+              try {
+                // Close existing published windows
+                await (window.electronAPI as any).closePublishedWindows();
+                
+                showNotification({
+                  type: "info",
+                  title: "Publishing Layout",
+                  message: "Creating new published layout...",
+                  autoClose: 2000,
+                });
+
+                // Proceed with publishing
+                await performPublish(selectedWindows);
+              } catch (error) {
+                showNotification({
+                  type: "error",
+                  title: "Failed to Close Publications",
+                  message: "Could not close existing published windows. Please close them manually and try again.",
+                  autoClose: 5000,
+                });
+              }
+            }
+          },
+        });
+        return;
+      }
+
+      // No existing publications, proceed directly
+      await performPublish(selectedWindows);
+
+    } catch (error) {
+      console.error("Failed to check published windows:", error);
+      showNotification({
+        type: "error",
+        title: "Publication Check Failed",
+        message: "Could not verify existing publications. Please try again.",
+        autoClose: 4000,
+      });
+    }
+  }, [state.windows, state.currentLayout, state.focusedWindowId, showNotification]);
+
+  const performPublish = async (selectedWindows: WindowInfo[]) => {
+    try {
+      showNotification({
+        type: "info",
+        title: "Publishing Layout",
+        message: "Creating fullscreen published layout...",
+        autoClose: 3000,
+      });
 
       // Call the Electron API to open a new window with the layout
       const result = await window.electronAPI.publishLayout({
@@ -206,40 +312,29 @@ export const Dashboard: React.FC = () => {
         layout: state.currentLayout,
         focusedWindowId: state.focusedWindowId,
       });
+      
       console.log("publishLayout result:", result);
 
-      // Update toast with success message
-      publishingToast.innerHTML = `
-        <div style="position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
-          ✅ Layout published successfully!
-        </div>
-      `;
-
-      // Remove toast after 3 seconds
-      setTimeout(() => {
-        if (publishingToast.parentNode) {
-          publishingToast.parentNode.removeChild(publishingToast);
-        }
-      }, 3000);
+      if (result.success) {
+        showNotification({
+          type: "success",
+          title: "Layout Published Successfully!",
+          message: `Published layout with ${selectedWindows.length} window${selectedWindows.length === 1 ? '' : 's'} in fullscreen mode.`,
+          autoClose: 4000,
+        });
+      } else {
+        throw new Error(result.error || "Unknown error occurred");
+      }
     } catch (error) {
       console.error("Failed to publish layout:", error);
-
-      // Show error toast
-      const errorToast = document.createElement("div");
-      errorToast.innerHTML = `
-        <div style="position: fixed; top: 20px; right: 20px; background: #dc2626; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; font-family: system-ui;">
-          ❌ Failed to publish layout
-        </div>
-      `;
-      document.body.appendChild(errorToast);
-
-      setTimeout(() => {
-        if (errorToast.parentNode) {
-          errorToast.parentNode.removeChild(errorToast);
-        }
-      }, 3000);
+      showNotification({
+        type: "error",
+        title: "Publication Failed",
+        message: error instanceof Error ? error.message : "An unexpected error occurred while publishing the layout.",
+        autoClose: 5000,
+      });
     }
-  }, [state.windows, state.currentLayout, state.focusedWindowId]);
+  };
 
   return (
     <div className="h-screen w-screen overflow-hidden relative p-3 flex items-center justify-center no-scrollbar">
@@ -268,6 +363,7 @@ export const Dashboard: React.FC = () => {
             className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             strokeWidth={3}
           />
+          {/* <SimpleThemeToggle/> */}
         </div>
 
         {/* Maximize button */}
@@ -286,13 +382,24 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Content Container with rounded corners - 95% height */}
       <div className="relative z-10 h-[95%] w-full backdrop-blur-sm bg-slate-900/20 border-1 border-primary-600  border-dashed rounded-3xl flex overflow-hidden">
-        <div className="w-80 bg-slate-900/60 backdrop-blur-sm border-r border-slate-600/30 p-6 flex flex-col overflow-hidden">
+        <div className="w-80 bg-slate-900/60 backdrop-blur-sm border-r border-slate-600/30 py-6 px-4 flex flex-col overflow-hidden">
           <WindowList
             windows={state.windows}
             onWindowSelect={handleWindowSelect}
             onWindowFocus={focusWindowNative}
+            onWindowDragStart={(window) => {
+              // Optional: Add any drag start logic here
+              console.log("Drag started for window:", window.name);
+            }}
+            onWindowDragEnd={() => {
+              // Optional: Add any drag end logic here
+              console.log("Drag ended");
+            }}
             isLoading={isLoadingWindows}
             error={windowError}
+            countdownTime={countdownTime}
+            totalRefreshTime={totalRefreshTime}
+            onManualRefresh={handleRefreshWindows}
           />
         </div>
 
@@ -312,6 +419,7 @@ export const Dashboard: React.FC = () => {
             onPresetSelect={handlePresetSelect}
             onWindowFocus={handleWindowFocus}
             onWindowRemove={handleWindowRemove}
+            onWindowAdd={handleWindowAdd}
             onPublishLayout={handlePublishLayout}
           />
         </div>
