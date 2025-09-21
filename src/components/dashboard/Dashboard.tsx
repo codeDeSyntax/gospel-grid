@@ -1,18 +1,23 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { X, Minus, Maximize2 } from "lucide-react";
 import { WindowList, type WindowInfo } from "./WindowList";
-import { PresetsList, mockPresets, type PresetInfo } from "./PresetsList";
+import { PresetsList, type PresetInfo } from "./PresetsList";
 import { CosmicBackground } from "./CosmicBackground";
 import { RightPanel } from "./RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
 import { SimpleThemeToggle } from "../ThemeToggle";
-import { 
-  NotificationModal, 
-  useNotifications,
-  NotificationAction 
-} from "@/components/ui/NotificationModal";
+import { PresetSaveModal } from "@/components/ui/PresetSaveModal";
+import type { SavedPreset } from "@/types/electron";
+import { NotificationModalComponent } from "@/components/ui/NotificationModal";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  showNotification,
+  removeNotification,
+  handlePublishLayout as reduxHandlePublishLayout,
+  type NotificationAction,
+} from "@/store/slices/notificationSlice";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -21,13 +26,8 @@ interface DashboardState {
   currentLayout: string;
   focusedWindowId: string | null;
   activeSection: string;
+  showPresetSaveModal: boolean;
 }
-
-const presetWindowMappings = {
-  "sunday-service": ["bible-app", "powerpoint", "notes", "obs"],
-  "bible-study": ["bible-app", "notes"],
-  worship: ["youtube", "powerpoint", "obs"],
-};
 
 export const Dashboard: React.FC = () => {
   const { minimize, maximize, close } = useWindowControls();
@@ -46,15 +46,20 @@ export const Dashboard: React.FC = () => {
     smartRefresh: false, // Disable smart refresh to prevent frequent updates
   });
 
-  const { notifications, showNotification, closeNotification } = useNotifications();
+  // Redux hooks for notifications
+  const dispatch = useAppDispatch();
+  const notifications = useAppSelector(
+    (state) => state.notification.notifications
+  );
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
-    presets: mockPresets,
+    presets: [], // Start with empty presets array
     selectedPreset: "",
     currentLayout: "auto",
     focusedWindowId: null,
     activeSection: "dashboard",
+    showPresetSaveModal: false,
   });
 
   // Update state when enumerated windows change
@@ -71,6 +76,37 @@ export const Dashboard: React.FC = () => {
     }
   }, [enumeratedWindows, isLoadingWindows, windowError]);
 
+  // Load saved presets on component mount
+  useEffect(() => {
+    const loadSavedPresets = async () => {
+      try {
+        const result = await (window.electronAPI as any)?.loadPresets();
+
+        if (result?.success && result.presets) {
+          const presetInfos: PresetInfo[] = result.presets.map(
+            (preset: SavedPreset) => ({
+              id: preset.id,
+              name: preset.name,
+              windowCount: preset.windowCount,
+            })
+          );
+
+          setState((prev) => ({
+            ...prev,
+            presets: presetInfos, // Only use saved presets, no mock presets
+          }));
+
+          console.log(`Loaded ${presetInfos.length} saved presets on startup`);
+        }
+      } catch (error) {
+        console.error("Failed to load saved presets on startup:", error);
+        // Don't show error notification on startup - just log it
+      }
+    };
+
+    loadSavedPresets();
+  }, []); // Empty dependency array - run once on mount
+
   // Section navigation handler
   const handleSectionChange = useCallback((section: string) => {
     setState((prev) => ({ ...prev, activeSection: section }));
@@ -84,28 +120,94 @@ export const Dashboard: React.FC = () => {
   const handleSavePreset = useCallback(() => {
     const selectedWindows = state.windows.filter((w) => w.isSelected);
     if (selectedWindows.length === 0) {
-      alert("No windows selected to save as preset!");
+      // Show notification for no windows selected
+      dispatch(
+        showNotification({
+          type: "error",
+          title: "No Windows Selected",
+          message: "Please select at least one window before saving a preset.",
+          autoClose: 4000,
+        })
+      );
       return;
     }
 
-    const presetName = prompt("Enter preset name:");
-    if (presetName) {
-      const newPreset: PresetInfo = {
-        id: presetName.toLowerCase().replace(/\s+/g, "-"),
-        name: presetName,
-        windowCount: selectedWindows.length,
-      };
+    // Show the preset save modal
+    setState((prev) => ({ ...prev, showPresetSaveModal: true }));
+  }, [state.windows, dispatch]);
 
-      setState((prev) => ({
-        ...prev,
-        presets: [...prev.presets, newPreset],
-      }));
+  const handlePresetSaveModalClose = useCallback(() => {
+    setState((prev) => ({ ...prev, showPresetSaveModal: false }));
+  }, []);
 
-      alert(
-        `Preset "${presetName}" saved with ${selectedWindows.length} windows!`
-      );
-    }
-  }, [state.windows]);
+  const handlePresetSave = useCallback(
+    async (presetName: string) => {
+      const selectedWindows = state.windows.filter((w) => w.isSelected);
+
+      try {
+        const savedPreset: SavedPreset = {
+          id: presetName.toLowerCase().replace(/\s+/g, "-"),
+          name: presetName,
+          windowCount: selectedWindows.length,
+          createdAt: new Date().toISOString(),
+          windows: selectedWindows.map((window) => ({
+            id: window.id,
+            name: window.name,
+            app: window.app,
+            sourceId: (window as any).sourceId, // From windowMapper
+            handle: window.handle,
+          })),
+        };
+
+        // Save to persistent storage via IPC
+        const result = await (window.electronAPI as any)?.savePreset(
+          savedPreset
+        );
+
+        if (result?.success) {
+          // Update local state
+          const newPresetInfo: PresetInfo = {
+            id: savedPreset.id,
+            name: savedPreset.name,
+            windowCount: savedPreset.windowCount,
+          };
+
+          setState((prev) => ({
+            ...prev,
+            presets: [...prev.presets, newPresetInfo],
+            showPresetSaveModal: false,
+          }));
+
+          // Show success notification
+          dispatch(
+            showNotification({
+              type: "success",
+              title: "Preset Saved",
+              message: `"${presetName}" saved with ${selectedWindows.length} windows!`,
+              autoClose: 3000,
+            })
+          );
+        } else {
+          throw new Error(result?.error || "Failed to save preset");
+        }
+      } catch (error) {
+        console.error("Failed to save preset:", error);
+
+        // Show error notification
+        dispatch(
+          showNotification({
+            type: "error",
+            title: "Save Failed",
+            message: `Failed to save preset: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            autoClose: 5000,
+          })
+        );
+      }
+    },
+    [state.windows, dispatch]
+  );
 
   const handleClearAll = useCallback(() => {
     setState((prev) => ({
@@ -118,10 +220,7 @@ export const Dashboard: React.FC = () => {
   const handlePresetChange = useCallback((presetId: string) => {
     setState((prev) => ({ ...prev, selectedPreset: presetId }));
 
-    if (
-      presetId &&
-      presetWindowMappings[presetId as keyof typeof presetWindowMappings]
-    ) {
+    if (presetId) {
       loadPreset(presetId);
     }
   }, []);
@@ -184,20 +283,102 @@ export const Dashboard: React.FC = () => {
     loadPreset(presetId);
   }, []);
 
-  const loadPreset = useCallback((presetId: string) => {
-    const windowIds =
-      presetWindowMappings[presetId as keyof typeof presetWindowMappings];
-    if (!windowIds) return;
+  const loadPreset = useCallback(
+    async (presetId: string) => {
+      try {
+        // Load presets from storage
+        const result = await (window.electronAPI as any)?.loadPresets();
 
-    setState((prev) => ({
-      ...prev,
-      windows: prev.windows.map((w) => ({
-        ...w,
-        isSelected: windowIds.includes(w.id),
-      })),
-      focusedWindowId: null,
-    }));
-  }, []);
+        if (!result?.success) {
+          console.error("Failed to load presets:", result?.error);
+          return;
+        }
+
+        // Find the specific preset
+        const preset = result.presets?.find(
+          (p: SavedPreset) => p.id === presetId
+        );
+        if (!preset) {
+          console.warn(`Preset not found: ${presetId}`);
+          return;
+        }
+
+        console.log(
+          `Loading preset "${preset.name}" with ${preset.windows.length} windows`
+        );
+
+        // Match windows by app name and partial title matching
+        setState((prev) => {
+          const updatedWindows = prev.windows.map((currentWindow) => {
+            // Check if this current window matches any window in the preset
+            const matchedPresetWindow = preset.windows.find(
+              (presetWindow: SavedPreset["windows"][0]) => {
+                // Primary match: app name (more reliable)
+                const appMatch =
+                  currentWindow.app?.toLowerCase() ===
+                  presetWindow.app?.toLowerCase();
+
+                // Secondary match: partial title match (handles dynamic content like tabs)
+                const titleMatch =
+                  currentWindow.name &&
+                  presetWindow.name &&
+                  (currentWindow.name
+                    .toLowerCase()
+                    .includes(presetWindow.name.toLowerCase()) ||
+                    presetWindow.name
+                      .toLowerCase()
+                      .includes(currentWindow.name.toLowerCase()));
+
+                return appMatch || titleMatch;
+              }
+            );
+
+            return {
+              ...currentWindow,
+              isSelected: !!matchedPresetWindow,
+            };
+          });
+
+          console.log(
+            `Matched ${
+              updatedWindows.filter((w) => w.isSelected).length
+            } windows for preset "${preset.name}"`
+          );
+
+          return {
+            ...prev,
+            windows: updatedWindows,
+            focusedWindowId: null,
+          };
+        });
+
+        // Show success notification
+        dispatch(
+          showNotification({
+            type: "success",
+            title: "Preset Loaded",
+            message: `Loaded "${preset.name}" preset`,
+            autoClose: 2000,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to load preset:", error);
+
+        // Show error notification
+        dispatch(
+          showNotification({
+            type: "error",
+            title: "Load Failed",
+            message: `Failed to load preset: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            autoClose: 4000,
+          })
+        );
+      }
+    },
+    [dispatch]
+  );
 
   // Grid handlers
   const handleWindowFocus = useCallback((windowId: string) => {
@@ -221,120 +402,15 @@ export const Dashboard: React.FC = () => {
   const handlePublishLayout = useCallback(async () => {
     const selectedWindows = state.windows.filter((w) => w.isSelected);
 
-    if (selectedWindows.length === 0) {
-      showNotification({
-        type: "warning",
-        title: "No Windows Selected",
-        message: "Please select at least one window to publish to the layout.",
-        autoClose: 4000,
-      });
-      return;
-    }
-
-    try {
-      // Check for existing published windows
-      const { hasActivePublications, count } = await (window.electronAPI as any).checkPublishedWindows();
-      
-      if (hasActivePublications) {
-        // Show confirmation modal to close existing publication
-        showNotification({
-          type: "question",
-          title: "Active Publication Detected",
-          message: `There ${count === 1 ? 'is' : 'are'} ${count} active published layout${count === 1 ? '' : 's'}. To create a new publication, the existing one${count === 1 ? '' : 's'} must be closed first. Do you want to continue?`,
-          persistent: true,
-          buttons: [
-            {
-              text: "Cancel",
-              action: "cancel",
-              variant: "secondary",
-            },
-            {
-              text: "Close & Publish",
-              action: "confirm",
-              variant: "danger",
-            },
-          ],
-          onAction: async (action: NotificationAction) => {
-            if (action === "confirm") {
-              try {
-                // Close existing published windows
-                await (window.electronAPI as any).closePublishedWindows();
-                
-                showNotification({
-                  type: "info",
-                  title: "Publishing Layout",
-                  message: "Creating new published layout...",
-                  autoClose: 2000,
-                });
-
-                // Proceed with publishing
-                await performPublish(selectedWindows);
-              } catch (error) {
-                showNotification({
-                  type: "error",
-                  title: "Failed to Close Publications",
-                  message: "Could not close existing published windows. Please close them manually and try again.",
-                  autoClose: 5000,
-                });
-              }
-            }
-          },
-        });
-        return;
-      }
-
-      // No existing publications, proceed directly
-      await performPublish(selectedWindows);
-
-    } catch (error) {
-      console.error("Failed to check published windows:", error);
-      showNotification({
-        type: "error",
-        title: "Publication Check Failed",
-        message: "Could not verify existing publications. Please try again.",
-        autoClose: 4000,
-      });
-    }
-  }, [state.windows, state.currentLayout, state.focusedWindowId, showNotification]);
-
-  const performPublish = async (selectedWindows: WindowInfo[]) => {
-    try {
-      showNotification({
-        type: "info",
-        title: "Publishing Layout",
-        message: "Creating fullscreen published layout...",
-        autoClose: 3000,
-      });
-
-      // Call the Electron API to open a new window with the layout
-      const result = await window.electronAPI.publishLayout({
-        windows: selectedWindows,
-        layout: state.currentLayout,
+    // Use Redux async thunk for publish layout
+    dispatch(
+      reduxHandlePublishLayout({
+        selectedWindows,
+        currentLayout: state.currentLayout,
         focusedWindowId: state.focusedWindowId,
-      });
-      
-      console.log("publishLayout result:", result);
-
-      if (result.success) {
-        showNotification({
-          type: "success",
-          title: "Layout Published Successfully!",
-          message: `Published layout with ${selectedWindows.length} window${selectedWindows.length === 1 ? '' : 's'} in fullscreen mode.`,
-          autoClose: 4000,
-        });
-      } else {
-        throw new Error(result.error || "Unknown error occurred");
-      }
-    } catch (error) {
-      console.error("Failed to publish layout:", error);
-      showNotification({
-        type: "error",
-        title: "Publication Failed",
-        message: error instanceof Error ? error.message : "An unexpected error occurred while publishing the layout.",
-        autoClose: 5000,
-      });
-    }
-  };
+      })
+    );
+  }, [dispatch, state.windows, state.currentLayout, state.focusedWindowId]);
 
   return (
     <div className="h-screen w-screen overflow-hidden relative p-3 flex items-center justify-center no-scrollbar">
@@ -441,6 +517,35 @@ export const Dashboard: React.FC = () => {
           DEMO MODE - No windows detected
         </div>
       )}
+
+      {/* Debug: Test Notification Button */}
+      <button
+        onClick={() => {
+          console.log("🧪 Testing notification system...");
+          dispatch(
+            showNotification({
+              type: "info",
+              title: "Test Notification",
+              message: "If you see this, the notification system is working!",
+              autoClose: 3000,
+            })
+          );
+        }}
+        className="fixed bottom-6 left-6 bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors z-20"
+      >
+        Test Notification
+      </button>
+
+      {/* Custom Notification Modal */}
+      <NotificationModalComponent />
+
+      {/* Preset Save Modal */}
+      <PresetSaveModal
+        isOpen={state.showPresetSaveModal}
+        onClose={handlePresetSaveModalClose}
+        onSave={handlePresetSave}
+        selectedWindowsCount={state.windows.filter((w) => w.isSelected).length}
+      />
     </div>
   );
 };

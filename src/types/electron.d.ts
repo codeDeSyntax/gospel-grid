@@ -49,6 +49,26 @@ export interface WindowOperationResult {
   thumbnail?: string;
 }
 
+export interface SavedPreset {
+  id: string;
+  name: string;
+  windowCount: number;
+  createdAt: string;
+  windows: Array<{
+    id: string; // window-0, window-1, etc. (from windowMapper)
+    name: string; // Full window title
+    app: string; // Extracted app name (e.g., "Code", "Chrome")
+    sourceId?: string; // Original desktopCapturer source ID
+    handle?: number; // Window handle
+  }>;
+}
+
+export interface PresetOperationResult {
+  success: boolean;
+  error?: string;
+  presets?: SavedPreset[];
+}
+
 export interface ElectronAPI {
   enumerateWindows: (
     options: EnumerateWindowsOptions
@@ -65,9 +85,23 @@ export interface ElectronAPI {
     handle: number,
     bounds: WindowBounds
   ) => Promise<WindowOperationResult>;
-  publishLayout: (layoutData: any) => Promise<{ success: boolean; windowId?: number; error?: string }>;
-  checkPublishedWindows: () => Promise<{ hasActivePublications: boolean; count: number }>;
-  closePublishedWindows: () => Promise<{ success: boolean; closedCount?: number; error?: string }>;
+  publishLayout: (
+    layoutData: any
+  ) => Promise<{ success: boolean; windowId?: number; error?: string }>;
+  getPublishedLayout: (layoutId: string) => Promise<any | null>;
+  checkPublishedWindows: () => Promise<{
+    hasActivePublications: boolean;
+    count: number;
+  }>;
+  closePublishedWindows: () => Promise<{
+    success: boolean;
+    closedCount?: number;
+    error?: string;
+  }>;
+  // Preset management
+  savePreset: (preset: SavedPreset) => Promise<PresetOperationResult>;
+  loadPresets: () => Promise<PresetOperationResult>;
+  deletePreset: (presetId: string) => Promise<PresetOperationResult>;
 }
 
 // Extend the global Window interface to include our APIs

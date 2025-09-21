@@ -88,44 +88,189 @@ export const RightPanel: React.FC<RightPanelProps> = ({
                 maxDisplayWindows={4}
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-slate-400 text-center">
-                <div className="relative">
-                  {/* Animated background circles */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-24 h-24 rounded-full border-2 border-slate-600/30 animate-pulse"></div>
-                    <div className="absolute w-16 h-16 rounded-full border border-slate-500/20 animate-ping"></div>
-                  </div>
+              <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
+                {/* Animated Moving Mesh Background */}
+                <div className="absolute inset-0">
+                  <svg
+                    className="w-full h-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      <pattern
+                        id="movingMesh"
+                        x="0"
+                        y="0"
+                        width="60"
+                        height="60"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        {/* Animated nodes */}
+                        <circle
+                          cx="30"
+                          cy="30"
+                          r="1"
+                          fill="rgba(59, 130, 246, 0.6)"
+                        >
+                          <animate
+                            attributeName="r"
+                            values="1;2;1"
+                            dur="3s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="opacity"
+                            values="0.6;1;0.6"
+                            dur="2s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
 
-                  {/* Main icon with floating animation */}
-                  <div className="relative z-10 bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-2xl p-6 backdrop-blur-sm border border-slate-600/30">
-                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-bounce">
-                      <ExternalLink className="w-6 h-6 text-blue-400 animate-pulse" />
-                    </div>
+                        {/* Animated vertical lines moving up and down */}
+                        <line
+                          x1="30"
+                          y1="0"
+                          x2="30"
+                          y2="60"
+                          stroke="rgba(99, 102, 241, 0.3)"
+                          strokeWidth="0.5"
+                        >
+                          <animateTransform
+                            attributeName="transform"
+                            attributeType="XML"
+                            type="translate"
+                            values="0,-10;0,10;0,-10"
+                            dur="4s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="opacity"
+                            values="0.1;0.5;0.1"
+                            dur="3s"
+                            repeatCount="indefinite"
+                          />
+                        </line>
 
-                    <div className="space-y-2">
-                      <div className="text-lg font-medium text-slate-300">
-                        No windows selected
-                      </div>
-                      <div className="text-sm text-slate-500 max-w-48">
-                        Click on windows in the sidebar to add them to the
-                        layout
-                      </div>
-                    </div>
+                        {/* Animated horizontal lines */}
+                        <line
+                          x1="0"
+                          y1="30"
+                          x2="60"
+                          y2="30"
+                          stroke="rgba(124, 58, 237, 0.3)"
+                          strokeWidth="0.5"
+                        >
+                          <animate
+                            attributeName="opacity"
+                            values="0.1;0.4;0.1"
+                            dur="2.5s"
+                            repeatCount="indefinite"
+                          />
+                        </line>
+                      </pattern>
+                    </defs>
+                    <rect
+                      width="100%"
+                      height="100%"
+                      fill="url(#movingMesh)"
+                      opacity="0.4"
+                    />
+                  </svg>
 
-                    {/* Decorative elements */}
-                    <div className="flex justify-center mt-4 gap-1">
-                      <div className="w-1 h-1 rounded-full bg-blue-500/60 animate-ping"></div>
+                  {/* Floating particles */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    {[...Array(8)].map((_, i) => (
                       <div
-                        className="w-1 h-1 rounded-full bg-purple-500/60 animate-ping"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                      <div
-                        className="w-1 h-1 rounded-full bg-blue-500/60 animate-ping"
-                        style={{ animationDelay: "0.4s" }}
-                      ></div>
-                    </div>
+                        key={i}
+                        className="absolute w-1 h-1 bg-blue-400/40 rounded-full"
+                        style={{
+                          left: `${15 + i * 12}%`,
+                          top: `${20 + i * 8}%`,
+                          animation: `float-${i % 3} ${
+                            4 + (i % 3)
+                          }s ease-in-out infinite`,
+                          animationDelay: `${i * 0.5}s`,
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
+
+                {/* Central content with gradient text - perfectly centered */}
+                <div className="relative z-10 flex flex-col items-center justify-center text-center px-8 max-w-lg mx-auto">
+                  <div className="relative mb-8">
+                    {/* Stylish gradient text */}
+                    <h2 className="text-2xl font-impact font-extrabold mb-4 bg-gradient-to-r from-blue-400 via-purple-500 to-yellow-400 bg-clip-text text-transparent animate-gradient-x">
+                      No Windows Selected
+                    </h2>
+
+                    {/* Multiple glowing underlines for depth */}
+                    <div className="relative mx-auto w-40 h-1">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full opacity-60"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400 to-transparent rounded-full animate-pulse"></div>
+                      <div
+                        className="absolute inset-0 bg-gradient-to-r from-blue-400 via-pink-400 to-yellow-400 rounded-full opacity-40 animate-pulse"
+                        style={{ animationDelay: "1s" }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <p className="text-xl font-[garamond] text-slate-300/90 leading-relaxed mb-6 font-medium">
+                    Click on windows in the sidebar to add them to your layout
+                  </p>
+
+                  {/* Decorative elements */}
+                  <div className="flex items-center justify-center gap-2 opacity-60">
+                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 rounded-full bg-pink-400 animate-bounce"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* CSS Animations */}
+                <style
+                  dangerouslySetInnerHTML={{
+                    __html: `
+                    @keyframes animate-gradient-x {
+                      0%, 100% {
+                        background-size: 200% 200%;
+                        background-position: left center;
+                      }
+                      50% {
+                        background-size: 200% 200%;
+                        background-position: right center;
+                      }
+                    }
+                    
+                    .animate-gradient-x {
+                      background-size: 200% 200%;
+                      animation: animate-gradient-x 3s ease infinite;
+                    }
+                    
+                    @keyframes float-0 {
+                      0%, 100% { transform: translateY(0px) translateX(0px); }
+                      33% { transform: translateY(-20px) translateX(10px); }
+                      66% { transform: translateY(-10px) translateX(-5px); }
+                    }
+                    
+                    @keyframes float-1 {
+                      0%, 100% { transform: translateY(0px) translateX(0px); }
+                      50% { transform: translateY(-15px) translateX(-8px); }
+                    }
+                    
+                    @keyframes float-2 {
+                      0%, 100% { transform: translateY(0px) translateX(0px); }
+                      25% { transform: translateY(-25px) translateX(5px); }
+                      75% { transform: translateY(-5px) translateX(-10px); }
+                    }
+                  `,
+                  }}
+                />
               </div>
             )}
           </div>

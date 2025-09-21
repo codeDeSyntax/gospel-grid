@@ -61,10 +61,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("move-window-external", handle, bounds),
   publishLayout: (layoutData: any) =>
     ipcRenderer.invoke("publish-layout", layoutData),
-  checkPublishedWindows: () =>
-    ipcRenderer.invoke("check-published-windows"),
-  closePublishedWindows: () =>
-    ipcRenderer.invoke("close-published-windows"),
+  getPublishedLayout: (layoutId: string) =>
+    ipcRenderer.invoke("get-published-layout", layoutId),
+  checkPublishedWindows: () => ipcRenderer.invoke("check-published-windows"),
+  closePublishedWindows: () => ipcRenderer.invoke("close-published-windows"),
+
+  // Preset management
+  savePreset: (preset: any) => ipcRenderer.invoke("save-preset", preset),
+  loadPresets: () => ipcRenderer.invoke("load-presets"),
+  deletePreset: (presetId: string) =>
+    ipcRenderer.invoke("delete-preset", presetId),
 
   // Cache management
   clearThumbnailCache: () => ipcRenderer.invoke("clear-thumbnail-cache"),

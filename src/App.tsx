@@ -26,35 +26,43 @@ function App() {
 
     // Check if this is a published layout window
     const urlParams = new URLSearchParams(window.location.search);
-    const layoutParam = urlParams.get("layout");
+    const layoutId = urlParams.get("layoutId");
 
-    if (layoutParam) {
-      try {
-        const layoutData = JSON.parse(decodeURIComponent(layoutParam));
-        if (layoutData.isPublished && layoutData.windows) {
-          setPublishedLayoutData({
-            windows: layoutData.windows,
-            layout: layoutData.layout,
-            focusedWindowId: layoutData.focusedWindowId,
-          });
-          setCurrentScreen("published");
+    if (layoutId) {
+      // Fetch layout data from main process using the ID
+      (window.electronAPI as any)
+        .getPublishedLayout(layoutId)
+        .then((layoutData: any) => {
+          if (layoutData && layoutData.isPublished && layoutData.windows) {
+            setPublishedLayoutData({
+              windows: layoutData.windows,
+              layout: layoutData.layout,
+              focusedWindowId: layoutData.focusedWindowId,
+            });
+            setCurrentScreen("published");
+            systemLogger.log(
+              "app",
+              "info",
+              "Layout",
+              `📊 Published layout loaded with ${layoutData.windows.length} windows`
+            );
+          } else {
+            systemLogger.log(
+              "app",
+              "error",
+              "Layout",
+              `❌ Failed to load published layout data for ID: ${layoutId}`
+            );
+          }
+        })
+        .catch((error: any) => {
           systemLogger.log(
             "app",
-            "info",
+            "error",
             "Layout",
-            `📊 Published layout loaded with ${layoutData.windows.length} windows`
+            `❌ Error fetching published layout: ${error.message}`
           );
-        }
-      } catch (error) {
-        systemLogger.log(
-          "app",
-          "error",
-          "Layout",
-          "Failed to parse layout data",
-          { error }
-        );
-        console.error("Failed to parse layout data:", error);
-      }
+        });
     }
 
     // Log app initialization complete

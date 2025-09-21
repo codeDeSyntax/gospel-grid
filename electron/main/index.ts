@@ -3,9 +3,9 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import os from "node:os";
+import fs from "node:fs/promises";
 import { update } from "./update";
 import {
-  enumerateWindows,
   focusWindow as focusWindowNative,
   minimizeWindow as minimizeWindowNative,
   getWindowIcon as getWindowIconNative,
@@ -59,6 +59,7 @@ if (!app.requestSingleInstanceLock()) {
 
 let win: BrowserWindow | null = null;
 let publishedWindows: BrowserWindow[] = []; // Track published layout windows
+const publishedLayoutData = new Map<string, any>(); // Store layout data temporarily
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
@@ -375,11 +376,22 @@ ipcMain.handle("hide-window-external", async (event, handle) => {
   }
 });
 
+// Get published layout data by ID
+ipcMain.handle("get-published-layout", async (event, layoutId: string) => {
+  console.log("Getting published layout data for ID:", layoutId);
+  const layoutData = publishedLayoutData.get(layoutId);
+  if (!layoutData) {
+    console.error("Layout data not found for ID:", layoutId);
+    return null;
+  }
+  return layoutData;
+});
+
 // Check for existing published windows
 ipcMain.handle("check-published-windows", async () => {
   // Clean up destroyed windows
-  publishedWindows = publishedWindows.filter(w => !w.isDestroyed());
-  
+  publishedWindows = publishedWindows.filter((w) => !w.isDestroyed());
+
   return {
     hasActivePublications: publishedWindows.length > 0,
     count: publishedWindows.length,
@@ -391,13 +403,13 @@ ipcMain.handle("close-published-windows", async () => {
   try {
     const windowsToClose = [...publishedWindows];
     publishedWindows = [];
-    
-    windowsToClose.forEach(window => {
+
+    windowsToClose.forEach((window) => {
       if (!window.isDestroyed()) {
         window.close();
       }
     });
-    
+
     return { success: true, closedCount: windowsToClose.length };
   } catch (error) {
     return {
@@ -423,6 +435,9 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       frame: false,
       show: true, // Show immediately instead of waiting
       backgroundColor: "#000000", // Black background for immediate display
+      skipTaskbar: false, // Ensure window appears in taskbar and Alt+Tab
+      focusable: true, // Make sure window can be focused and unfocused
+      minimizable: true, // Allow minimizing for better window management
       webPreferences: {
         preload,
         contextIsolation: true,
@@ -430,46 +445,94 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       },
     });
 
-    // Load the same app but pass layout data via query params
-    const layoutQuery = encodeURIComponent(
-      JSON.stringify({
-        windows: selectedWindows,
-        layout,
-        focusedWindowId,
-        isPublished: true,
-      })
-    );
+    // Store layout data with a unique ID instead of passing via URL
+    const layoutId = `layout-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    publishedLayoutData.set(layoutId, {
+      windows: selectedWindows,
+      layout,
+      focusedWindowId,
+      isPublished: true,
+    });
 
-    console.log("Loading window with layout data...", { layoutQuery });
+    console.log("Loading window with layout ID...", { layoutId });
 
-    // Focus the window immediately
+    // Focus the window but don't set alwaysOnTop for fullscreen windows
+    // Fullscreen windows are already on top and alwaysOnTop interferes with Alt+Tab
     publishWindow.focus();
-    publishWindow.setAlwaysOnTop(true, "screen-saver");
 
     if (VITE_DEV_SERVER_URL) {
       await publishWindow.loadURL(
-        `${VITE_DEV_SERVER_URL}?layout=${layoutQuery}`
+        `${VITE_DEV_SERVER_URL}?layoutId=${layoutId}`
       );
     } else {
       await publishWindow.loadFile(indexHtml, {
-        query: { layout: layoutQuery },
+        query: { layoutId: layoutId },
       });
-    } // Handle window ready and closed events
+    }
+
+    // Handle window ready and closed events
     publishWindow.once("ready-to-show", () => {
       console.log("Published window ready, ensuring focus...");
-      publishWindow.setAlwaysOnTop(false); // Remove always on top after loading
+      // Force focus and bring to front
+      publishWindow.show();
       publishWindow.focus();
+      publishWindow.moveTop();
     });
 
     publishWindow.webContents.once("did-finish-load", () => {
       console.log("Published window content loaded");
+
+      // Additional focus insurance after content loads
+      setTimeout(() => {
+        if (!publishWindow.isDestroyed()) {
+          publishWindow.focus();
+          publishWindow.moveTop();
+          console.log("🎯 Published window focused after content load");
+        }
+      }, 500);
+
+      // Add keyboard shortcuts for better window management
+      publishWindow.webContents.on("before-input-event", (event, input) => {
+        // Alt+Tab should work normally (don't prevent it)
+        // Escape key to exit fullscreen
+        if (input.key === "Escape" && input.type === "keyDown") {
+          console.log("Escape pressed, exiting fullscreen...");
+          publishWindow.setFullScreen(false);
+        }
+
+        // Alt+F4 to close window
+        if (input.key === "F4" && input.alt && input.type === "keyDown") {
+          console.log("Alt+F4 pressed, closing published window...");
+          publishWindow.close();
+        }
+
+        // Windows key + M to minimize
+        if (input.key === "Meta" && input.type === "keyDown") {
+          console.log("Windows key pressed, allowing system shortcuts...");
+          // Don't prevent system shortcuts
+        }
+      });
+    });
+
+    // Handle focus events to ensure Alt+Tab works properly
+    publishWindow.on("blur", () => {
+      console.log("Published window lost focus - Alt+Tab should work");
+      // Don't force focus back, allow user to switch windows
+    });
+
+    publishWindow.on("focus", () => {
+      console.log("Published window gained focus");
     });
 
     // Handle window closed
     publishWindow.on("closed", () => {
       console.log("Published layout window closed");
+      // Clean up stored layout data
+      publishedLayoutData.delete(layoutId);
       // Remove from tracking array
-      publishedWindows = publishedWindows.filter(w => w !== publishWindow);
+      publishedWindows = publishedWindows.filter((w) => w !== publishWindow);
     });
 
     // Add to tracking array
@@ -548,3 +611,114 @@ ipcMain.handle(
     }
   }
 );
+
+// Preset storage functionality
+interface SavedPreset {
+  id: string;
+  name: string;
+  windowCount: number;
+  createdAt: string;
+  windows: Array<{
+    id: string; // window-0, window-1, etc. (from windowMapper)
+    name: string; // Full window title
+    app: string; // Extracted app name (e.g., "Code", "Chrome")
+    sourceId?: string; // Original desktopCapturer source ID
+    handle?: number; // Window handle
+  }>;
+}
+
+const getPresetsFilePath = () => {
+  const userDataPath = app.getPath("userData");
+  return path.join(userDataPath, "presets.json");
+};
+
+// Save preset to file
+ipcMain.handle("save-preset", async (event, preset: SavedPreset) => {
+  try {
+    const presetsFile = getPresetsFilePath();
+    let presets: SavedPreset[] = [];
+
+    // Load existing presets
+    try {
+      const data = await fs.readFile(presetsFile, "utf-8");
+      presets = JSON.parse(data);
+    } catch (error) {
+      // File doesn't exist or is invalid, start with empty array
+      console.log("Starting with new presets file");
+    }
+
+    // Check if preset with same ID already exists
+    const existingIndex = presets.findIndex((p) => p.id === preset.id);
+    if (existingIndex >= 0) {
+      // Replace existing preset
+      presets[existingIndex] = preset;
+    } else {
+      // Add new preset
+      presets.push(preset);
+    }
+
+    // Save back to file
+    await fs.writeFile(presetsFile, JSON.stringify(presets, null, 2), "utf-8");
+
+    console.log(`Preset "${preset.name}" saved successfully`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to save preset:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+// Load presets from file
+ipcMain.handle("load-presets", async () => {
+  try {
+    const presetsFile = getPresetsFilePath();
+    const data = await fs.readFile(presetsFile, "utf-8");
+    const presets: SavedPreset[] = JSON.parse(data);
+
+    console.log(`Loaded ${presets.length} presets from storage`);
+    return { success: true, presets };
+  } catch (error) {
+    // File doesn't exist or is invalid
+    console.log("No presets file found, returning empty array");
+    return { success: true, presets: [] };
+  }
+});
+
+// Delete preset from file
+ipcMain.handle("delete-preset", async (event, presetId: string) => {
+  try {
+    const presetsFile = getPresetsFilePath();
+    let presets: SavedPreset[] = [];
+
+    // Load existing presets
+    try {
+      const data = await fs.readFile(presetsFile, "utf-8");
+      presets = JSON.parse(data);
+    } catch (error) {
+      return { success: false, error: "No presets file found" };
+    }
+
+    // Filter out the preset to delete
+    const initialLength = presets.length;
+    presets = presets.filter((p) => p.id !== presetId);
+
+    if (presets.length === initialLength) {
+      return { success: false, error: "Preset not found" };
+    }
+
+    // Save back to file
+    await fs.writeFile(presetsFile, JSON.stringify(presets, null, 2), "utf-8");
+
+    console.log(`Preset "${presetId}" deleted successfully`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete preset:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
