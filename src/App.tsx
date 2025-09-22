@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ThemeManager } from "./utils/theme";
+import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { PublishedLayout } from "./components/dashboard/PublishedLayout";
@@ -145,10 +146,12 @@ function App() {
   };
 
   return (
-    <div className="app no-scrollbar">
-      {renderScreen()}
-      <SecretTerminal />
-    </div>
+    <ThemeProvider>
+      <div className="app no-scrollbar">
+        {renderScreen()}
+        <SecretTerminal />
+      </div>
+    </ThemeProvider>
   );
 }
 

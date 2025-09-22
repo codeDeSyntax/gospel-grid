@@ -1,0 +1,248 @@
+/* Theme Configuration */
+/* Base theme variables using CSS custom properties */
+
+:root {
+  /* Default theme: Cosmic Blue */
+  --theme-primary-50: 239 246 255;
+  --theme-primary-100: 219 234 254;
+  --theme-primary-200: 191 219 254;
+  --theme-primary-300: 147 197 253;
+  --theme-primary-400: 96 165 250;
+  --theme-primary-500: 59 130 246;
+  --theme-primary-600: 37 99 235;
+  --theme-primary-700: 29 78 216;
+  --theme-primary-800: 30 64 175;
+  --theme-primary-900: 30 58 138;
+  --theme-primary-950: 23 37 84;
+
+  /* Accent colors for current theme */
+  --theme-accent-light: 96 165 250;
+  --theme-accent-medium: 59 130 246;
+  --theme-accent-dark: 37 99 235;
+
+  /* Background gradient colors */
+  --theme-bg-gradient-1: 59 130 246;
+  --theme-bg-gradient-2: 37 99 235;
+  --theme-bg-gradient-3: 29 78 216;
+  --theme-bg-gradient-4: 23 37 84;
+}
+
+/* Cosmic Blue Theme (Default) */
+[data-color-theme="cosmic-blue"] {
+  --theme-primary-50: 239 246 255;
+  --theme-primary-100: 219 234 254;
+  --theme-primary-200: 191 219 254;
+  --theme-primary-300: 147 197 253;
+  --theme-primary-400: 96 165 250;
+  --theme-primary-500: 59 130 246;
+  --theme-primary-600: 37 99 235;
+  --theme-primary-700: 29 78 216;
+  --theme-primary-800: 30 64 175;
+  --theme-primary-900: 30 58 138;
+  --theme-primary-950: 23 37 84;
+
+  --theme-accent-light: 96 165 250;
+  --theme-accent-medium: 59 130 246;
+  --theme-accent-dark: 37 99 235;
+
+  --theme-bg-gradient-1: 59 130 246;
+  --theme-bg-gradient-2: 37 99 235;
+  --theme-bg-gradient-3: 29 78 216;
+  --theme-bg-gradient-4: 23 37 84;
+}
+
+/* Matrix Green Theme */
+[data-color-theme="matrix-green"] {
+  --theme-primary-50: 240 253 244;
+  --theme-primary-100: 220 252 231;
+  --theme-primary-200: 187 247 208;
+  --theme-primary-300: 134 239 172;
+  --theme-primary-400: 74 222 128;
+  --theme-primary-500: 34 197 94;
+  --theme-primary-600: 22 163 74;
+  --theme-primary-700: 21 128 61;
+  --theme-primary-800: 22 101 52;
+  --theme-primary-900: 20 83 45;
+  --theme-primary-950: 5 46 22;
+
+  --theme-accent-light: 74 222 128;
+  --theme-accent-medium: 34 197 94;
+  --theme-accent-dark: 22 163 74;
+
+  --theme-bg-gradient-1: 34 197 94;
+  --theme-bg-gradient-2: 22 163 74;
+  --theme-bg-gradient-3: 21 128 61;
+  --theme-bg-gradient-4: 5 46 22;
+}
+
+/* Fire Red Theme */
+[data-color-theme="fire-red"] {
+  --theme-primary-50: 254 242 242;
+  --theme-primary-100: 254 226 226;
+  --theme-primary-200: 254 202 202;
+  --theme-primary-300: 252 165 165;
+  --theme-primary-400: 248 113 113;
+  --theme-primary-500: 239 68 68;
+  --theme-primary-600: 220 38 38;
+  --theme-primary-700: 185 28 28;
+  --theme-primary-800: 153 27 27;
+  --theme-primary-900: 127 29 29;
+  --theme-primary-950: 69 10 10;
+
+  --theme-accent-light: 248 113 113;
+  --theme-accent-medium: 239 68 68;
+  --theme-accent-dark: 220 38 38;
+
+  --theme-bg-gradient-1: 239 68 68;
+  --theme-bg-gradient-2: 220 38 38;
+  --theme-bg-gradient-3: 185 28 28;
+  --theme-bg-gradient-4: 69 10 10;
+}
+
+/* Steel Gray Theme */
+[data-color-theme="steel-gray"] {
+  --theme-primary-50: 248 250 252;
+  --theme-primary-100: 241 245 249;
+  --theme-primary-200: 226 232 240;
+  --theme-primary-300: 203 213 225;
+  --theme-primary-400: 148 163 184;
+  --theme-primary-500: 100 116 139;
+  --theme-primary-600: 71 85 105;
+  --theme-primary-700: 51 65 85;
+  --theme-primary-800: 30 41 59;
+  --theme-primary-900: 15 23 42;
+  --theme-primary-950: 2 6 23;
+
+  --theme-accent-light: 148 163 184;
+  --theme-accent-medium: 100 116 139;
+  --theme-accent-dark: 71 85 105;
+
+  --theme-bg-gradient-1: 100 116 139;
+  --theme-bg-gradient-2: 71 85 105;
+  --theme-bg-gradient-3: 51 65 85;
+  --theme-bg-gradient-4: 2 6 23;
+}
+
+/* Earth Brown Theme */
+[data-color-theme="earth-brown"] {
+  --theme-primary-50: 251 247 240;
+  --theme-primary-100: 245 237 224;
+  --theme-primary-200: 233 213 176;
+  --theme-primary-300: 214 181 120;
+  --theme-primary-400: 180 135 72;
+  --theme-primary-500: 146 109 58;
+  --theme-primary-600: 120 87 44;
+  --theme-primary-700: 101 69 37;
+  --theme-primary-800: 82 56 33;
+  --theme-primary-900: 69 46 29;
+  --theme-primary-950: 37 23 15;
+
+  --theme-accent-light: 180 135 72;
+  --theme-accent-medium: 146 109 58;
+  --theme-accent-dark: 120 87 44;
+
+  --theme-bg-gradient-1: 146 109 58;
+  --theme-bg-gradient-2: 120 87 44;
+  --theme-bg-gradient-3: 101 69 37;
+  --theme-bg-gradient-4: 37 23 15;
+}
+
+/* Utility classes for theme colors */
+.theme-primary-50 {
+  color: rgb(var(--theme-primary-50));
+}
+.theme-primary-100 {
+  color: rgb(var(--theme-primary-100));
+}
+.theme-primary-200 {
+  color: rgb(var(--theme-primary-200));
+}
+.theme-primary-300 {
+  color: rgb(var(--theme-primary-300));
+}
+.theme-primary-400 {
+  color: rgb(var(--theme-primary-400));
+}
+.theme-primary-500 {
+  color: rgb(var(--theme-primary-500));
+}
+.theme-primary-600 {
+  color: rgb(var(--theme-primary-600));
+}
+.theme-primary-700 {
+  color: rgb(var(--theme-primary-700));
+}
+.theme-primary-800 {
+  color: rgb(var(--theme-primary-800));
+}
+.theme-primary-900 {
+  color: rgb(var(--theme-primary-900));
+}
+.theme-primary-950 {
+  color: rgb(var(--theme-primary-950));
+}
+
+.bg-theme-primary-50 {
+  background-color: rgb(var(--theme-primary-50));
+}
+.bg-theme-primary-100 {
+  background-color: rgb(var(--theme-primary-100));
+}
+.bg-theme-primary-200 {
+  background-color: rgb(var(--theme-primary-200));
+}
+.bg-theme-primary-300 {
+  background-color: rgb(var(--theme-primary-300));
+}
+.bg-theme-primary-400 {
+  background-color: rgb(var(--theme-primary-400));
+}
+.bg-theme-primary-500 {
+  background-color: rgb(var(--theme-primary-500));
+}
+.bg-theme-primary-600 {
+  background-color: rgb(var(--theme-primary-600));
+}
+.bg-theme-primary-700 {
+  background-color: rgb(var(--theme-primary-700));
+}
+.bg-theme-primary-800 {
+  background-color: rgb(var(--theme-primary-800));
+}
+.bg-theme-primary-900 {
+  background-color: rgb(var(--theme-primary-900));
+}
+.bg-theme-primary-950 {
+  background-color: rgb(var(--theme-primary-950));
+}
+
+.border-theme-primary-400 {
+  border-color: rgb(var(--theme-primary-400));
+}
+.border-theme-primary-500 {
+  border-color: rgb(var(--theme-primary-500));
+}
+.border-theme-primary-600 {
+  border-color: rgb(var(--theme-primary-600));
+}
+
+/* Background gradient utilities */
+.bg-theme-gradient-radial {
+  background: radial-gradient(
+    ellipse 50% 35% at 15% 85%,
+    rgba(var(--theme-bg-gradient-1), 0.8) 0%,
+    rgba(var(--theme-bg-gradient-2), 0.6) 30%,
+    rgba(var(--theme-bg-gradient-3), 0.4) 60%,
+    rgba(var(--theme-bg-gradient-4), 0.2) 80%,
+    transparent 100%
+  );
+}
+
+.bg-theme-card {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--theme-primary-900), 0.8),
+    rgba(148, 163, 184, 0.7),
+    rgba(var(--theme-primary-800), 0.8)
+  );
+}

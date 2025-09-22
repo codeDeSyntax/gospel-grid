@@ -167,8 +167,8 @@ export function OptimizedThumbnailGrid({
           transition-all duration-200
           ${
             window.isSelected
-              ? "border-blue-500 scale-105"
-              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+              ? "border-theme-primary-500 scale-105"
+              : "border-stone-300 dark:border-stone-600 hover:border-stone-400 dark:hover:border-stone-500"
           }
           ${failedThumbnails.has(window.id) ? "opacity-50" : ""}
         `}
@@ -227,7 +227,7 @@ export function OptimizedThumbnailGrid({
           {/* Selection indicator */}
           {window.isSelected && (
             <div className="absolute top-1 right-1">
-              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+              <div className="w-4 h-4 bg-theme-primary-500 rounded-full flex items-center justify-center">
                 <svg
                   className="w-3 h-3 text-white"
                   fill="currentColor"
@@ -246,7 +246,7 @@ export function OptimizedThumbnailGrid({
           {/* Loading indicator */}
           {!loadedThumbnails[window.id] && !failedThumbnails.has(window.id) && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-theme-primary-500"></div>
             </div>
           )}
 
@@ -258,12 +258,12 @@ export function OptimizedThumbnailGrid({
               </span>
             )}
             {window.isMaximized && (
-              <span className="px-1 py-0.5 bg-green-500 text-white text-xs rounded">
+              <span className="px-1 py-0.5 bg-emerald-500 text-white text-xs rounded">
                 MAX
               </span>
             )}
             {!window.isVisible && (
-              <span className="px-1 py-0.5 bg-gray-500 text-white text-xs rounded">
+              <span className="px-1 py-0.5 bg-stone-500 text-white text-xs rounded">
                 HID
               </span>
             )}
@@ -389,7 +389,9 @@ export function OptimizedThumbnailGrid({
 
       default:
         return (
-          <div className="text-center text-gray-500">No windows to display</div>
+          <div className="text-center text-stone-500">
+            No windows to display
+          </div>
         );
     }
   };
@@ -432,7 +434,9 @@ export function OptimizedThumbnailGrid({
     return (
       <CosmicGridBackground
         className={`${className} flex items-center justify-center min-h-[200px] border-2 border-dashed transition-colors duration-200 ${
-          isDragOver ? "border-blue-400 bg-blue-500/10" : "border-gray-600/30"
+          isDragOver
+            ? "border-theme-primary-400 bg-theme-primary-500/10"
+            : "border-stone-600/30"
         }`}
       >
         <div
@@ -442,12 +446,12 @@ export function OptimizedThumbnailGrid({
           className="w-full h-full flex items-center justify-center"
         >
           <div className="text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-2">
+            <p className="text-stone-500 dark:text-stone-400 mb-2">
               {isDragOver
                 ? "Drop window here to add to layout"
                 : "No windows in layout"}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-500">
+            <p className="text-sm text-stone-600 dark:text-stone-500">
               Drag windows from the left panel to add them
             </p>
           </div>
@@ -459,7 +463,7 @@ export function OptimizedThumbnailGrid({
   return (
     <CosmicGridBackground
       className={`${className} overflow-hidden transition-all duration-200 ${
-        isDragOver ? "ring-2 ring-blue-400 ring-opacity-50" : ""
+        isDragOver ? "ring-2 ring-theme-primary-400 ring-opacity-50" : ""
       }`}
     >
       <div
@@ -469,8 +473,8 @@ export function OptimizedThumbnailGrid({
         onDrop={handleDrop}
       >
         {isDragOver && (
-          <div className="absolute inset-0 bg-blue-500/10 backdrop-blur-sm z-10 flex items-center justify-center">
-            <div className="text-blue-400 text-lg font-medium">
+          <div className="absolute inset-0 bg-theme-primary-500/10 backdrop-blur-sm z-10 flex items-center justify-center">
+            <div className="text-theme-primary-400 text-lg font-medium">
               Drop window to add to layout
             </div>
           </div>

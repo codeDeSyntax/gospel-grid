@@ -56,10 +56,10 @@ const NotificationModalComponent = () => {
     },
     question: {
       icon: AlertCircle,
-      bgColor: "from-purple-500/10 via-violet-500/5 to-purple-600/10",
-      borderColor: "border-purple-500/30",
-      iconColor: "text-purple-400",
-      titleColor: "text-purple-100",
+      bgColor: "from-blue-500/10 via-indigo-500/5 to-blue-600/10",
+      borderColor: "border-blue-500/30",
+      iconColor: "text-blue-400",
+      titleColor: "text-blue-100",
     },
   };
 
@@ -255,7 +255,7 @@ const NotificationModalComponent = () => {
                       duration: notification.autoClose / 1000,
                       ease: "linear",
                     }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
                     onAnimationComplete={() => handleClose(id, "dismiss")}
                   />
                 </div>

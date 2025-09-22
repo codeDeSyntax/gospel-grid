@@ -100,14 +100,14 @@ export const WindowList: React.FC<WindowListProps> = ({
     <div className="h-full flex flex-col">
       {/* Fixed Header Section */}
       <div className="flex-shrink-0 mb-4">
-        <h3 className="text-base font-semibold text-blue-200 mb-4 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-theme-primary-200 mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MdMonitor size={18} />
             <span>Available Windows</span>
             {isLoading && (
               <AiOutlineLoading3Quarters
                 size={14}
-                className="animate-spin text-blue-400"
+                className="animate-spin text-theme-primary-400"
               />
             )}
           </div>
@@ -122,7 +122,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                   size={24}
                   isLoading={isLoading}
                 />
-                {/* <span className="text-xs text-slate-400">
+                {/* <span className="text-xs text-stone-400">
                   {countdownTime}s
                 </span> */}
               </div>
@@ -130,7 +130,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             {onManualRefresh && (
               <button
                 onClick={onManualRefresh}
-                className=" rounded-lg bg-transparent hover:scale-105 cursor-pointer hover:rotate-45 duration-100  border border-slate-600/40 text-slate-400 hover:text-blue-400 hover:border-blue-500/50 transition-all"
+                className=" rounded-lg bg-transparent hover:scale-105 cursor-pointer hover:rotate-45 duration-100  border border-stone-600/40 text-stone-400 hover:text-theme-primary-400 hover:border-theme-primary-500/50 transition-all"
                 title="Refresh now"
               >
                 <MdRefresh size={24} />
@@ -145,14 +145,14 @@ export const WindowList: React.FC<WindowListProps> = ({
           <div className="relative">
             <MdSearch
               size={16}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 transform -transtone-y-1/2 text-stone-400"
             />
             <input
               type="text"
               placeholder="Search windows..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600/40 rounded-lg text-white placeholder-slate-400 focus:border-blue-500/50 focus:outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-2 bg-stone-800/50 border border-stone-600/40 rounded-lg text-white placeholder-stone-400 focus:border-theme-primary-500/50 focus:outline-none transition-colors"
             />
           </div>
 
@@ -161,8 +161,8 @@ export const WindowList: React.FC<WindowListProps> = ({
             onClick={() => setShowOnlyVisible(!showOnlyVisible)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
               showOnlyVisible
-                ? "bg-blue-500/20 border border-blue-500/30 text-blue-200"
-                : "bg-slate-800/30 border border-slate-600/30 text-slate-400 hover:text-white"
+                ? "bg-theme-primary-500/20 border border-theme-primary-500/30 text-theme-primary-200"
+                : "bg-stone-800/30 border border-stone-600/30 text-stone-400 hover:text-white"
             }`}
           >
             <MdFilterList size={14} />
@@ -181,19 +181,19 @@ export const WindowList: React.FC<WindowListProps> = ({
       {/* Scrollable Window List */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {filteredWindows.length === 0 && !isLoading ? (
-          <div className="text-center py-8 text-slate-400">
+          <div className="text-center py-8 text-stone-400">
             <MdMonitor size={48} className="mx-auto mb-3 opacity-50" />
             {searchTerm || !showOnlyVisible ? (
               <>
                 <p className="text-sm">No windows match your filters</p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-stone-500 mt-1">
                   Try adjusting your search or filter settings
                 </p>
               </>
             ) : (
               <>
                 <p className="text-sm">No windows available</p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-stone-500 mt-1">
                   Open some applications to see them here
                 </p>
               </>
@@ -238,7 +238,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                   }}
                   className={`
                     relative overflow-hidden transition-all duration-500 
-                    flex items-center gap-3 pl-8 pr-8 py-2 rounded-2xl group hover:scale-[1.02] hover:-translate-y-1
+                    flex items-center gap-3 pl-8 pr-8 py-2 rounded-2xl group hover:scale-[1.02] hover:-transtone-y-1
                     cursor-pointer
                     ${
                       draggedWindow?.id === window.id
@@ -248,15 +248,15 @@ export const WindowList: React.FC<WindowListProps> = ({
                     ${
                       window.isSelected
                         ? `
-                          bg-gradient-to-br from-blue-500/30 via-purple-500/20 to-blue-500/30
-                          border border-blue-400/50 shadow shadow-blue-500/25
+                          bg-gradient-to-br from-theme-primary-500/30 via-theme-primary-500/20 to-theme-primary-500/30
+                          border border-theme-primary-400/50 shadow shadow-theme-primary-500/25
                           backdrop-blur-lg before:absolute before:inset-0 
                           before:bg-gradient-to-br before:from-white/10 before:to-transparent before:rounded-2xl
                         `
                         : `
                           
-                          border border-slate-600/30 hover:border-blue-400/40
-                          backdrop-blur-md bg-gradient-to-br from-blue-900/20 via-purple-800/15 to-slate-700/25
+                          border border-solid  border-theme-primary-200/10 hover:border-theme-primary-400/40
+                          backdrop-blur-md bg-gradient-to-br from-theme-primary-900/20 via-theme-primary-800/15 to-stone-700/25
                         
                           before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent 
                           before:rounded-2xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
@@ -290,7 +290,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                       cursor-grab active:cursor-grabbing
                       transition-all duration-200
                       hover:bg-white/10 active:bg-white/20
-                      border-r border-slate-600/30 hover:border-blue-400/50
+                      border-r border-stone-600/30 hover:border-theme-primary-400/50
                       backdrop-blur-sm
                       ${
                         draggedWindow?.id === window.id
@@ -303,16 +303,16 @@ export const WindowList: React.FC<WindowListProps> = ({
                     {/* Dotted grip icon */}
                     <div className="flex flex-col gap-0.5 opacity-60 hover:opacity-100 transition-opacity">
                       <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
                       </div>
                       <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
                       </div>
                       <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
-                        <div className="w-1 h-1 bg-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
+                        <div className="w-1 h-1 bg-theme-primary-300 rounded-full"></div>
                       </div>
                     </div>
                   </div>
@@ -322,7 +322,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                     className="
                     absolute inset-0 opacity-0 group-hover:opacity-100
                     bg-gradient-to-r from-transparent via-white/10 to-transparent
-                    transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] 
+                    transform -skew-x-12 transtone-x-[-100%] group-hover:transtone-x-[200%] 
                     transition-all duration-1000 ease-out
                   "
                   />
@@ -334,8 +334,8 @@ export const WindowList: React.FC<WindowListProps> = ({
                     absolute inset-0 rounded-lg bg-gradient-to-br opacity-20 group-hover:opacity-40 transition-opacity duration-300
                     ${
                       window.isSelected
-                        ? "from-blue-400 to-purple-500"
-                        : "from-slate-500 to-slate-600"
+                        ? "from-theme-primary-400 to-theme-primary-500"
+                        : "from-stone-500 to-stone-600"
                     }
                   `}
                     />
@@ -391,7 +391,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                         </span>
                       )}
                       {window.processId && (
-                        <span className="text-slate-300 text-xs opacity-70">
+                        <span className="text-stone-300 text-xs opacity-70">
                           PID: {window.processId}
                         </span>
                       )}
@@ -410,13 +410,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                     </div>
 
                     {/* Window Title/Description - Small at bottom */}
-                    <div className="text-xs text-slate-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="text-xs text-stone-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                       {window.name}
                     </div>
 
                     {/* Window Dimensions (if available) */}
                     {window.bounds && (
-                      <div className="text-xs text-slate-400 mt-1 opacity-60">
+                      <div className="text-xs text-stone-400 mt-1 opacity-60">
                         {window.bounds.width}×{window.bounds.height}
                       </div>
                     )}
@@ -428,11 +428,11 @@ export const WindowList: React.FC<WindowListProps> = ({
                       absolute right-0 top-0 w-6 h-full 
                       flex items-center justify-center
                       transition-all duration-200
-                      border-l border-slate-600/30 hover:border-blue-400/50
+                      border-l border-stone-600/30 hover:border-theme-primary-400/50
                       backdrop-blur-sm
                       ${
                         window.isSelected
-                          ? "opacity-100 bg-blue-500/20 hover:bg-blue-500/30"
+                          ? "opacity-100 bg-theme-primary-500/20 hover:bg-theme-primary-500/30"
                           : "opacity-0 group-hover:opacity-100 hover:bg-white/10"
                       }
                     `}
@@ -447,8 +447,8 @@ export const WindowList: React.FC<WindowListProps> = ({
                         transition-all duration-200
                         ${
                           window.isSelected
-                            ? " hover:bg-blue-400 text-white scale-100"
-                            : " hover:bg-blue-500 text-white hover:scale-110"
+                            ? " hover:bg-theme-primary-400 text-white scale-100"
+                            : " hover:bg-theme-primary-500 text-white hover:scale-110"
                         }
                       `}
                       title={

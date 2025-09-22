@@ -54,20 +54,20 @@ export const GridTile: React.FC<GridTileProps> = ({
     <div
       className={`backdrop-blur-md bg-slate-800/40 border rounded-2xl overflow-hidden relative transition-all duration-300 flex flex-col hover:scale-105 ${
         isFocused
-          ? "border-blue-400/60 shadow-xl shadow-blue-500/25 bg-slate-700/50"
-          : "border-slate-600/40 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10"
+          ? "border-theme-primary-400/60 shadow-xl shadow-theme-primary-500/25 bg-slate-700/50"
+          : "border-slate-600/40 hover:border-theme-primary-500/50 hover:shadow-xl hover:shadow-theme-primary-500/10"
       }`}
     >
       {/* Tile Header */}
       <div className="backdrop-blur-md bg-slate-900/60 px-4 py-3 border-b border-slate-600/30 flex justify-between items-center">
-        <div className="text-sm font-semibold text-blue-200 truncate">
+        <div className="text-sm font-semibold text-theme-primary-200 truncate">
           {window.name}
         </div>
 
         <div className="flex gap-1">
           <button
             onClick={onFocus}
-            className="text-blue-300/70 hover:text-blue-200 hover:bg-slate-700/50 px-2 py-1 rounded-lg text-xs transition-all duration-200 backdrop-blur-sm"
+            className="text-theme-primary-300/70 hover:text-theme-primary-200 hover:bg-slate-700/50 px-2 py-1 rounded-lg text-xs transition-all duration-200 backdrop-blur-sm"
             title={isFocused ? "Unfocus" : "Focus"}
           >
             🎯
@@ -86,10 +86,12 @@ export const GridTile: React.FC<GridTileProps> = ({
       <div className="flex-1 relative overflow-hidden">
         {isLoading ? (
           <div className="h-full flex items-center justify-center backdrop-blur-sm bg-slate-900/20">
-            <div className="text-center text-blue-200/60">
+            <div className="text-center text-theme-primary-200/60">
               <div className="text-4xl mb-4 opacity-30">📺</div>
               <div className="text-sm mb-1">Live capture from:</div>
-              <div className="font-semibold text-blue-100">{window.app}</div>
+              <div className="font-semibold text-theme-primary-100">
+                {window.app}
+              </div>
             </div>
           </div>
         ) : (
@@ -100,7 +102,7 @@ export const GridTile: React.FC<GridTileProps> = ({
             }}
           >
             {/* Cosmic overlay effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-theme-primary-500/5 via-transparent to-theme-primary-600/5" />
 
             <div className="relative z-10 text-center">
               <div className="text-5xl mb-4 opacity-80 drop-shadow-lg">
@@ -109,7 +111,7 @@ export const GridTile: React.FC<GridTileProps> = ({
               <div className="font-semibold text-white text-lg mb-2 drop-shadow-md">
                 {window.name}
               </div>
-              <div className="text-sm text-blue-200/90 flex items-center justify-center gap-2">
+              <div className="text-sm text-theme-primary-200/90 flex items-center justify-center gap-2">
                 <span className="inline-block w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse shadow-lg shadow-red-400/50"></span>
                 <span className="font-medium">LIVE</span>
               </div>

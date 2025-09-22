@@ -3,7 +3,7 @@ import { X, Minus, Maximize2 } from "lucide-react";
 import { WindowList, type WindowInfo } from "./WindowList";
 import { PresetsList, type PresetInfo } from "./PresetsList";
 import { CosmicBackground } from "./CosmicBackground";
-import { RightPanel } from "./RightPanel";
+import { RightPanel } from "./RightPanel/RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
@@ -457,8 +457,8 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Container with rounded corners - 95% height */}
-      <div className="relative z-10 h-[95%] w-full backdrop-blur-sm bg-slate-900/20 border-1 border-primary-600  border-dashed rounded-3xl flex overflow-hidden">
-        <div className="w-80 bg-slate-900/60 backdrop-blur-sm border-r border-slate-600/30 py-6 px-4 flex flex-col overflow-hidden">
+      <div className="relative z-10 h-[95%] w-full backdrop-blur-sm bg-theme-primary-900/20 border-1 border-theme-primary-600  border-dashed rounded-3xl flex overflow-hidden">
+        <div className="w-80 bg-theme-pimary-900/60 backdrop-blur-sm border-r border-theme-primary-600/30 py-6 px-4 flex flex-col overflow-hidden">
           <WindowList
             windows={state.windows}
             onWindowSelect={handleWindowSelect}
@@ -503,8 +503,8 @@ export const Dashboard: React.FC = () => {
 
       {/* Live Mode Badge */}
       {state.windows.length > 0 ? (
-        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-blue-400 text-white px-4 py-2 rounded-full text-sm font-bold border border-blue-400/30 shadow-lg shadow-blue-500/25 z-20 flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-theme-primary-400 text-white px-4 py-2 rounded-full text-sm font-bold border border-theme-primary-400/30 shadow-lg shadow-theme-primary-500/25 z-20 flex items-center gap-2">
+          <div className="w-2 h-2 bg-theme-primary-400 rounded-full animate-pulse"></div>
           LIVE MODE - {state.windows.length} windows detected
         </div>
       ) : isLoadingWindows ? (
@@ -513,7 +513,7 @@ export const Dashboard: React.FC = () => {
           Loading windows...
         </div>
       ) : (
-        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-blue-600/80 text-white px-4 py-2 rounded-full text-sm font-bold border border-blue-400/30 shadow-lg shadow-blue-500/25 z-20">
+        <div className="fixed bottom-6 right-6 backdrop-blur-md bg-theme-primary-600/80 text-white px-4 py-2 rounded-full text-sm font-bold border border-theme-primary-400/30 shadow-lg shadow-theme-primary-500/25 z-20">
           DEMO MODE - No windows detected
         </div>
       )}
@@ -531,7 +531,7 @@ export const Dashboard: React.FC = () => {
             })
           );
         }}
-        className="fixed bottom-6 left-6 bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors z-20"
+        className="fixed bottom-6 left-6 bg-theme-primary-600 hover:bg-theme-primary-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors z-20"
       >
         Test Notification
       </button>
