@@ -2,7 +2,7 @@ import React from "react";
 import { X, Minus, Maximize2 } from "lucide-react";
 import { ScreenAggregationMockup } from "./components/ScreenAggregationMockup";
 import { useWindowControls } from "@/hooks/useWindowControls";
-import MeshBackground from './components/MeshBackground';
+import MeshBackground from "./components/MeshBackground";
 
 interface WelcomeProps {
   onGetStarted: () => void;
@@ -12,7 +12,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
   const { minimize, maximize, close } = useWindowControls();
 
   return (
-    <div className="h-screen bg-background-primary text-text-primary relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-b from-stone-900 via-theme-primary-900/20 to-stone-800 text-white relative overflow-hidden">
       {/* Mesh background */}
       <MeshBackground intensity="medium" />
 
@@ -66,59 +66,59 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
             <div className="relative w-full">
               <ScreenAggregationMockup />
 
-              {/* Decorative elements */}
-              <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-br from-primary-500/20 to-primary-700/20 rounded-full blur-xl animate-pulse"></div>
+              {/* Decorative elements with theme colors */}
+              <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-br from-theme-primary-500/20 to-theme-primary-700/20 rounded-full blur-xl animate-pulse"></div>
               <div
-                className="absolute bottom-1/4 -right-8 w-20 h-20 bg-gradient-to-br from-accent-blue/20 to-primary-500/20 rounded-full blur-xl animate-pulse"
+                className="absolute bottom-1/4 -right-8 w-20 h-20 bg-gradient-to-br from-theme-primary-400/20 to-theme-primary-500/20 rounded-full blur-xl animate-pulse"
                 style={{ animationDelay: "1s" }}
               ></div>
             </div>
 
             {/* Compact text content */}
             <div className="max-w-3xl space-y-4">
-              {/* Main headline - now normal text */}
+              {/* Main headline - now themed */}
               <div className="space-y-2">
-                <p className="text-lg lg:text-xl text-text-primary leading-relaxed">
+                <p className="text-lg lg:text-xl text-white leading-relaxed">
                   A tool for{" "}
-                  <span className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent font-semibold">
+                  <span className="bg-gradient-to-r from-theme-primary-500 to-theme-primary-700 bg-clip-text text-transparent font-semibold">
                     aggregating multiple windows
                   </span>{" "}
                   in one place
                 </p>
-                <p className="text-sm lg:text-base text-text-secondary leading-relaxed">
+                <p className="text-sm lg:text-base text-theme-primary-200 leading-relaxed">
                   Unleash the unlimited potential of multi-window aggregation.
                   Input live applications and watch our dashboard turn them into
                   unified streaming visuals.
                 </p>
               </div>
 
-              {/* Feature badges */}
+              {/* Feature badges with theme styling */}
               <div className="flex flex-wrap justify-center gap-2">
-                <div className="inline-flex items-center gap-2 bg-surface-secondary/60 backdrop-blur border border-border-primary rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-accent-green rounded-full"></div>
-                  <span className="text-xs text-text-secondary">
+                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                  <span className="text-xs text-theme-primary-200">
                     Real-time Capture
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-surface-secondary/60 backdrop-blur border border-border-primary rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-accent-blue rounded-full"></div>
-                  <span className="text-xs text-text-secondary">
+                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-theme-primary-400 rounded-full"></div>
+                  <span className="text-xs text-theme-primary-200">
                     Smart Grid Layout
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-surface-secondary/60 backdrop-blur border border-border-primary rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
-                  <span className="text-xs text-text-secondary">
+                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-theme-primary-500 rounded-full"></div>
+                  <span className="text-xs text-theme-primary-200">
                     No Installation
                   </span>
                 </div>
               </div>
 
-              {/* CTA Button */}
+              {/* CTA Button with theme styling */}
               <div className="space-y-2">
                 <button
                   onClick={onGetStarted}
-                  className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-medium py-2.5 px-5 rounded-full shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
+                  className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-theme-primary-600 to-theme-primary-700 hover:from-theme-primary-700 hover:to-theme-primary-800 text-white font-medium py-2.5 px-5 rounded-full shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
                 >
                   <span className="relative z-10 text-sm">Get started</span>
                   <svg
@@ -139,7 +139,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
                 </button>
 
-                <p className="text-xs text-text-tertiary">
+                <p className="text-xs text-theme-primary-300">
                   No credit card required
                 </p>
               </div>

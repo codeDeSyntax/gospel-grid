@@ -95,17 +95,29 @@ function App() {
     setCurrentScreen("welcome");
   };
 
+  const handleMinimizePublished = () => {
+    systemLogger.log(
+      "app",
+      "info",
+      "Published",
+      "⬇️ Minimizing published layout window via ESC key"
+    );
+    // Minimize this window and focus main window
+    if (window.windowControls) {
+      window.windowControls.minimize();
+    }
+  };
+
   const handleClosePublished = () => {
     systemLogger.log(
       "app",
       "info",
       "Published",
-      "⬇️ Minimizing published layout window"
+      "❌ Closing published layout window via close button"
     );
-    // Minimize this window instead of closing it
-    if (window.windowControls) {
-      window.windowControls.minimize();
-    }
+    // This handler is called before the window closes
+    // The actual window closing is handled by the useWindowControls hook in PublishedLayout
+    // We could add cleanup logic here if needed
   };
 
   const renderScreen = () => {
@@ -120,6 +132,7 @@ function App() {
             windows={publishedLayoutData.windows}
             layout={publishedLayoutData.layout}
             focusedWindowId={publishedLayoutData.focusedWindowId}
+            onMinimize={handleMinimizePublished}
             onClose={handleClosePublished}
           />
         ) : null;

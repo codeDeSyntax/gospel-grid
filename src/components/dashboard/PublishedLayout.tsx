@@ -1,24 +1,29 @@
 import React, { useEffect, useState, useRef } from "react";
 import { WindowInfo } from "./WindowList";
 import { LiveWindowGrid } from "./LiveWindowGrid";
+import { useWindowControls } from "@/hooks/useWindowControls";
+import { Minimize2, X } from "lucide-react";
 
 interface PublishedLayoutProps {
   windows: WindowInfo[];
   layout: string;
   focusedWindowId: string | null;
-  onClose: () => void;
+  onMinimize: () => void; // ESC key - minimize and focus main window
+  onClose: () => void; // Close button - close window and focus main window
 }
 
 export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
   windows,
   layout,
   focusedWindowId,
+  onMinimize,
   onClose,
 }) => {
   const [currentFocusedId, setCurrentFocusedId] = useState<string | null>(
     focusedWindowId
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const { close: closeWindow, minimize: minimizeWindow } = useWindowControls();
 
   // Focus the container when it mounts to ensure keyboard events are captured
   useEffect(() => {
@@ -27,13 +32,13 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
     }
   }, []);
 
-  // Handle escape key to minimize
+  // Handle escape key to minimize and focus main window
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        handleMinimizeButton(); // Use the same function as the minimize button
       }
     };
 
@@ -43,7 +48,19 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyPress, true);
     };
-  }, [onClose]);
+  }, [onMinimize]);
+
+  // Handle minimize button and ESC key - minimize and focus main window
+  const handleMinimizeButton = async () => {
+    onMinimize(); // Notify parent component
+    await minimizeWindow(); // Actually minimize this window (main process will focus main window)
+  };
+
+  // Handle close button - actually close the window
+  const handleCloseButton = async () => {
+    onClose(); // Notify parent component
+    await closeWindow(); // Actually close this window (main process will focus main window)
+  };
 
   return (
     <div
@@ -51,14 +68,26 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
       className="fixed inset-0 bg-black text-white z-50 overflow-hidden focus:outline-none"
       tabIndex={-1}
     >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 bg-red-600 hover:bg-red-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-        title="Close Published Layout (Esc)"
-      >
-        ✕
-      </button>
+      {/* Window Controls */}
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {/* Minimize button */}
+        <button
+          onClick={handleMinimizeButton}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          title="Minimize Published Layout (ESC)"
+        >
+          <Minimize2 size={16} />
+        </button>
+
+        {/* Close button */}
+        <button
+          onClick={handleCloseButton}
+          className="bg-red-600 hover:bg-red-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          title="Close Published Layout"
+        >
+          <X size={16} />
+        </button>
+      </div>
 
       {/* Live Window Grid */}
       <LiveWindowGrid

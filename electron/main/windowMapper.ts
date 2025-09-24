@@ -52,13 +52,13 @@ export async function getWindowSourceMapping() {
       const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
 
       return {
-        sourceId: source.id,
+        sourceId: source.id, // Native desktopCapturer ID (e.g., "window:853982:0")
         title: source.name,
         index: index,
         windowHandle: windowHandle, // Add the actual window handle!
         hasIcon: !!source.appIcon, // Whether app icon is available
-        // Create a simple mapping ID
-        mappingId: `window-${index}`,
+        // Use the native source ID as the primary identifier instead of index
+        mappingId: source.id, // Use Electron's native ID for true uniqueness
         thumbnail: source.thumbnail,
         appIcon: source.appIcon, // Include the app icon
       };
@@ -78,7 +78,7 @@ export async function getWindowsWithThumbnails() {
     const sources = await getWindowSourceMapping();
 
     return sources.map((source) => ({
-      id: source.mappingId, // Use our mapping ID instead of process ID
+      id: source.sourceId, // Use Electron's native source ID for true uniqueness
       name: source.title, // UI expects 'name' property
       app: extractProcessName(source.title), // UI expects 'app' property
       handle: source.windowHandle, // Add the actual window handle

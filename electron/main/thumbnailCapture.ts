@@ -60,28 +60,16 @@ export async function captureWindowThumbnail(
     let targetSource = null;
     let windowTitle = "";
 
-    // If windowId is in our new format (window-0, window-1, etc.)
-    if (windowId.startsWith("window-")) {
-      const index = parseInt(windowId.split("-")[1]);
-      if (index >= 0 && index < sources.length) {
-        targetSource = sources[index];
-        windowTitle = targetSource.name;
-        // console.log(`Using window at index ${index}: "${windowTitle}"`);
-      }
-    }
-    // For any other format, just use the first available window as a fallback
-    else {
-      targetSource = sources.find(
-        (source) => source.thumbnail && !source.thumbnail.isEmpty()
-      );
-      if (targetSource) {
-        windowTitle = targetSource.name;
-        console.log(`Using first available window: "${windowTitle}"`);
-      }
-    }
-
-    if (!targetSource) {
+    // Find the window source by matching the native source ID directly
+    targetSource = sources.find((source) => source.id === windowId);
+    
+    if (targetSource) {
+      windowTitle = targetSource.name;
+      // console.log(`Found window source for ID ${windowId}: "${windowTitle}"`);
+    } else {
+      // Fallback: if no exact match, log available sources for debugging
       console.warn(`No window source found for ID: ${windowId}`);
+      console.warn(`Available source IDs:`, sources.map(s => s.id).slice(0, 5)); // Show first 5 for debugging
       return null;
     }
 

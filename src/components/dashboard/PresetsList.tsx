@@ -4,6 +4,14 @@ export interface PresetInfo {
   id: string;
   name: string;
   windowCount: number;
+  windows?: Array<{
+    id: string;
+    name: string;
+    app: string;
+    icon?: string;
+    hasNativeIcon?: boolean;
+  }>; // Actual saved window data with icons
+  requiredWindows?: string[]; // Keep for backward compatibility/mock data
 }
 
 interface PresetsListProps {
@@ -43,21 +51,29 @@ export const PresetsList: React.FC<PresetsListProps> = ({
   );
 };
 
-// Default mock presets for development
+// Default mock presets for development (kept for backward compatibility)
 export const mockPresets: PresetInfo[] = [
   {
     id: "sunday-service",
     name: "Sunday Service",
     windowCount: 4,
+    requiredWindows: [
+      "PowerPoint",
+      "Chrome",
+      "VLC Media Player",
+      "File Explorer",
+    ],
   },
   {
     id: "bible-study",
     name: "Bible Study",
     windowCount: 2,
+    requiredWindows: ["PowerPoint", "Logos Bible Software"],
   },
   {
     id: "worship",
     name: "Worship Only",
     windowCount: 3,
+    requiredWindows: ["VLC Media Player", "Chrome", "PowerPoint"],
   },
 ];

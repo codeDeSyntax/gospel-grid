@@ -21,6 +21,10 @@ interface AppState {
   colorTheme: ColorTheme;
   isLoading: boolean;
   error: string | null;
+  publishedQuality: {
+    contrast: number; // 0.5 to 2.0, default 1.3
+    brightness: number; // 0.5 to 2.0, default 1.5
+  };
 }
 
 const initialState: AppState = {
@@ -29,6 +33,10 @@ const initialState: AppState = {
   colorTheme: "cosmic-blue", // Default to current blue theme
   isLoading: false,
   error: null,
+  publishedQuality: {
+    contrast: 1.3, // Default values matching current hardcoded values
+    brightness: 1.5,
+  },
 };
 
 const appSlice = createSlice({
@@ -58,6 +66,31 @@ const appSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setPublishedContrast: (state, action: PayloadAction<number>) => {
+      state.publishedQuality.contrast = Math.min(
+        Math.max(action.payload, 0.5),
+        2.0
+      ); // Clamp between 0.5 and 2.0
+    },
+    setPublishedBrightness: (state, action: PayloadAction<number>) => {
+      state.publishedQuality.brightness = Math.min(
+        Math.max(action.payload, 0.5),
+        2.0
+      ); // Clamp between 0.5 and 2.0
+    },
+    setPublishedQuality: (
+      state,
+      action: PayloadAction<{ contrast: number; brightness: number }>
+    ) => {
+      state.publishedQuality.contrast = Math.min(
+        Math.max(action.payload.contrast, 0.5),
+        2.0
+      );
+      state.publishedQuality.brightness = Math.min(
+        Math.max(action.payload.brightness, 0.5),
+        2.0
+      );
+    },
   },
 });
 
@@ -68,5 +101,8 @@ export const {
   setLoading,
   setError,
   clearError,
+  setPublishedContrast,
+  setPublishedBrightness,
+  setPublishedQuality,
 } = appSlice.actions;
 export default appSlice.reducer;

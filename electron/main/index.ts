@@ -189,6 +189,16 @@ ipcMain.handle("window-maximize", (event) => {
 ipcMain.handle("window-close", (event) => {
   const currentWindow = BrowserWindow.fromWebContents(event.sender);
   if (currentWindow) {
+    // If this is a published window being closed, bring main window into focus
+    if (currentWindow !== win && win && !win.isDestroyed()) {
+      setTimeout(() => {
+        if (win && !win.isDestroyed()) {
+          win.focus();
+          win.show(); // Ensure main window is visible
+        }
+      }, 100); // Small delay to ensure close begins first
+    }
+
     currentWindow.close();
   }
 });
@@ -619,7 +629,7 @@ interface SavedPreset {
   windowCount: number;
   createdAt: string;
   windows: Array<{
-    id: string; // window-0, window-1, etc. (from windowMapper)
+    id: string; // Native desktopCapturer source ID (e.g., "window:853982:0")
     name: string; // Full window title
     app: string; // Extracted app name (e.g., "Code", "Chrome")
     sourceId?: string; // Original desktopCapturer source ID

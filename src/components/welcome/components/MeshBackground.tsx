@@ -18,70 +18,74 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`}>
       {/* Primarily dark base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background-primary via-background-secondary to-background-primary" />
+      {/* <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900" /> */}
 
       {/* Concentrated purple zones - MAXIMUM PROJECTION! */}
       {/* Bottom-right purple concentration - maximum intensity */}
-      <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gradient-to-tl from-primary-400/100 via-primary-300/95 to-primary-500/90" />
+      {/* <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gradient-to-tl from-theme-primary-400/100 via-theme-primary-300/95 to-theme-primary-500/90" /> */}
 
       {/* Top-left purple accent zone - amplified */}
-      <div className="absolute top-0 left-0 w-3/5 h-3/5 bg-gradient-to-br from-primary-300/95 via-primary-500/90 to-primary-600/85" />
+      {/* <div className="absolute top-0 left-0 w-3/5 h-3/5 bg-gradient-to-br from-theme-primary-300/95 via-theme-primary-500/90 to-theme-primary-600/85" /> */}
 
       {/* Center-right purple glow - ultra intense */}
-      <div className="absolute top-1/4 right-0 w-2/5 h-3/5 bg-gradient-to-l from-primary-200/100 via-primary-400/100 to-primary-500/95" />
+      {/* <div className="absolute top-1/4 right-0 w-2/5 h-3/5 bg-gradient-to-l from-theme-primary-200/100 via-theme-primary-400/100 to-theme-primary-500/95" /> */}
 
       {/* Small accent at bottom-left - maxed out */}
-      <div className="absolute bottom-0 left-0 w-1/3 h-2/5 bg-gradient-to-tr from-primary-500/100 to-primary-600/85" />
+      {/* <div className="absolute bottom-0 left-0 w-1/3 h-2/5 bg-gradient-to-tr from-theme-primary-500/100 to-theme-primary-600/85" /> */}
 
       {/* Additional purple overlay for extra projection */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-400/20 via-transparent to-primary-300/25" />
+      {/* <div className="absolute inset-0 bg-gradient-to-br from-theme-primary-400/20 via-transparent to-theme-primary-300/25" /> */}
 
       {/* Rest stays dark with minimal purple */}
-      <div className="absolute inset-0 bg-gradient-to-t from-surface-primary via-surface-secondary to-surface-primary" />
+      {/* <div className="absolute inset-0 bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900" /> */}
 
       {/* Concentrated magical orbs in specific zones */}
       <div
         className={`absolute inset-0 ${intensityClasses[intensity]} pointer-events-none`}
       >
         {/* Large concentrated orb bottom-right - MAXIMUM intensity */}
-        <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-gradient-radial from-primary-300/100 via-primary-400/70 to-primary-500/40 rounded-full blur-3xl animate-float" />
+        {/* <div className="absolute bottom-0 right-0 w-[50rem] h-[50rem] bg-gradient-radial from-theme-primary-300/100 via-theme-primary-400/70 to-theme-primary-500/40 rounded-full blur-3xl animate-float" /> */}
 
         {/* Medium orb top-left - ultra enhanced */}
-        <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-radial from-primary-200/90 via-primary-500/55 to-primary-600/25 rounded-full blur-2xl animate-float-delayed" />
+        {/* <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-radial from-theme-primary-200/90 via-theme-primary-500/55 to-theme-primary-600/25 rounded-full blur-2xl animate-float-delayed" /> */}
 
         {/* Accent orb center-right - maximum boost */}
-        <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-radial from-primary-100/85 via-primary-600/45 to-primary-700/20 rounded-full blur-xl animate-float-slow" />
+        <div className="absolute  right-[20%]  w-[50rem] h-[50rem] bg-gradient-radial from-theme-primary-100/85 via-theme-primary-600/45 to-theme-primary-700/20 rounded-full blur-xl animate-float-slow" />
 
         {/* Additional small intense orbs for extra projection */}
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-gradient-radial from-primary-300/80 via-primary-500/30 to-transparent rounded-full blur-2xl animate-float-delayed" />
-        <div className="absolute top-1/6 left-1/4 w-32 h-32 bg-gradient-radial from-primary-200/75 via-primary-400/25 to-transparent rounded-full blur-xl animate-float-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-gradient-radial from-theme-primary-300/80 via-theme-primary-500/30 to-transparent rounded-full blur-2xl animate-float-delayed" />
+        <div className="absolute top-1/6 left-1/4 w-32 h-32 bg-gradient-radial from-theme-primary-200/75 via-theme-primary-400/25 to-transparent rounded-full blur-xl animate-float-slow" />
       </div>
 
       {/* Subtle mesh network - purple accents on dark */}
       <div className={`absolute inset-0 ${intensityClasses[intensity]}`}>
         <svg width="100%" height="100%" className="absolute inset-0">
           <defs>
-            {/* Strong purple glow for concentrated zones - MAXIMUM visibility */}
+            {/* Strong glow for concentrated zones using theme primary */}
             <linearGradient id="meshGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgb(59,130,246)" stopOpacity="1.0" />
+              <stop
+                offset="0%"
+                stopColor="var(--theme-primary-800)"
+                stopOpacity="1.0"
+              />
               <stop
                 offset="30%"
-                stopColor="rgb(59,130,246)"
+                stopColor="var(--theme-primary-500)"
                 stopOpacity="1.0"
               />
               <stop
                 offset="70%"
-                stopColor="rgb(59,130,246)"
+                stopColor="var(--theme-primary-400)"
                 stopOpacity="1.0"
               />
               <stop
                 offset="100%"
-                stopColor="rgb(59,130,246)"
+                stopColor="var(--theme-primary-600)"
                 stopOpacity="0.9"
               />
             </linearGradient>
 
-            {/* Concentrated animated gradient - ULTRA enhanced */}
+            {/* Concentrated animated gradient using theme colors */}
             <linearGradient
               id="meshGlowAnimated"
               x1="0%"
@@ -89,7 +93,11 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
               x2="100%"
               y2="100%"
             >
-              <stop offset="0%" stopColor="rgb(59,130,246)" stopOpacity="1.0">
+              <stop
+                offset="0%"
+                stopColor="var(--theme-primary-300)"
+                stopOpacity="1.0"
+              >
                 <animate
                   attributeName="stop-opacity"
                   values="1.0;1.0;1.0"
@@ -97,7 +105,11 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                   repeatCount="indefinite"
                 />
               </stop>
-              <stop offset="50%" stopColor="rgb(59,130,246)" stopOpacity="1.0">
+              <stop
+                offset="50%"
+                stopColor="var(--theme-primary-500)"
+                stopOpacity="1.0"
+              >
                 <animate
                   attributeName="stop-opacity"
                   values="1.0;1.0;1.0"
@@ -107,7 +119,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
               </stop>
               <stop
                 offset="100%"
-                stopColor="rgb(46, 16, 101)"
+                stopColor="var(--theme-primary-700)"
                 stopOpacity="0.8"
               >
                 <animate
@@ -119,17 +131,21 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
               </stop>
             </linearGradient>
 
-            {/* Dark zones gradient - minimal */}
+            {/* Dark zones gradient using theme-aware stones */}
             <linearGradient id="meshDark" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgb(27, 27, 27)" stopOpacity="0.3" />
+              <stop
+                offset="0%"
+                stopColor="var(--theme-primary-900)"
+                stopOpacity="0.3"
+              />
               <stop
                 offset="50%"
-                stopColor="rgb(30, 30, 30)"
+                stopColor="var(--theme-primary-800)"
                 stopOpacity="0.2"
               />
               <stop
                 offset="100%"
-                stopColor="rgb(24, 24, 24)"
+                stopColor="var(--theme-primary-950)"
                 stopOpacity="0.4"
               />
             </linearGradient>

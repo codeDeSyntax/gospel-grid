@@ -22,6 +22,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   onLayoutChange,
   onWindowSelect,
   onPresetSelect,
+  onPresetDelete,
   onWindowFocus,
   onWindowRemove,
   onWindowAdd,
@@ -75,7 +76,9 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         <PresetsCard
           presets={presets}
           selectedPreset={selectedPreset}
+          availableWindows={windows}
           onPresetSelect={onPresetSelect}
+          onPresetDelete={onPresetDelete}
         />
       </div>
     </div>

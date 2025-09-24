@@ -70,8 +70,8 @@ export const ScreenAggregationMockup: React.FC = () => {
             "scale(0.75) rotateY(25deg) rotateX(5deg) translateX(-20px)",
         }}
       >
-        <div className="bg-surface-primary border border-border-primary rounded-xl shadow-xl overflow-hidden">
-          <div className="bg-surface-secondary p-2">
+        <div className="bg-gray-800 border border-theme-primary-600/30 rounded-xl shadow-xl overflow-hidden">
+          <div className="bg-gray-700 p-2">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded p-4 h-48 flex flex-col items-center justify-center text-white relative overflow-hidden">
               <div className="text-4xl mb-3">📖</div>
               <div className="text-sm font-semibold text-center">
@@ -83,10 +83,10 @@ export const ScreenAggregationMockup: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             </div>
           </div>
-          <div className="h-1 bg-surface-tertiary"></div>
+          <div className="h-1 bg-gray-600"></div>
         </div>
-        <div className="mx-auto w-20 h-3 bg-surface-secondary rounded-b-lg -mt-0.5"></div>
-        <div className="mx-auto w-32 h-1 bg-surface-tertiary rounded-full -mt-0.5"></div>
+        <div className="mx-auto w-20 h-3 bg-gray-700 rounded-b-lg -mt-0.5"></div>
+        <div className="mx-auto w-32 h-1 bg-gray-600 rounded-full -mt-0.5"></div>
       </div>
 
       {/* Right monitor - PowerPoint */}
@@ -97,8 +97,8 @@ export const ScreenAggregationMockup: React.FC = () => {
             "scale(0.75) rotateY(-25deg) rotateX(5deg) translateX(20px)",
         }}
       >
-        <div className="bg-surface-primary border border-border-primary rounded-xl shadow-xl overflow-hidden">
-          <div className="bg-surface-secondary p-2">
+        <div className="bg-gray-800 border border-theme-primary-600/30 rounded-xl shadow-xl overflow-hidden">
+          <div className="bg-gray-700 p-2">
             <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded p-4 h-48 flex flex-col items-center justify-center text-white relative overflow-hidden">
               <div className="text-4xl mb-3">📊</div>
               <div className="text-sm font-semibold text-center">
@@ -110,10 +110,10 @@ export const ScreenAggregationMockup: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             </div>
           </div>
-          <div className="h-1 bg-surface-tertiary"></div>
+          <div className="h-1 bg-gray-600"></div>
         </div>
-        <div className="mx-auto w-20 h-3 bg-surface-secondary rounded-b-lg -mt-0.5"></div>
-        <div className="mx-auto w-32 h-1 bg-surface-tertiary rounded-full -mt-0.5"></div>
+        <div className="mx-auto w-20 h-3 bg-gray-700 rounded-b-lg -mt-0.5"></div>
+        <div className="mx-auto w-32 h-1 bg-gray-600 rounded-full -mt-0.5"></div>
       </div>
 
       {/* Far left monitor - Notes */}
@@ -124,8 +124,8 @@ export const ScreenAggregationMockup: React.FC = () => {
             "scale(0.6) rotateY(35deg) rotateX(8deg) translateX(-80px)",
         }}
       >
-        <div className="bg-surface-primary border border-border-primary rounded-xl shadow-lg overflow-hidden">
-          <div className="bg-surface-secondary p-2">
+        <div className="bg-gray-800 border border-theme-primary-600/30 rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gray-700 p-2">
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded p-3 h-40 flex flex-col items-center justify-center text-white relative overflow-hidden">
               <div className="text-3xl mb-2">📝</div>
               <div className="text-xs font-semibold text-center">
@@ -134,9 +134,9 @@ export const ScreenAggregationMockup: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             </div>
           </div>
-          <div className="h-1 bg-surface-tertiary"></div>
+          <div className="h-1 bg-gray-600"></div>
         </div>
-        <div className="mx-auto w-16 h-2 bg-surface-secondary rounded-b-lg -mt-0.5"></div>
+        <div className="mx-auto w-16 h-2 bg-gray-700 rounded-b-lg -mt-0.5"></div>
       </div>
 
       {/* Far right monitor - OBS */}
@@ -175,10 +175,14 @@ export const ScreenAggregationMockup: React.FC = () => {
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="rgb(124, 58, 237)" stopOpacity="0.4" />
+            <stop
+              offset="0%"
+              stopColor="var(--theme-primary-600)"
+              stopOpacity="0.4"
+            />
             <stop
               offset="100%"
-              stopColor="rgb(59, 130, 246)"
+              stopColor="var(--theme-primary-400)"
               stopOpacity="0.2"
             />
           </linearGradient>

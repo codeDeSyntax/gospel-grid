@@ -1,4 +1,5 @@
 import React from "react";
+import { WindowBounds } from '../types/electron';
 
 // Simple Icons (Si) - Brand icons
 import {
@@ -167,6 +168,8 @@ import {
   DiVisualstudio,
   DiChrome,
 } from "react-icons/di";
+import { AppWindow, AppWindowIcon } from "lucide-react";
+import { MdInstallDesktop } from "react-icons/md";
 
 export interface AppIconData {
   icon: React.ReactNode;
@@ -757,9 +760,9 @@ export const getAppIconData = (appName: string): AppIconData => {
 
   // Default fallback
   return {
-    icon: <FaDesktop />,
+    icon: <MdInstallDesktop />,
     gradient: "from-gray-500 to-gray-300",
-    color: "text-gray-500",
+    color: "text-theme-primary-200",
   };
 };
 

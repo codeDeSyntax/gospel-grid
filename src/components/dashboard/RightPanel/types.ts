@@ -14,6 +14,7 @@ export interface RightPanelProps {
   onLayoutChange: (layout: string) => void;
   onWindowSelect: (windowId: string) => void;
   onPresetSelect: (presetId: string) => void;
+  onPresetDelete?: (presetId: string) => void;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => void;
@@ -40,7 +41,9 @@ export interface AITranscriptionCardProps {
 export interface PresetsCardProps {
   presets: PresetInfo[];
   selectedPreset: string;
+  availableWindows?: WindowInfo[]; // Available windows for checking requirements
   onPresetSelect: (presetId: string) => void;
+  onPresetDelete?: (presetId: string) => void;
 }
 
 export type MainViewType = "windows" | "settings";

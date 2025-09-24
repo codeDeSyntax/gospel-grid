@@ -55,9 +55,11 @@ export interface SavedPreset {
   windowCount: number;
   createdAt: string;
   windows: Array<{
-    id: string; // window-0, window-1, etc. (from windowMapper)
+    id: string; // Native desktopCapturer source ID (e.g., "window:853982:0")
     name: string; // Full window title
     app: string; // Extracted app name (e.g., "Code", "Chrome")
+    icon?: string; // Base64 encoded icon data
+    hasNativeIcon?: boolean; // Whether the window has a native app icon available
     sourceId?: string; // Original desktopCapturer source ID
     handle?: number; // Window handle
   }>;

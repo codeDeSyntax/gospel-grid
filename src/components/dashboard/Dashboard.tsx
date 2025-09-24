@@ -88,6 +88,13 @@ export const Dashboard: React.FC = () => {
               id: preset.id,
               name: preset.name,
               windowCount: preset.windowCount,
+              windows: preset.windows.map((window) => ({
+                id: window.id,
+                name: window.name,
+                app: window.app,
+                icon: window.icon,
+                hasNativeIcon: window.hasNativeIcon,
+              })),
             })
           );
 
@@ -154,6 +161,8 @@ export const Dashboard: React.FC = () => {
             id: window.id,
             name: window.name,
             app: window.app,
+            icon: window.icon, // Store the Base64 icon data
+            hasNativeIcon: window.hasNativeIcon, // Store icon availability flag
             sourceId: (window as any).sourceId, // From windowMapper
             handle: window.handle,
           })),
@@ -170,6 +179,13 @@ export const Dashboard: React.FC = () => {
             id: savedPreset.id,
             name: savedPreset.name,
             windowCount: savedPreset.windowCount,
+            windows: savedPreset.windows.map((window) => ({
+              id: window.id,
+              name: window.name,
+              app: window.app,
+              icon: window.icon,
+              hasNativeIcon: window.hasNativeIcon,
+            })),
           };
 
           setState((prev) => ({
@@ -281,6 +297,32 @@ export const Dashboard: React.FC = () => {
 
   const handlePresetSelect = useCallback((presetId: string) => {
     loadPreset(presetId);
+  }, []);
+
+  const handlePresetDelete = useCallback(async (presetId: string) => {
+    try {
+      // Delete preset from storage
+      const result = await (window.electronAPI as any)?.deletePreset?.(
+        presetId
+      );
+
+      if (result?.success) {
+        // Update state to remove the deleted preset
+        setState((prev) => ({
+          ...prev,
+          presets: prev.presets.filter((p) => p.id !== presetId),
+          selectedPreset:
+            prev.selectedPreset === presetId ? "" : prev.selectedPreset,
+        }));
+
+        console.log("Preset deleted successfully:", presetId);
+      } else {
+        console.error("Failed to delete preset:", result?.error);
+        // The notification for the error will be shown by the PresetsCard component
+      }
+    } catch (error) {
+      console.error("Error deleting preset:", error);
+    }
   }, []);
 
   const loadPreset = useCallback(
@@ -493,6 +535,7 @@ export const Dashboard: React.FC = () => {
             onLayoutChange={handleLayoutChange}
             onWindowSelect={handleWindowSelect}
             onPresetSelect={handlePresetSelect}
+            onPresetDelete={handlePresetDelete}
             onWindowFocus={handleWindowFocus}
             onWindowRemove={handleWindowRemove}
             onWindowAdd={handleWindowAdd}

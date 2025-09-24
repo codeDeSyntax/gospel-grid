@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { WindowInfo } from "./WindowList";
 import { systemLogger } from "@/hooks/useSystemLogger";
+import { useAppSelector } from "@/store/hooks";
 
 interface LiveWindowGridProps {
   windows: WindowInfo[];
@@ -17,6 +18,9 @@ export function LiveWindowGrid({
   windows,
   className = "",
 }: LiveWindowGridProps) {
+  const publishedQuality = useAppSelector(
+    (state) => state.app.publishedQuality
+  );
   const [thumbnails, setThumbnails] = useState<
     Record<string, LiveWindowThumbnail>
   >({});
@@ -45,7 +49,7 @@ export function LiveWindowGrid({
 
     const container = containerRef.current;
     const containerWidth = container.clientWidth - 32; // Account for px-4 (16px * 2)
-    const containerHeight = container.clientHeight - 48; // Account for pt-4 + pb-8 (16px + 32px)
+    const containerHeight = container.clientHeight - 10; // Account for pt-4 + pb-8 (16px + 32px)
 
     // Account for gaps (16px gap between items)
     const gap = 16;
@@ -99,8 +103,31 @@ export function LiveWindowGrid({
     const minHeight = 200;
 
     // Calculate higher resolution for capture while maintaining aspect ratio
-    const captureWidth = Math.max(Math.min(width * 1.5, 1200), minWidth);
-    const captureHeight = Math.max(Math.min(height * 1.5, 800), minHeight);
+    const baseScale = 2.0; // Increased base scale for better quality
+    const maxCaptureWidth = 1920; // Higher max resolution
+    const maxCaptureHeight = 1080;
+
+    const captureWidth = Math.max(
+      Math.min(width * baseScale, maxCaptureWidth),
+      minWidth * 1.5 // Ensure minimum quality
+    );
+    const captureHeight = Math.max(
+      Math.min(height * baseScale, maxCaptureHeight),
+      minHeight * 1.5
+    );
+
+    // Dynamic quality based on layout type
+    const qualitySettings: Record<
+      string,
+      { quality: number; scaleFactor: number }
+    > = {
+      single: { quality: 99, scaleFactor: 1.5 },
+      dual: { quality: 98, scaleFactor: 1.4 },
+      triple: { quality: 97, scaleFactor: 1.3 },
+      quad: { quality: 96, scaleFactor: 1.2 },
+    };
+
+    const currentQuality = qualitySettings[type] || qualitySettings.quad;
 
     // Add specific debugging for dual layout
     if (type === "dual") {
@@ -125,12 +152,13 @@ export function LiveWindowGrid({
     try {
       systemLogger.thumbnail(
         "batch-capture",
-        `Capturing ${gridWindows.length} live windows (${type} layout)`,
+        `Capturing ${gridWindows.length} live windows (${type} layout) with enhanced quality`,
         {
           dimensions: { width: captureWidth, height: captureHeight },
           originalDimensions: { width, height },
           layoutType: type,
-          quality: 98,
+          quality: currentQuality.quality,
+          scaleFactor: currentQuality.scaleFactor,
         }
       );
 
@@ -140,8 +168,8 @@ export function LiveWindowGrid({
         {
           width: captureWidth,
           height: captureHeight,
-          scaleFactor: 1.25, // Moderate scale for quality without excessive cropping
-          quality: 98, // Very high quality for published view
+          scaleFactor: currentQuality.scaleFactor,
+          quality: currentQuality.quality,
           forceRefresh: true, // Always get fresh capture
         }
       );
@@ -229,10 +257,44 @@ export function LiveWindowGrid({
     // Initial capture
     captureThumbnails();
 
-    // Set up live updates every 2 seconds for smooth "live" experience
+    // Performance-aware update intervals based on window count and layout
+    const getOptimalUpdateInterval = () => {
+      const windowCount = gridWindows.length;
+      const baseInterval = 2000; // 2 seconds base
+
+      // Adjust based on layout complexity and window count
+      switch (type) {
+        case "single":
+          return baseInterval; // Most responsive for single window
+        case "dual":
+          return Math.max(baseInterval * 1.2, 2400); // Slightly slower for dual
+        case "triple":
+          return Math.max(baseInterval * 1.5, 3000); // 3 seconds for triple
+        case "quad":
+          return Math.max(baseInterval * 2, 4000); // 4 seconds for quad to reduce load
+        default:
+          return baseInterval * 2;
+      }
+    };
+
+    const updateInterval = getOptimalUpdateInterval();
+
+    systemLogger.thumbnail(
+      "performance-config",
+      `Configured ${type} layout with ${updateInterval}ms update interval`,
+      {
+        layoutType: type,
+        windowCount: gridWindows.length,
+        updateInterval,
+        estimatedLoad:
+          type === "quad" ? "high" : type === "triple" ? "medium" : "low",
+      }
+    );
+
+    // Set up live updates with performance-optimized intervals
     updateIntervalRef.current = setInterval(() => {
       captureThumbnails();
-    }, 2000);
+    }, updateInterval);
 
     // Safety timeout to clear loading state if it gets stuck
     const loadingTimeout = setTimeout(() => {
@@ -245,7 +307,7 @@ export function LiveWindowGrid({
       }
       clearTimeout(loadingTimeout);
     };
-  }, [captureThumbnails]);
+  }, [captureThumbnails, type, gridWindows.length]);
 
   // Recapture when window resizes
   useEffect(() => {
@@ -260,12 +322,14 @@ export function LiveWindowGrid({
   if (gridWindows.length === 0) {
     return (
       <div
-        className={`${className} flex items-center justify-center h-full bg-black text-white`}
+        className={`${className} flex items-center justify-center h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/30 to-gray-800 text-white`}
       >
         <div className="text-center">
           <div className="text-6xl mb-4">📺</div>
-          <div className="text-2xl font-bold">No Windows Selected</div>
-          <div className="text-lg opacity-75">
+          <div className="text-2xl font-bold text-theme-primary-200">
+            No Windows Selected
+          </div>
+          <div className="text-lg opacity-75 text-theme-primary-300">
             Select windows to display in published layout
           </div>
         </div>
@@ -279,6 +343,22 @@ export function LiveWindowGrid({
     customStyle?: React.CSSProperties
   ) => {
     const thumbnail = thumbnails[window.id];
+
+    // Intelligent color correction based on application type
+    const getSmartFilters = () => {
+      const baseFilters = [
+        `contrast(${publishedQuality.contrast})`,
+        `brightness(${publishedQuality.brightness})`,
+      ];
+
+      // Default applications - general enhancement
+      return [
+        ...baseFilters,
+        "saturate(1.1)", // Standard saturation boost
+        "unsharp-mask(amount=1.2, radius=1px, threshold=0)", // General sharpening
+        "gamma(0.9)", // Slight gamma correction
+      ];
+    };
 
     // Debug logging for dual layout
     if (type === "dual") {
@@ -294,6 +374,7 @@ export function LiveWindowGrid({
             : null,
           isLoading,
           layoutType: type,
+          smartFilters: getSmartFilters(),
         }
       );
     }
@@ -301,57 +382,90 @@ export function LiveWindowGrid({
     return (
       <div
         key={window.id}
-        className="relative bg-gray-900 rounded-lg overflow-hidden border-2 border-blue-400 shadow-lg flex items-center justify-center flex-shrink-0"
+        className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-inner shadow-theme-primary-900"
         style={{
           ...customStyle,
-          boxSizing: "border-box",
-          borderWidth: "3px",
-          borderStyle: "solid",
-          borderColor: "#60a5fa", // Blue-400
-          boxShadow:
-            "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(96, 165, 250, 0.3)",
+          // boxSizing: "border-box",
+          // border: "3px solid transparent",
+          backgroundClip: "padding-box",
+          position: "relative",
+          // Enhanced shadow and glow effect
+          // boxShadow: [
+          //   "0 3px 5px -2px rgb(var(--theme-primary-600))", // Main shadow
+          //   "0 4px 6px -1px rgb(var(--theme-primary-600))", // Secondary shadow
+          // ].join(", "),
         }}
       >
-        {/* Window title overlay */}
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 text-xs font-medium z-10 flex items-center justify-between">
-          <span className="truncate">{window.app}</span>
-          <span className="text-blue-100 ml-2 flex-shrink-0">📺</span>
-        </div>
+        {/* Animated border gradient with theme colors */}
+        <div
+          className="absolute inset-0 rounded-xl opacity-75"
+          style={{
+            background: `linear-gradient(45deg, 
+              rgb(var(--theme-primary-500)), 
+              rgb(var(--theme-primary-400)), 
+              rgb(var(--theme-primary-600)), 
+              rgb(var(--theme-primary-500))
+            )`,
+            backgroundSize: "300% 300%",
+            animation: "gradientShift 6s ease infinite",
+            zIndex: -1,
+          }}
+        />
 
-        {/* Live thumbnail */}
-        {thumbnail ? (
-          <img
-            src={thumbnail.dataUrl}
-            alt={`${window.name} - ${window.app}`}
-            className="w-full h-full object-contain bg-black"
-            style={{
-              imageRendering: "auto",
-              filter: "contrast(1.3) brightness(1.5)",
-              display: "block",
-              marginTop: "28px", // Account for title bar
-            }}
-          />
-        ) : (
-          <div
-            className="flex flex-col items-center justify-center text-gray-400 h-full"
-            style={{ marginTop: "28px" }}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-                <div className="text-sm">Loading window...</div>
-              </>
-            ) : (
-              <>
-                <div className="text-4xl mb-2">🖥️</div>
-                <div className="text-sm text-center">
-                  <div className="font-medium">{window.app}</div>
-                  <div className="opacity-75">{window.name}</div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        {/* Content container */}
+        <div className="absolute inset-[3px] bg-gray-900 rounded-lg overflow-hidden">
+          {/* Live thumbnail */}
+          {thumbnail ? (
+            <img
+              src={thumbnail.dataUrl}
+              alt={`${window.name} - ${window.app}`}
+              className="w-full h-full object-contain bg-black"
+              style={{
+                WebkitBackfaceVisibility: "hidden", // Improve rendering performance
+                WebkitTransform: "translateZ(0)", // Hardware acceleration hint
+                backfaceVisibility: "hidden",
+                transform: "translateZ(0)",
+                imageRendering: "high-quality" as any,
+                filter: getSmartFilters().join(" "),
+                display: "block",
+                // marginTop: "10px", // Account for enhanced title bar
+                transition: "filter 0.3s ease", // Smooth transition when quality changes
+                ...({
+                  // Browser-specific image rendering optimizations
+                  "-webkit-image-rendering": "high-quality",
+                  "-moz-image-rendering": "-moz-crisp-edges",
+                  "-ms-interpolation-mode": "bicubic",
+                } as any),
+              }}
+            />
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center text-gray-400 h-full"
+              style={{ marginTop: "32px" }}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-primary-500 mb-4"></div>
+                  <div className="text-sm text-theme-primary-200">
+                    Loading window...
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-4xl mb-2">🖥️</div>
+                  <div className="text-sm text-center">
+                    <div className="font-medium text-theme-primary-300">
+                      {window.app}
+                    </div>
+                    <div className="opacity-75 text-theme-primary-400">
+                      {window.name}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -392,12 +506,9 @@ export function LiveWindowGrid({
 
       case "triple":
         return (
-          <div className="w-full h-full flex flex-col" style={{ gap: "16px" }}>
+          <div className="w-full h-full flex flex-col" style={{ gap: "8px" }}>
             {/* Top row - 2 windows */}
-            <div
-              className="flex"
-              style={{ gap: "16px", height: `${height}px` }}
-            >
+            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
               {renderWindow(gridWindows[0], {
                 width: `${width}px`,
                 height: `${height}px`,
@@ -419,12 +530,9 @@ export function LiveWindowGrid({
 
       case "quad":
         return (
-          <div className="w-full h-full flex flex-col" style={{ gap: "16px" }}>
+          <div className="w-full h-full flex flex-col" style={{ gap: "8px" }}>
             {/* Top row */}
-            <div
-              className="flex"
-              style={{ gap: "16px", height: `${height}px` }}
-            >
+            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
               {renderWindow(gridWindows[0], {
                 width: `${width}px`,
                 height: `${height}px`,
@@ -435,10 +543,7 @@ export function LiveWindowGrid({
               })}
             </div>
             {/* Bottom row */}
-            <div
-              className="flex"
-              style={{ gap: "16px", height: `${height}px` }}
-            >
+            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
               {renderWindow(gridWindows[2], {
                 width: `${width}px`,
                 height: `${height}px`,
@@ -459,13 +564,13 @@ export function LiveWindowGrid({
   return (
     <div
       ref={containerRef}
-      className={`${className} w-full h-full bg-black pt-4 px-4 pb-8`}
+      className={`${className} w-full h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/20 to-gray-800 pt-4 px-4 pb-8 `}
     >
       {renderLayout()}
 
-      {/* Status indicator */}
+      {/* Status indicator with theme styling */}
       {isLoading && (
-        <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+        <div className="absolute top-4 left-4 bg-theme-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium border border-theme-primary-500 shadow-lg">
           Updating...
         </div>
       )}
