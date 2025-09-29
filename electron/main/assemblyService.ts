@@ -167,12 +167,12 @@ export class AssemblyService {
 
       // Create a continuous audio stream that we can write to
       // This mimics the recording.stream().pipeTo(transcriber.stream()) from the docs
-      const { Readable } = await import('stream');
-      
+      const { Readable } = await import("stream");
+
       this.audioStream = new Readable({
         read() {
           // This will be pushed to by transcribeStream method
-        }
+        },
       });
 
       // Start streaming the audio data
