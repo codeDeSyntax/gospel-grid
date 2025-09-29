@@ -4,6 +4,7 @@ import {
   WindowLayoutCard,
   SettingsPanel,
   AITranscriptionCard,
+  SpeechToTextCard,
   PresetsCard,
   type RightPanelProps,
   type MainViewType,
@@ -69,8 +70,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({
           </div>
         </div>
 
-        {/* AI Speech-to-Text Card */}
-        <AITranscriptionCard onWindowSelect={onWindowSelect} />
+        {/* Speech to Text Card */}
+        <SpeechToTextCard onWindowSelect={onWindowSelect} />
 
         {/* Saved Presets Card */}
         <PresetsCard

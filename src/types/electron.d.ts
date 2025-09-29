@@ -107,10 +107,74 @@ export interface ElectronAPI {
 }
 
 // Extend the global Window interface to include our APIs
+// Speech to Text API types
+export interface TranscriptionOptions {
+  language?: string;
+  task?: "transcribe" | "translate";
+  isLast?: boolean; // For streaming transcription
+}
+
+export interface TranscriptionResult {
+  success: boolean;
+  text?: string;
+  processingTime?: number;
+  error?: string;
+}
+
+export interface WhisperStatus {
+  isConnected: boolean;
+  isConnecting: boolean;
+  sessionId?: string;
+}
+
+export interface WhisperStatusResult {
+  success: boolean;
+  status?: WhisperStatus;
+  error?: string;
+}
+
+export interface SpeechToTextAPI {
+  transcribe: (
+    audioBuffer: ArrayBuffer,
+    options?: TranscriptionOptions
+  ) => Promise<TranscriptionResult>;
+  transcribeStream: (
+    audioBuffer: ArrayBuffer,
+    options?: TranscriptionOptions
+  ) => Promise<TranscriptionResult>;
+
+  // AssemblyAI streaming controls
+  startStreaming: (options?: {
+    sampleRate?: number;
+  }) => Promise<{ success: boolean; error?: string }>;
+  stopStreaming: () => Promise<{ success: boolean; error?: string }>;
+
+  getSupportedLanguages: () => Promise<{
+    success: boolean;
+    languages?: Array<{ code: string; name: string }>;
+    error?: string;
+  }>;
+  getStatus: () => Promise<WhisperStatusResult>;
+  restart: () => Promise<{ success: boolean; error?: string }>;
+  onWhisperStatus: (callback: (status: any) => void) => () => void;
+
+  // Real-time speech result callback (for AssemblyAI streaming)
+  onSpeechResult?: (
+    callback: (result: {
+      success: boolean;
+      text?: string;
+      confidence?: number;
+      isFinal?: boolean;
+      error?: string;
+    }) => void
+  ) => () => void;
+}
+
 declare global {
   interface Window {
     windowControls: WindowControls;
     electronAPI: ElectronAPI;
+    speechToTextAPI: SpeechToTextAPI;
     ipcRenderer: {
       on: (
         channel: string,

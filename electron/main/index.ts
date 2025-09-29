@@ -4,7 +4,9 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
+import { config } from "dotenv";
 import { update } from "./update";
+import { AssemblyService } from "./assemblyService";
 import {
   focusWindow as focusWindowNative,
   minimizeWindow as minimizeWindowNative,
@@ -25,6 +27,18 @@ import { getWindowsWithThumbnails } from "./windowMapper";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load environment variables
+config({ path: path.join(process.cwd(), ".env") });
+
+console.log(
+  "🔧 Loading environment variables from:",
+  path.join(process.cwd(), ".env")
+);
+console.log(
+  "🔑 AssemblyAI API Key loaded:",
+  process.env.ASSEMBLYAI_API_KEY ? "✅ Present" : "❌ Missing"
+);
 
 // The built directory structure
 //
@@ -58,6 +72,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let win: BrowserWindow | null = null;
+let assemblyService: AssemblyService | null = null;
 let publishedWindows: BrowserWindow[] = []; // Track published layout windows
 const publishedLayoutData = new Map<string, any>(); // Store layout data temporarily
 const preload = path.join(__dirname, "../preload/index.mjs");
@@ -100,6 +115,33 @@ async function createWindow() {
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
+
+  // Initialize AssemblyAI Speech-to-Text Service
+  if (win) {
+    // TODO: Set your AssemblyAI API key here
+    const apiKey = process.env.ASSEMBLYAI_API_KEY || "YOUR_API_KEY_HERE";
+    assemblyService = new AssemblyService(apiKey, win);
+
+    // Initialize the service
+    assemblyService
+      .initialize()
+      .then(() => {
+        console.log("🎯 AssemblyAI API key validated and ready for streaming");
+        // Set the service as connected since it's ready to stream
+        if (assemblyService && win) {
+          win.webContents.send("whisper-status", { status: "ready" });
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Failed to initialize AssemblyAI:", error);
+        if (win) {
+          win.webContents.send("whisper-status", {
+            status: "error",
+            message: "Failed to initialize AssemblyAI service",
+          });
+        }
+      });
+  }
 
   // Make all links open with the browser, not with the application
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -726,6 +768,145 @@ ipcMain.handle("delete-preset", async (event, presetId: string) => {
     return { success: true };
   } catch (error) {
     console.error("Failed to delete preset:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+// AssemblyAI Speech-to-Text IPC Handlers
+ipcMain.handle(
+  "whisper-transcribe",
+  async (event, audioBuffer: Buffer, options: any) => {
+    try {
+      if (!assemblyService) {
+        throw new Error("AssemblyAI service not initialized");
+      }
+
+      const result = await assemblyService.transcribeFile(
+        audioBuffer.buffer as ArrayBuffer
+      );
+      return result;
+    } catch (error) {
+      console.error("AssemblyAI transcription error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  "whisper-transcribe-stream",
+  async (event, audioBuffer: Buffer, options: any) => {
+    try {
+      if (!assemblyService) {
+        throw new Error("AssemblyAI service not initialized");
+      }
+
+      const result = await assemblyService.transcribeStream(
+        audioBuffer.buffer as ArrayBuffer,
+        options
+      );
+      return result;
+    } catch (error) {
+      console.error("AssemblyAI stream transcription error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+);
+
+ipcMain.handle("whisper-get-languages", async (event) => {
+  try {
+    if (!assemblyService) {
+      throw new Error("AssemblyAI service not initialized");
+    }
+
+    const languages = assemblyService.getSupportedLanguages();
+    return { success: true, languages };
+  } catch (error) {
+    console.error("Failed to get AssemblyAI languages:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+ipcMain.handle("whisper-get-status", async (event) => {
+  try {
+    if (!assemblyService) {
+      return {
+        success: true,
+        status: {
+          isConnected: false,
+          isConnecting: false,
+          sessionId: null,
+        },
+      };
+    }
+
+    const status = assemblyService.getStatus();
+    return { success: true, status };
+  } catch (error) {
+    console.error("Failed to get AssemblyAI status:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+ipcMain.handle("whisper-restart", async (event) => {
+  try {
+    if (!assemblyService) {
+      throw new Error("AssemblyAI service not initialized");
+    }
+
+    await assemblyService.restart();
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to restart AssemblyAI service:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+// AssemblyAI streaming control handlers
+ipcMain.handle("assembly-start-streaming", async (event, options: any) => {
+  try {
+    if (!assemblyService) {
+      throw new Error("AssemblyAI service not initialized");
+    }
+
+    await assemblyService.startStreaming(options);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to start AssemblyAI streaming:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+ipcMain.handle("assembly-stop-streaming", async (event) => {
+  try {
+    if (!assemblyService) {
+      throw new Error("AssemblyAI service not initialized");
+    }
+
+    await assemblyService.stopStreaming();
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to stop AssemblyAI streaming:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

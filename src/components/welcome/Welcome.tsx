@@ -109,7 +109,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                 <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
                   <div className="w-1.5 h-1.5 bg-theme-primary-500 rounded-full"></div>
                   <span className="text-xs text-theme-primary-200">
-                    No Installation
+                    Ease of use
                   </span>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <div className="space-y-2">
                 <button
                   onClick={onGetStarted}
-                  className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-theme-primary-600 to-theme-primary-700 hover:from-theme-primary-700 hover:to-theme-primary-800 text-white font-medium py-2.5 px-5 rounded-full shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
+                  className="group relative cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-theme-primary-600 to-theme-primary-700 hover:from-theme-primary-700 hover:to-theme-primary-800 text-white font-medium py-2.5 px-5 rounded-full shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
                 >
                   <span className="relative z-10 text-sm">Get started</span>
                   <svg

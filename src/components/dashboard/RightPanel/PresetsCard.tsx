@@ -141,7 +141,7 @@ export const PresetsCard: React.FC<PresetsCardProps> = ({
             }" requires the following windows that are not currently available: ${missingWindows.join(
               ", "
             )}. Please open these applications and try again.`,
-            autoClose: 8000,
+            autoClose: 3000,
           })
         );
         return;
@@ -239,9 +239,9 @@ export const PresetsCard: React.FC<PresetsCardProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-r from-theme-primary-500/5 via-transparent to-theme-primary-400/5 rounded-2xl"></div>
                 )}
 
-                <div className="relative z-10">
+                <div className="relative z-10 flex">
                   {/* Main content area */}
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between ">
                     {/* Left side: Overlapping app icons */}
                     <div className="flex items-center">
                       {preset.windows && preset.windows.length > 0 ? (

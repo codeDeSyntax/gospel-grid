@@ -49,25 +49,27 @@ const NotificationModalComponent = () => {
     },
     info: {
       icon: Info,
-      bgColor: "from-blue-500/10 via-cyan-500/5 to-blue-600/10",
-      borderColor: "border-blue-500/30",
-      iconColor: "text-blue-400",
-      titleColor: "text-blue-100",
+      bgColor:
+        "from-theme-primary-500/10 via-theme-primary-600/5 to-theme-primary-700/10",
+      borderColor: "border-theme-primary-500/30",
+      iconColor: "text-theme-primary-400",
+      titleColor: "text-theme-primary-100",
     },
     question: {
       icon: AlertCircle,
-      bgColor: "from-blue-500/10 via-indigo-500/5 to-blue-600/10",
-      borderColor: "border-blue-500/30",
-      iconColor: "text-blue-400",
-      titleColor: "text-blue-100",
+      bgColor:
+        "from-theme-primary-500/10 via-theme-primary-600/5 to-theme-primary-700/10",
+      borderColor: "border-theme-primary-500/30",
+      iconColor: "text-theme-primary-400",
+      titleColor: "text-theme-primary-100",
     },
   };
 
   const buttonVariants = {
     primary:
-      "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white",
+      "bg-gradient-to-r from-theme-primary-600 to-theme-primary-500 hover:from-theme-primary-500 hover:to-theme-primary-400 text-white shadow-lg shadow-theme-primary-500/25",
     secondary:
-      "bg-slate-700/80 hover:bg-slate-600/80 text-slate-200 border border-slate-600/50",
+      "bg-theme-primary-700/60 hover:bg-theme-primary-600/70 text-theme-primary-200 border border-theme-primary-600/50",
     danger:
       "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white",
   };
@@ -148,7 +150,7 @@ const NotificationModalComponent = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-slate-950/20 backdrop-blur-sm"
+        className="absolute inset-0 bg-theme-primary-950/20 backdrop-blur-sm"
         onClick={() => {
           const latestNotification = notifications[notifications.length - 1];
           if (latestNotification && !latestNotification.persistent) {
@@ -184,10 +186,12 @@ const NotificationModalComponent = () => {
               }}
               className={`
                 relative max-w-md w-full mx-4 p-6 rounded-2xl
-                backdrop-blur-md bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 ${
+                backdrop-blur-md bg-gradient-to-br from-theme-primary-900/90 via-theme-primary-800/90 to-theme-primary-900/90 ${
                   config.bgColor
                 }
-                border ${config.borderColor} shadow-2xl shadow-blue-500/10
+                border ${
+                  config.borderColor
+                } shadow-2xl shadow-theme-primary-500/10
                 ${
                   index < notifications.length - 1
                     ? "pointer-events-none opacity-60"
@@ -202,7 +206,7 @@ const NotificationModalComponent = () => {
               {!notification.persistent && (
                 <button
                   onClick={() => handleClose(id, "cancel")}
-                  className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/10 transition-colors text-slate-400 hover:text-slate-200"
+                  className="absolute top-4 right-4 p-1 rounded-full hover:bg-theme-primary-700/20 transition-colors text-theme-primary-400 hover:text-theme-primary-200"
                 >
                   <X size={16} />
                 </button>
@@ -219,7 +223,7 @@ const NotificationModalComponent = () => {
                   >
                     {notification.title}
                   </h3>
-                  <p className="text-slate-300 text-sm leading-relaxed">
+                  <p className="text-theme-primary-300 text-sm leading-relaxed">
                     {notification.message}
                   </p>
                 </div>
@@ -247,7 +251,7 @@ const NotificationModalComponent = () => {
 
               {/* Auto-close progress bar */}
               {notification.autoClose && notification.autoClose > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 rounded-b-2xl overflow-hidden">
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-theme-primary-800/30 rounded-b-2xl overflow-hidden">
                   <motion.div
                     initial={{ width: "100%" }}
                     animate={{ width: "0%" }}
@@ -255,7 +259,7 @@ const NotificationModalComponent = () => {
                       duration: notification.autoClose / 1000,
                       ease: "linear",
                     }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
+                    className="h-full bg-gradient-to-r from-theme-primary-500 to-theme-primary-600"
                     onAnimationComplete={() => handleClose(id, "dismiss")}
                   />
                 </div>
@@ -264,7 +268,7 @@ const NotificationModalComponent = () => {
               {/* Shimmer effect */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
                 <div
-                  className="absolute inset-0 opacity-20 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%]"
+                  className="absolute inset-0 opacity-20 bg-gradient-to-r from-transparent via-theme-primary-200/20 to-transparent transform -skew-x-12 translate-x-[-100%]"
                   style={{
                     animation: "shimmer 3s ease-in-out infinite",
                   }}

@@ -11,6 +11,7 @@ import "./index.css";
 import "./styles/themes.css"; // Import theme styles
 
 import "./demos/ipc";
+import "./utils/speechRecognition"; // Initialize speech recognition on startup
 // If you want use Node.js, the`nodeIntegration` needs to be enabled in the Main process.
 // import './demos/node'
 

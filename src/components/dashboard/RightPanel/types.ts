@@ -38,6 +38,10 @@ export interface AITranscriptionCardProps {
   onWindowSelect: (windowId: string) => void;
 }
 
+export interface SpeechToTextCardProps {
+  onWindowSelect: (windowId: string) => void;
+}
+
 export interface PresetsCardProps {
   presets: PresetInfo[];
   selectedPreset: string;
