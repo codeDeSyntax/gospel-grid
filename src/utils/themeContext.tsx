@@ -25,7 +25,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
     // Try to load theme from localStorage
     try {
-      const savedTheme = localStorage.getItem("streamspire-theme") as ThemeType;
+      const savedTheme = localStorage.getItem("wingrid-theme") as ThemeType;
       return savedTheme && THEMES[savedTheme] ? savedTheme : DEFAULT_THEME;
     } catch {
       return DEFAULT_THEME;
@@ -35,7 +35,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = (theme: ThemeType) => {
     setCurrentTheme(theme);
     try {
-      localStorage.setItem("streamspire-theme", theme);
+      localStorage.setItem("wingrid-theme", theme);
     } catch (error) {
       console.warn("Failed to save theme to localStorage:", error);
     }

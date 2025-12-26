@@ -1,7 +1,7 @@
 import { ColorTheme } from "@/store/slices/appSlice";
 
 export class ThemeManager {
-  private static readonly STORAGE_KEY = "streamspire-color-theme";
+  private static readonly STORAGE_KEY = "wingrid-color-theme";
 
   /**
    * Initialize theme on app startup

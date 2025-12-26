@@ -161,19 +161,17 @@ export default {
         "dashboard-focus": "2fr 1fr",
       },
       fontFamily: {
-        anton: ['"Anton SC"', "sans-serif"],
-        bigshoulders: ['"Big Shoulders Thin"', "sans-serif"],
-        bitter: ['"Bitter Thin"', "sans-serif"],
-        oswald: ['"Oswald ExtraLight"', "sans-serif"],
-        archivo: ['"Archivo Black"', "sans-serif"],
-        roboto: ['"Roboto Thin"', "sans-serif"],
-        cooper: ['"Cooper Black"', "sans-serif"],
-        haettenschweiler: ['"Haettenschweiler"', "sans-serif"],
-        impact: ['"Impact"', "sans-serif"],
-        teko: ['"Teko Light"', "sans-serif"],
-        alumini: ['"Alumini Sans Black"', "sans-serif"],
-        LTFuzz: ['"LTFuzz"', "sans-serif"],
-        ThePriest: ['"thepriest"', "sans-serif"],
+       
+        mono: [
+          "JetBrains Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Roboto Mono",
+          "monospace",
+        ],
+     
       },
       // Background gradients for mesh design
       backgroundImage: {

@@ -299,7 +299,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
                     Settings & Preferences
                   </h2>
                   <p className="text-slate-400">
-                    Customize your StreamSpire experience
+                    Customize your wingrid experience
                   </p>
                 </div>
 

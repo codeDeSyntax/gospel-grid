@@ -19,7 +19,7 @@ export const ScreenAggregationMockup: React.FC = () => {
               {/* VLC Media Player Card */}
               <div className="flex items-center justify-center p-1 rounded-md hover:bg-surface-secondary/20 transition-colors duration-200 shadow-sm hover:shadow-md bg-surface-primary/20 backdrop-blur-sm border border-border-primary/10 min-h-0 min-w-0">
                 <img
-                  src="/vlc.png"
+                  src="./vlc.png"
                   alt="VLC"
                   className="max-w-full max-h-full object-contain"
                 />
@@ -28,7 +28,7 @@ export const ScreenAggregationMockup: React.FC = () => {
               {/* File Explorer Card */}
               <div className="flex items-center justify-center p-1 rounded-md hover:bg-surface-secondary/20 transition-colors duration-200 shadow-sm hover:shadow-md bg-surface-primary/20 backdrop-blur-sm border border-border-primary/10 min-h-0 min-w-0">
                 <img
-                  src="/fileexp.png"
+                  src="./fileexp.png"
                   alt="File Explorer"
                   className="max-w-full max-h-full object-contain"
                 />
@@ -37,7 +37,7 @@ export const ScreenAggregationMockup: React.FC = () => {
               {/* PowerPoint Card */}
               <div className="flex items-center justify-center p-1 rounded-md hover:bg-surface-secondary/20 transition-colors duration-200 shadow-sm hover:shadow-md bg-surface-primary/20 backdrop-blur-sm border border-border-primary/10 min-h-0 min-w-0">
                 <img
-                  src="/powerpoint.png"
+                  src="./powerpoint.png"
                   alt="PowerPoint"
                   className="max-w-full max-h-full object-contain"
                 />
@@ -46,7 +46,7 @@ export const ScreenAggregationMockup: React.FC = () => {
               {/* Chrome Browser Card */}
               <div className="flex items-center justify-center p-1 rounded-md hover:bg-surface-secondary/20 transition-colors duration-200 shadow-sm hover:shadow-md bg-surface-primary/20 backdrop-blur-sm border border-border-primary/10 min-h-0 min-w-0">
                 <img
-                  src="/chrome.png"
+                  src="./chrome.png"
                   alt="Chrome"
                   className="max-w-full max-h-full object-contain"
                 />

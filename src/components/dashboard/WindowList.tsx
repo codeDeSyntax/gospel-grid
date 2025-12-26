@@ -377,7 +377,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                   </div>
 
                   {/* App Content */}
-                  <div className="flex-1 min-w-0 relative z-10">
+                  <div className="flex-1 min-w-0 relative z-10 font-mono">
                     {/* Window State Indicators */}
                     <div className="flex items-center gap-1 mb-1">
                       {window.isMinimized && (
@@ -410,7 +410,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                     </div>
 
                     {/* Window Title/Description - Small at bottom */}
-                    <div className="text-xs text-stone-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="text-xs font-sans text-stone-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                       {window.name}
                     </div>
 

@@ -11,9 +11,7 @@ export const TitleBar: React.FC = () => {
         <div className="w-4 h-4 rounded bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
           <span className="text-[10px] text-white">⛪</span>
         </div>
-        <span className="text-sm font-medium text-text-primary">
-          StreamSpire
-        </span>
+        <span className="text-sm font-medium text-text-primary">wingrid</span>
       </div>
 
       {/* Drag region */}

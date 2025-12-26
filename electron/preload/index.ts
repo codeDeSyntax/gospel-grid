@@ -269,11 +269,11 @@ const safeDOM = {
 };
 
 /**
- * StreamSpire Loading Screen - Theme-Aware with Centered SVG
+ * wingrid Loading Screen - Theme-Aware with Centered SVG
  * Features: Theme-aware colors with system preference detection and zoom in/out animated logo
  */
 function useLoading() {
-  const className = `streamspire-loading`;
+  const className = `wingrid-loading`;
 
   // Theme configurations matching the main app
   const THEME_CONFIGS = {
@@ -324,7 +324,7 @@ function useLoading() {
   // Read saved theme from localStorage or default to cosmic-blue
   let currentTheme: ThemeKey = "cosmic-blue";
   try {
-    const savedTheme = localStorage.getItem("streamspire-theme") as ThemeKey;
+    const savedTheme = localStorage.getItem("wingrid-theme") as ThemeKey;
     if (savedTheme && THEME_CONFIGS[savedTheme]) {
       currentTheme = savedTheme;
     }
@@ -369,7 +369,7 @@ function useLoading() {
   --theme-primary-700: ${defaultTheme.primary700};
 }
 
-/* StreamSpire Loading Animations */
+/* wingrid Loading Animations */
 @keyframes logoZoom {
   0%, 100% { 
     transform: scale(1);
@@ -425,7 +425,7 @@ function useLoading() {
   opacity: 0.8;
 }
 
-.streamspire-mesh {
+.wingrid-mesh {
   position: absolute;
   top: 0;
   left: 0;
@@ -435,7 +435,7 @@ function useLoading() {
   pointer-events: none;
 }
 
-.streamspire-logo-container {
+.wingrid-logo-container {
   position: relative;
   z-index: 10;
   display: flex;
@@ -443,14 +443,14 @@ function useLoading() {
   justify-content: center;
 }
 
-.streamspire-logo {
+.wingrid-logo {
   width: 180px;
   height: 180px;
   animation: logoZoom 3s ease-in-out infinite;
   filter: drop-shadow(0 0 20px rgb(var(--theme-primary-500) / 0.6));
 }
 
-.streamspire-logo-inner {
+.wingrid-logo-inner {
   animation: logoSpin 20s linear infinite;
   transform-origin: center;
 }
@@ -464,7 +464,7 @@ function useLoading() {
     const primary700 = themeColors.primary[700];
 
     return `
-      <svg class="streamspire-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <svg class="wingrid-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:${primary500};stop-opacity:1" />
@@ -497,7 +497,7 @@ function useLoading() {
           </filter>
         </defs>
         
-        <g class="streamspire-logo-inner">
+        <g class="wingrid-logo-inner">
           <!-- Outer ring representing window capture -->
           <circle cx="100" cy="100" r="85" fill="none" stroke="white" stroke-width="3" opacity="0.6" filter="url(#glow)"/>
           
@@ -573,12 +573,12 @@ function useLoading() {
   const oStyle = document.createElement("style");
   const oDiv = document.createElement("div");
 
-  oStyle.id = "streamspire-loading-style";
+  oStyle.id = "wingrid-loading-style";
   oStyle.innerHTML = styleContent;
   oDiv.className = `${className}`;
   oDiv.innerHTML = `
     <!-- Theme-aware mesh pattern background -->
-    <div class="streamspire-mesh">
+    <div class="wingrid-mesh">
       <svg width="100%" height="100%">
         <defs>
           ${generateThemeAwareMeshPattern()}
@@ -588,7 +588,7 @@ function useLoading() {
       </svg>
     </div>
     
-    <div class="streamspire-logo-container">
+    <div class="wingrid-logo-container">
       ${generateThemeAwareSVG()}
     </div>
   `;

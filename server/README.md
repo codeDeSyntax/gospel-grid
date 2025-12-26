@@ -1,4 +1,4 @@
-# StreamSpire Speech-to-Text Server
+# wingrid Speech-to-Text Server
 
 A local Whisper-based speech-to-text server that provides privacy-focused, offline transcription capabilities.
 
@@ -87,7 +87,7 @@ Edit `index.js` to customize:
 
 ## Integration with Electron App
 
-The server is designed to work seamlessly with the StreamSpire Electron app through:
+The server is designed to work seamlessly with the wingrid Electron app through:
 
 1. **HTTP API** - For file-based transcription
 2. **WebSocket** - For real-time microphone input transcription

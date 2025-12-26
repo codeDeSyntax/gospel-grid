@@ -1,7 +1,7 @@
 {
-  "name": "streamspire-speech-server",
+  "name": "wingrid-speech-server",
   "version": "1.0.0",
-  "description": "Local Whisper-based speech-to-text server for StreamSpire",
+  "description": "Local Whisper-based speech-to-text server for wingrid",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -25,6 +25,6 @@
     "electron",
     "streaming"
   ],
-  "author": "StreamSpire",
+  "author": "wingrid",
   "license": "MIT"
 }

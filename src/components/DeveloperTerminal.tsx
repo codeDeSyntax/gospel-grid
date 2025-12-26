@@ -16,7 +16,7 @@ interface Command {
   handler: (args: string[]) => string | Promise<string>;
 }
 
-const PROMPT = "user@streamspire:~$ ";
+const PROMPT = "user@wingrid:~$ ";
 const WELCOME_MESSAGE = `
 ███████╗████████╗██████╗ ███████╗ █████╗ ███╗   ███╗███████╗██████╗ ██╗██████╗ ███████╗
 ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗ ████║██╔════╝██╔══██╗██║██╔══██╗██╔════╝
@@ -25,10 +25,10 @@ const WELCOME_MESSAGE = `
 ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║███████║██║     ██║██║  ██║███████╗
 ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝
 
-StreamSpire Developer Terminal v1.0.0
-Copyright (c) 2025 StreamSpire Technologies
+wingrid Developer Terminal v1.0.0
+Copyright (c) 2025 wingrid Technologies
 
-Welcome to the StreamSpire Developer Console
+Welcome to the wingrid Developer Console
 Type 'help' for available commands
 Press Ctrl+C to exit
 
@@ -495,7 +495,7 @@ This browser does not support the Memory API`;
               <div className="w-3 h-3 bg-green-500 rounded-full hover:bg-green-400 transition-colors cursor-pointer"></div>
             </div>
             <span className="ml-4 text-gray-200 font-semibold">
-              StreamSpire Developer Terminal - Git Bash
+              wingrid Developer Terminal - Git Bash
             </span>
           </div>
           <button
@@ -525,7 +525,7 @@ This browser does not support the Memory API`;
                     <span className="text-red-300">{subLine}</span>
                   ) : subLine.startsWith("✅") ? (
                     <span className="text-green-300">{subLine}</span>
-                  ) : subLine.includes("user@streamspire") ? (
+                  ) : subLine.includes("user@wingrid") ? (
                     <span className="text-green-400 font-semibold">
                       {subLine}
                     </span>
@@ -544,8 +544,7 @@ This browser does not support the Memory API`;
                         {subLine.replace(/^\s{2}\w+/, "")}
                       </span>
                     </span>
-                  ) : subLine.includes("StreamSpire") ||
-                    subLine.includes("███") ? (
+                  ) : subLine.includes("wingrid") || subLine.includes("███") ? (
                     <span className="text-green-400 font-bold">{subLine}</span>
                   ) : subLine.includes("Type") || subLine.includes("Press") ? (
                     <span className="text-gray-300">{subLine}</span>
