@@ -36,9 +36,9 @@ export interface WindowInfo {
     height: number;
   };
   // Visual properties
-  icon?: string; // Base64 encoded icon or icon path
+  icon?: string; // Base64 encoded icon or icon path (always captured)
   hasNativeIcon?: boolean; // Whether the window has a native app icon available
-  thumbnail?: string; // Base64 encoded thumbnail
+  thumbnail?: string; // Base64 encoded thumbnail (captured on-demand only - NOT during enumeration)
   // Additional metadata
   parentHandle?: number;
   hasChildren?: boolean;

@@ -38,7 +38,7 @@ export function useThumbnails(
     height = 200, // Reduced from 600
     scaleFactor = 1.0, // Reduced from 2.0
     quality = 85, // Reduced from 90
-    refreshInterval = 16, // 60 FPS for smooth video playback
+    refreshInterval = 100, // 10 FPS - thumbnails don't need 60 FPS
     autoRefresh = true,
     smartRefresh = true,
     batchSize = 3,
@@ -46,11 +46,11 @@ export function useThumbnails(
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Activity monitoring for smart refresh
+  // Activity monitoring for smart refresh - optimized intervals
   const { activityState } = useActivityMonitor({
-    fastInterval: 16, // 60 FPS when active
-    slowInterval: 100, // 10 FPS when idle (reduced from 10s)
-    pausedInterval: 1000, // 1 FPS when paused (reduced from 30s)
+    fastInterval: 100, // 10 FPS when active (was 60 FPS)
+    slowInterval: 1000, // 1 FPS when idle
+    pausedInterval: 5000, // 0.2 FPS when paused
   });
 
   const captureThumbnails = useCallback(async () => {

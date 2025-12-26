@@ -3,6 +3,13 @@ import { WindowInfo } from "./WindowList";
 import { systemLogger } from "@/hooks/useSystemLogger";
 import { useAppSelector } from "@/store/hooks";
 
+/**
+ * PERFORMANCE OPTIMIZATION:
+ * This component ONLY captures thumbnails for windows in the published layout.
+ * It does NOT pre-fetch or cache thumbnails for all windows.
+ * Thumbnails are captured on-demand when the layout is published.
+ */
+
 interface LiveWindowGridProps {
   windows: WindowInfo[];
   className?: string;
@@ -27,6 +34,9 @@ export function LiveWindowGrid({
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastCaptureRef = useRef<number>(0);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Limit to 4 windows and calculate perfect grid layout
   const displayWindows = windows.slice(0, 4);
@@ -48,8 +58,8 @@ export function LiveWindowGrid({
     if (!containerRef.current) return { width: 800, height: 600 };
 
     const container = containerRef.current;
-    const containerWidth = container.clientWidth - 32; // Account for px-4 (16px * 2)
-    const containerHeight = container.clientHeight - 10; // Account for pt-4 + pb-8 (16px + 32px)
+    const containerWidth = container.clientWidth; // Full width for single window
+    const containerHeight = container.clientHeight; // Full height for single window
 
     // Account for gaps (16px gap between items)
     const gap = 16;
@@ -58,28 +68,34 @@ export function LiveWindowGrid({
 
     switch (type) {
       case "single":
-        // Full container minus padding
+        // Full screen - no padding or margins
         windowWidth = containerWidth;
         windowHeight = containerHeight;
         break;
       case "dual":
         // Two windows side by side, centered - landscape format
-        availableWidth = containerWidth - gap; // Gap between windows
+        const containerWidthDual = container.clientWidth - 32; // Account for px-4 (16px * 2)
+        const containerHeightDual = container.clientHeight - 10; // Account for pt-4 + pb-8 (16px + 32px)
+        availableWidth = containerWidthDual - gap; // Gap between windows
         windowWidth = Math.max(Math.floor(availableWidth / 2), 300); // Ensure minimum width
         // Use 60% of container height for landscape feel, with minimum height
-        windowHeight = Math.max(Math.floor(containerHeight * 0.6), 200);
+        windowHeight = Math.max(Math.floor(containerHeightDual * 0.6), 200);
         break;
       case "triple":
         // Two on top, one bottom-left
-        availableWidth = containerWidth - gap; // Gap between top windows
-        availableHeight = containerHeight - gap; // Gap between rows
+        const containerWidthTriple = container.clientWidth - 32; // Account for px-4 (16px * 2)
+        const containerHeightTriple = container.clientHeight - 10; // Account for pt-4 + pb-8 (16px + 32px)
+        availableWidth = containerWidthTriple - gap; // Gap between top windows
+        availableHeight = containerHeightTriple - gap; // Gap between rows
         windowWidth = Math.floor(availableWidth / 2);
         windowHeight = Math.floor(availableHeight / 2);
         break;
       case "quad":
         // 2x2 grid
-        availableWidth = containerWidth - gap; // Gap between columns
-        availableHeight = containerHeight - gap; // Gap between rows
+        const containerWidthQuad = container.clientWidth - 32; // Account for px-4 (16px * 2)
+        const containerHeightQuad = container.clientHeight - 10; // Account for pt-4 + pb-8 (16px + 32px)
+        availableWidth = containerWidthQuad - gap; // Gap between columns
+        availableHeight = containerHeightQuad - gap; // Gap between rows
         windowWidth = Math.floor(availableWidth / 2);
         windowHeight = Math.floor(availableHeight / 2);
         break;
@@ -252,36 +268,47 @@ export function LiveWindowGrid({
     }
   }, [gridWindows, calculateDimensions]);
 
+  // Performance-aware update intervals based on window count and layout
+  const getOptimalUpdateInterval = useCallback(() => {
+    const baseInterval = 2000; // 2 seconds base
+
+    // Adjust based on layout complexity and window count
+    switch (type) {
+      case "single":
+        return baseInterval; // Most responsive for single window
+      case "dual":
+        return Math.max(baseInterval * 1.2, 2400); // Slightly slower for dual
+      case "triple":
+        return Math.max(baseInterval * 1.5, 3000); // 3 seconds for triple
+      case "quad":
+        return Math.max(baseInterval * 2, 4000); // 4 seconds for quad to reduce load
+      default:
+        return baseInterval * 2;
+    }
+  }, [type]);
+
+  // RAF-based update loop for better performance than setInterval
+  const tick = useCallback(
+    (timestamp: number) => {
+      const interval = getOptimalUpdateInterval();
+
+      if (timestamp - lastCaptureRef.current >= interval) {
+        captureThumbnails();
+        lastCaptureRef.current = timestamp;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(tick);
+    },
+    [captureThumbnails, getOptimalUpdateInterval]
+  );
+
   // Start live updates when component mounts
   useEffect(() => {
-    // Initial capture
-    captureThumbnails();
-
-    // Performance-aware update intervals based on window count and layout
-    const getOptimalUpdateInterval = () => {
-      const windowCount = gridWindows.length;
-      const baseInterval = 2000; // 2 seconds base
-
-      // Adjust based on layout complexity and window count
-      switch (type) {
-        case "single":
-          return baseInterval; // Most responsive for single window
-        case "dual":
-          return Math.max(baseInterval * 1.2, 2400); // Slightly slower for dual
-        case "triple":
-          return Math.max(baseInterval * 1.5, 3000); // 3 seconds for triple
-        case "quad":
-          return Math.max(baseInterval * 2, 4000); // 4 seconds for quad to reduce load
-        default:
-          return baseInterval * 2;
-      }
-    };
-
     const updateInterval = getOptimalUpdateInterval();
 
     systemLogger.thumbnail(
       "performance-config",
-      `Configured ${type} layout with ${updateInterval}ms update interval`,
+      `Configured ${type} layout with ${updateInterval}ms update interval (RAF-based)`,
       {
         layoutType: type,
         windowCount: gridWindows.length,
@@ -291,10 +318,12 @@ export function LiveWindowGrid({
       }
     );
 
-    // Set up live updates with performance-optimized intervals
-    updateIntervalRef.current = setInterval(() => {
-      captureThumbnails();
-    }, updateInterval);
+    // Initial capture
+    captureThumbnails();
+    lastCaptureRef.current = performance.now();
+
+    // Start RAF loop
+    animationFrameRef.current = requestAnimationFrame(tick);
 
     // Safety timeout to clear loading state if it gets stuck
     const loadingTimeout = setTimeout(() => {
@@ -302,21 +331,38 @@ export function LiveWindowGrid({
     }, 10000); // 10 second timeout
 
     return () => {
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
       clearTimeout(loadingTimeout);
     };
-  }, [captureThumbnails, type, gridWindows.length]);
+  }, [
+    tick,
+    captureThumbnails,
+    type,
+    gridWindows.length,
+    getOptimalUpdateInterval,
+  ]);
 
-  // Recapture when window resizes
+  // Recapture when window resizes with proper debounce
   useEffect(() => {
     const handleResize = () => {
-      setTimeout(() => captureThumbnails(), 100); // Debounce
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      resizeTimeoutRef.current = setTimeout(() => {
+        captureThumbnails();
+      }, 250); // Increased debounce for better performance
     };
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+    };
   }, [captureThumbnails]);
 
   if (gridWindows.length === 0) {
@@ -479,8 +525,8 @@ export function LiveWindowGrid({
         return (
           <div className="w-full h-full flex items-center justify-center">
             {renderWindow(gridWindows[0], {
-              width: `${width}px`,
-              height: `${height}px`,
+              width: "100%",
+              height: "100%",
             })}
           </div>
         );
@@ -564,7 +610,9 @@ export function LiveWindowGrid({
   return (
     <div
       ref={containerRef}
-      className={`${className} w-full h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/20 to-gray-800 pt-4 px-4 pb-8 `}
+      className={`${className} w-full h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/20 to-gray-800 ${
+        type === "single" ? "" : "pt-4 px-4 pb-8"
+      }`}
     >
       {renderLayout()}
 

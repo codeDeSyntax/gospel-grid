@@ -5,7 +5,7 @@ import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { PublishedLayout } from "./components/dashboard/PublishedLayout";
 import { WindowInfo } from "./components/dashboard/WindowList";
-import SecretTerminal from "./components/SecretTerminal";
+
 import { systemLogger } from "./hooks/useSystemLogger";
 
 type AppScreen = "welcome" | "dashboard" | "settings" | "published";
@@ -162,7 +162,7 @@ function App() {
     <ThemeProvider>
       <div className="app no-scrollbar">
         {renderScreen()}
-        <SecretTerminal />
+      
       </div>
     </ThemeProvider>
   );

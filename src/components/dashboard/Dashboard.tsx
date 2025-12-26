@@ -1,15 +1,12 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { X, Minus, Maximize2 } from "lucide-react";
 import { WindowList, type WindowInfo } from "./WindowList";
-import { PresetsList, type PresetInfo } from "./PresetsList";
 import { CosmicBackground } from "./CosmicBackground";
 import { RightPanel } from "./RightPanel/RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
 import { SimpleThemeToggle } from "../ThemeToggle";
-import { PresetSaveModal } from "@/components/ui/PresetSaveModal";
-import type { SavedPreset } from "@/types/electron";
 import { NotificationModalComponent } from "@/components/ui/NotificationModal";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -21,12 +18,9 @@ import {
 
 interface DashboardState {
   windows: WindowInfo[];
-  presets: PresetInfo[];
-  selectedPreset: string;
   currentLayout: string;
   focusedWindowId: string | null;
   activeSection: string;
-  showPresetSaveModal: boolean;
 }
 
 export const Dashboard: React.FC = () => {
@@ -54,12 +48,9 @@ export const Dashboard: React.FC = () => {
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
-    presets: [], // Start with empty presets array
-    selectedPreset: "",
     currentLayout: "auto",
     focusedWindowId: null,
     activeSection: "dashboard",
-    showPresetSaveModal: false,
   });
 
   // Update state when enumerated windows change
@@ -76,44 +67,6 @@ export const Dashboard: React.FC = () => {
     }
   }, [enumeratedWindows, isLoadingWindows, windowError]);
 
-  // Load saved presets on component mount
-  useEffect(() => {
-    const loadSavedPresets = async () => {
-      try {
-        const result = await (window.electronAPI as any)?.loadPresets();
-
-        if (result?.success && result.presets) {
-          const presetInfos: PresetInfo[] = result.presets.map(
-            (preset: SavedPreset) => ({
-              id: preset.id,
-              name: preset.name,
-              windowCount: preset.windowCount,
-              windows: preset.windows.map((window) => ({
-                id: window.id,
-                name: window.name,
-                app: window.app,
-                icon: window.icon,
-                hasNativeIcon: window.hasNativeIcon,
-              })),
-            })
-          );
-
-          setState((prev) => ({
-            ...prev,
-            presets: presetInfos, // Only use saved presets, no mock presets
-          }));
-
-          console.log(`Loaded ${presetInfos.length} saved presets on startup`);
-        }
-      } catch (error) {
-        console.error("Failed to load saved presets on startup:", error);
-        // Don't show error notification on startup - just log it
-      }
-    };
-
-    loadSavedPresets();
-  }, []); // Empty dependency array - run once on mount
-
   // Section navigation handler
   const handleSectionChange = useCallback((section: string) => {
     setState((prev) => ({ ...prev, activeSection: section }));
@@ -124,107 +77,6 @@ export const Dashboard: React.FC = () => {
     refreshWindows();
   }, [refreshWindows]);
 
-  const handleSavePreset = useCallback(() => {
-    const selectedWindows = state.windows.filter((w) => w.isSelected);
-    if (selectedWindows.length === 0) {
-      // Show notification for no windows selected
-      dispatch(
-        showNotification({
-          type: "error",
-          title: "No Windows Selected",
-          message: "Please select at least one window before saving a preset.",
-          autoClose: 4000,
-        })
-      );
-      return;
-    }
-
-    // Show the preset save modal
-    setState((prev) => ({ ...prev, showPresetSaveModal: true }));
-  }, [state.windows, dispatch]);
-
-  const handlePresetSaveModalClose = useCallback(() => {
-    setState((prev) => ({ ...prev, showPresetSaveModal: false }));
-  }, []);
-
-  const handlePresetSave = useCallback(
-    async (presetName: string) => {
-      const selectedWindows = state.windows.filter((w) => w.isSelected);
-
-      try {
-        const savedPreset: SavedPreset = {
-          id: presetName.toLowerCase().replace(/\s+/g, "-"),
-          name: presetName,
-          windowCount: selectedWindows.length,
-          createdAt: new Date().toISOString(),
-          windows: selectedWindows.map((window) => ({
-            id: window.id,
-            name: window.name,
-            app: window.app,
-            icon: window.icon, // Store the Base64 icon data
-            hasNativeIcon: window.hasNativeIcon, // Store icon availability flag
-            sourceId: (window as any).sourceId, // From windowMapper
-            handle: window.handle,
-          })),
-        };
-
-        // Save to persistent storage via IPC
-        const result = await (window.electronAPI as any)?.savePreset(
-          savedPreset
-        );
-
-        if (result?.success) {
-          // Update local state
-          const newPresetInfo: PresetInfo = {
-            id: savedPreset.id,
-            name: savedPreset.name,
-            windowCount: savedPreset.windowCount,
-            windows: savedPreset.windows.map((window) => ({
-              id: window.id,
-              name: window.name,
-              app: window.app,
-              icon: window.icon,
-              hasNativeIcon: window.hasNativeIcon,
-            })),
-          };
-
-          setState((prev) => ({
-            ...prev,
-            presets: [...prev.presets, newPresetInfo],
-            showPresetSaveModal: false,
-          }));
-
-          // Show success notification
-          dispatch(
-            showNotification({
-              type: "success",
-              title: "Preset Saved",
-              message: `"${presetName}" saved with ${selectedWindows.length} windows!`,
-              autoClose: 3000,
-            })
-          );
-        } else {
-          throw new Error(result?.error || "Failed to save preset");
-        }
-      } catch (error) {
-        console.error("Failed to save preset:", error);
-
-        // Show error notification
-        dispatch(
-          showNotification({
-            type: "error",
-            title: "Save Failed",
-            message: `Failed to save preset: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-            autoClose: 5000,
-          })
-        );
-      }
-    },
-    [state.windows, dispatch]
-  );
-
   const handleClearAll = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -233,19 +85,11 @@ export const Dashboard: React.FC = () => {
     }));
   }, []);
 
-  const handlePresetChange = useCallback((presetId: string) => {
-    setState((prev) => ({ ...prev, selectedPreset: presetId }));
-
-    if (presetId) {
-      loadPreset(presetId);
-    }
-  }, []);
-
   const handleLayoutChange = useCallback((layout: string) => {
     setState((prev) => ({ ...prev, currentLayout: layout }));
   }, []);
 
-  // Window and preset handlers
+  // Window handlers
   const handleWindowSelect = useCallback((windowId: string) => {
     setState((prev) => {
       const updatedWindows = prev.windows.map((w) =>
@@ -295,133 +139,6 @@ export const Dashboard: React.FC = () => {
     });
   }, []);
 
-  const handlePresetSelect = useCallback((presetId: string) => {
-    loadPreset(presetId);
-  }, []);
-
-  const handlePresetDelete = useCallback(async (presetId: string) => {
-    try {
-      // Delete preset from storage
-      const result = await (window.electronAPI as any)?.deletePreset?.(
-        presetId
-      );
-
-      if (result?.success) {
-        // Update state to remove the deleted preset
-        setState((prev) => ({
-          ...prev,
-          presets: prev.presets.filter((p) => p.id !== presetId),
-          selectedPreset:
-            prev.selectedPreset === presetId ? "" : prev.selectedPreset,
-        }));
-
-        console.log("Preset deleted successfully:", presetId);
-      } else {
-        console.error("Failed to delete preset:", result?.error);
-        // The notification for the error will be shown by the PresetsCard component
-      }
-    } catch (error) {
-      console.error("Error deleting preset:", error);
-    }
-  }, []);
-
-  const loadPreset = useCallback(
-    async (presetId: string) => {
-      try {
-        // Load presets from storage
-        const result = await (window.electronAPI as any)?.loadPresets();
-
-        if (!result?.success) {
-          console.error("Failed to load presets:", result?.error);
-          return;
-        }
-
-        // Find the specific preset
-        const preset = result.presets?.find(
-          (p: SavedPreset) => p.id === presetId
-        );
-        if (!preset) {
-          console.warn(`Preset not found: ${presetId}`);
-          return;
-        }
-
-        console.log(
-          `Loading preset "${preset.name}" with ${preset.windows.length} windows`
-        );
-
-        // Match windows by app name and partial title matching
-        setState((prev) => {
-          const updatedWindows = prev.windows.map((currentWindow) => {
-            // Check if this current window matches any window in the preset
-            const matchedPresetWindow = preset.windows.find(
-              (presetWindow: SavedPreset["windows"][0]) => {
-                // Primary match: app name (more reliable)
-                const appMatch =
-                  currentWindow.app?.toLowerCase() ===
-                  presetWindow.app?.toLowerCase();
-
-                // Secondary match: partial title match (handles dynamic content like tabs)
-                const titleMatch =
-                  currentWindow.name &&
-                  presetWindow.name &&
-                  (currentWindow.name
-                    .toLowerCase()
-                    .includes(presetWindow.name.toLowerCase()) ||
-                    presetWindow.name
-                      .toLowerCase()
-                      .includes(currentWindow.name.toLowerCase()));
-
-                return appMatch || titleMatch;
-              }
-            );
-
-            return {
-              ...currentWindow,
-              isSelected: !!matchedPresetWindow,
-            };
-          });
-
-          console.log(
-            `Matched ${
-              updatedWindows.filter((w) => w.isSelected).length
-            } windows for preset "${preset.name}"`
-          );
-
-          return {
-            ...prev,
-            windows: updatedWindows,
-            focusedWindowId: null,
-          };
-        });
-
-        // Show success notification
-        dispatch(
-          showNotification({
-            type: "success",
-            title: "Preset Loaded",
-            message: `Loaded "${preset.name}" preset`,
-            autoClose: 2000,
-          })
-        );
-      } catch (error) {
-        console.error("Failed to load preset:", error);
-
-        // Show error notification
-        dispatch(
-          showNotification({
-            type: "error",
-            title: "Load Failed",
-            message: `Failed to load preset: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-            autoClose: 4000,
-          })
-        );
-      }
-    },
-    [dispatch]
-  );
-
   // Grid handlers
   const handleWindowFocus = useCallback((windowId: string) => {
     setState((prev) => ({
@@ -441,9 +158,13 @@ export const Dashboard: React.FC = () => {
     }));
   }, []);
 
-  const handlePublishLayout = useCallback(async () => {
-    const selectedWindows = state.windows.filter((w) => w.isSelected);
+  // Memoize selected windows to prevent recalculation
+  const selectedWindows = useMemo(
+    () => state.windows.filter((w) => w.isSelected),
+    [state.windows]
+  );
 
+  const handlePublishLayout = useCallback(async () => {
     // Use Redux async thunk for publish layout
     dispatch(
       reduxHandlePublishLayout({
@@ -452,7 +173,7 @@ export const Dashboard: React.FC = () => {
         focusedWindowId: state.focusedWindowId,
       })
     );
-  }, [dispatch, state.windows, state.currentLayout, state.focusedWindowId]);
+  }, [dispatch, selectedWindows, state.currentLayout, state.focusedWindowId]);
 
   return (
     <div className="h-screen w-screen overflow-hidden relative p-3 flex items-center justify-center no-scrollbar">
@@ -524,18 +245,12 @@ export const Dashboard: React.FC = () => {
         <div className="flex-1 flex flex-col overflow-hidden">
           <RightPanel
             windows={state.windows}
-            presets={state.presets}
-            selectedPreset={state.selectedPreset}
             currentLayout={state.currentLayout}
             focusedWindowId={state.focusedWindowId}
             onRefreshWindows={handleRefreshWindows}
-            onSavePreset={handleSavePreset}
             onClearAll={handleClearAll}
-            onPresetChange={handlePresetChange}
             onLayoutChange={handleLayoutChange}
             onWindowSelect={handleWindowSelect}
-            onPresetSelect={handlePresetSelect}
-            onPresetDelete={handlePresetDelete}
             onWindowFocus={handleWindowFocus}
             onWindowRemove={handleWindowRemove}
             onWindowAdd={handleWindowAdd}
@@ -562,7 +277,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Debug: Test Notification Button */}
-      <button
+      {/* <button
         onClick={() => {
           console.log("🧪 Testing notification system...");
           dispatch(
@@ -577,18 +292,10 @@ export const Dashboard: React.FC = () => {
         className="fixed bottom-6 left-6 bg-theme-primary-600 hover:bg-theme-primary-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors z-20"
       >
         Test Notification
-      </button>
+      </button> */}
 
       {/* Custom Notification Modal */}
       <NotificationModalComponent />
-
-      {/* Preset Save Modal */}
-      <PresetSaveModal
-        isOpen={state.showPresetSaveModal}
-        onClose={handlePresetSaveModalClose}
-        onSave={handlePresetSave}
-        selectedWindowsCount={state.windows.filter((w) => w.isSelected).length}
-      />
     </div>
   );
 };

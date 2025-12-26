@@ -1,14 +1,31 @@
 import { desktopCapturer } from "electron";
 
 /**
- * Get a mapping of desktop capturer sources to process information
+ * PERFORMANCE OPTIMIZATION:
+ * Window enumeration now separates listing windows from capturing thumbnails.
+ * This prevents system drain when enumerating all windows.
+ *
+ * Strategy:
+ * 1. List all windows WITHOUT thumbnails (captureThumbnails=false by default)
+ * 2. Capture thumbnails on-demand only for selected/published windows
+ * 3. Use batch capture for published layouts via LiveWindowGrid
  */
-export async function getWindowSourceMapping() {
+
+/**
+ * Get a mapping of desktop capturer sources to process information
+ * @param captureThumbnails - Whether to capture thumbnails (default: false for performance)
+ */
+export async function getWindowSourceMapping(
+  captureThumbnails: boolean = false
+) {
   try {
     // Get all window sources from desktopCapturer
+    // Only capture thumbnails if explicitly requested to save system resources
     const sources = await desktopCapturer.getSources({
       types: ["window"],
-      thumbnailSize: { width: 300, height: 200 },
+      thumbnailSize: captureThumbnails
+        ? { width: 300, height: 200 }
+        : { width: 1, height: 1 }, // Minimal size when not capturing
       fetchWindowIcons: true, // Enable fetching window icons!
     });
 
@@ -59,7 +76,7 @@ export async function getWindowSourceMapping() {
         hasIcon: !!source.appIcon, // Whether app icon is available
         // Use the native source ID as the primary identifier instead of index
         mappingId: source.id, // Use Electron's native ID for true uniqueness
-        thumbnail: source.thumbnail,
+        thumbnail: captureThumbnails ? source.thumbnail : null, // Only include thumbnail if requested
         appIcon: source.appIcon, // Include the app icon
       };
     });
@@ -72,10 +89,13 @@ export async function getWindowSourceMapping() {
 /**
  * Get windows in a format that matches what our UI expects
  * but uses actual desktopCapturer source IDs
+ * @param captureThumbnails - Whether to capture thumbnails (default: false for performance)
  */
-export async function getWindowsWithThumbnails() {
+export async function getWindowsWithThumbnails(
+  captureThumbnails: boolean = false
+) {
   try {
-    const sources = await getWindowSourceMapping();
+    const sources = await getWindowSourceMapping(captureThumbnails);
 
     return sources.map((source) => ({
       id: source.sourceId, // Use Electron's native source ID for true uniqueness
@@ -92,6 +112,7 @@ export async function getWindowsWithThumbnails() {
       sourceId: source.sourceId, // Keep the original source ID for thumbnail capture
       icon: source.appIcon ? source.appIcon.toDataURL() : null, // Convert app icon to base64 data URL
       hasNativeIcon: source.hasIcon, // Flag to indicate if native icon is available
+      thumbnail: null, // Thumbnails are fetched on-demand via captureWindowThumbnail
     }));
   } catch (error) {
     console.error("Failed to get windows with thumbnails:", error);

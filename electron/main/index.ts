@@ -75,6 +75,17 @@ let win: BrowserWindow | null = null;
 
 let publishedWindows: BrowserWindow[] = []; // Track published layout windows
 const publishedLayoutData = new Map<string, any>(); // Store layout data temporarily
+
+// IPC request debouncing for batch captures
+const captureDebounceMap = new Map<
+  string,
+  {
+    timeout: NodeJS.Timeout;
+    resolvers: Array<(value: any) => void>;
+    rejecters: Array<(reason: any) => void>;
+  }
+>();
+
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
@@ -618,22 +629,57 @@ ipcMain.handle(
   }
 );
 
-// Batch thumbnail capture with throttling
+// Batch thumbnail capture with throttling and debouncing
 ipcMain.handle(
   "batch-capture-thumbnails",
   async (event, windowIds: string[], options: ThumbnailOptions = {}) => {
-    try {
-      const thumbnails = await batchCaptureThumbnails(windowIds, options);
-      return {
-        success: true,
-        thumbnails,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
+    // Create a unique key for this request based on window IDs
+    const key = windowIds.sort().join(",");
+
+    // Return a promise that will be resolved when the debounced capture completes
+    return new Promise((resolve, reject) => {
+      // If there's an existing debounce entry, add to its resolvers
+      const existing = captureDebounceMap.get(key);
+
+      if (existing) {
+        // Clear the existing timeout and add this resolver to the list
+        clearTimeout(existing.timeout);
+        existing.resolvers.push(resolve);
+        existing.rejecters.push(reject);
+      } else {
+        // Create new debounce entry
+        captureDebounceMap.set(key, {
+          timeout: null as any,
+          resolvers: [resolve],
+          rejecters: [reject],
+        });
+      }
+
+      // Get the current entry
+      const entry = captureDebounceMap.get(key)!;
+
+      // Set up debounced execution
+      entry.timeout = setTimeout(async () => {
+        try {
+          const thumbnails = await batchCaptureThumbnails(windowIds, options);
+          const result = { success: true, thumbnails };
+
+          // Resolve all pending promises
+          entry.resolvers.forEach((r) => r(result));
+        } catch (error) {
+          const errorResult = {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          };
+
+          // Reject all pending promises
+          entry.rejecters.forEach((r) => r(errorResult));
+        } finally {
+          // Clean up
+          captureDebounceMap.delete(key);
+        }
+      }, 50); // 50ms debounce window
+    });
   }
 );
 

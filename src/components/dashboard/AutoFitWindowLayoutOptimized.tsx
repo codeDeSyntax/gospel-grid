@@ -2,6 +2,13 @@ import React, { useMemo, useRef } from "react";
 import { OptimizedThumbnailGrid } from "./OptimizedThumbnailGrid";
 import { WindowInfo } from "../dashboard/WindowList";
 
+/**
+ * PERFORMANCE OPTIMIZATION:
+ * This preview component shows thumbnails for SELECTED windows only (max 4).
+ * Thumbnails use lazy loading via LazyThumbnail component (loads when visible).
+ * This is intentional - users need to see what they selected before publishing.
+ */
+
 interface AutoFitWindowLayoutProps {
   selectedWindows: WindowInfo[];
   focusedWindowId: string | null;

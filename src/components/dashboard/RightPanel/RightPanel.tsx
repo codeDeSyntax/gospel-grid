@@ -3,27 +3,18 @@ import { DashboardHeader } from "../DashboardHeader";
 import {
   WindowLayoutCard,
   SettingsPanel,
-  AITranscriptionCard,
-  SpeechToTextCard,
-  PresetsCard,
   type RightPanelProps,
   type MainViewType,
 } from "./index";
 
 export const RightPanel: React.FC<RightPanelProps> = ({
   windows,
-  presets,
-  selectedPreset,
   currentLayout,
   focusedWindowId,
   onRefreshWindows,
-  onSavePreset,
   onClearAll,
-  onPresetChange,
   onLayoutChange,
   onWindowSelect,
-  onPresetSelect,
-  onPresetDelete,
   onWindowFocus,
   onWindowRemove,
   onWindowAdd,
@@ -39,11 +30,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         {/* Header Card - Using imported component */}
         <DashboardHeader
           onRefreshWindows={onRefreshWindows}
-          onSavePreset={onSavePreset}
           onClearAll={onClearAll}
-          selectedPreset={selectedPreset}
-          onPresetChange={onPresetChange}
-          presets={presets}
           onPublishLayout={onPublishLayout}
           selectedWindowsCount={selectedWindows.length}
           onToggleSettings={() =>
@@ -52,8 +39,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({
           isSettingsView={mainView === "settings"}
         />
 
-        {/* Main Window Grid Card - Large center area */}
-        <div className="col-span-7 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-stone-800/20 border border-stone-400 rounded-2xl py-4 px-2 shadow shadow-primary-500/30 flex flex-col">
+        {/* Main Window Grid Card - Full right panel */}
+        <div className="col-span-12 row-span-7 backdrop-blur-md bg-gradient-to-br from-transparent via-transparent to-stone-800/20 border border-stone-400 rounded-2xl py-4 px-2 shadow shadow-primary-500/30 flex flex-col">
           {/* Fixed height container that never overflows */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {mainView === "windows" ? (
@@ -69,18 +56,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             )}
           </div>
         </div>
-
-        {/* Speech to Text Card */}
-        <SpeechToTextCard onWindowSelect={onWindowSelect} />
-
-        {/* Saved Presets Card */}
-        <PresetsCard
-          presets={presets}
-          selectedPreset={selectedPreset}
-          availableWindows={windows}
-          onPresetSelect={onPresetSelect}
-          onPresetDelete={onPresetDelete}
-        />
       </div>
     </div>
   );
