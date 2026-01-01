@@ -82,6 +82,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   batchCaptureThumbnails: (windowIds: string[], options?: any) =>
     ipcRenderer.invoke("batch-capture-thumbnails", windowIds, options),
 
+  // Subscribe to published thumbnails broadcast from main
+  onPublishedThumbnails: (callback: (payload: any) => void) => {
+    const listener = (_: any, payload: any) => callback(payload);
+    ipcRenderer.on("published-thumbnails", listener);
+    return () => ipcRenderer.off("published-thumbnails", listener);
+  },
+
+  // Subscribe to main window thumbnails broadcast (synchronized with published window)
+  onMainWindowThumbnails: (callback: (payload: any) => void) => {
+    const listener = (_: any, payload: any) => callback(payload);
+    ipcRenderer.on("main-window-thumbnails", listener);
+    return () => ipcRenderer.off("main-window-thumbnails", listener);
+  },
+
   // Wrapper for compatibility
   captureWindowThumbnail: (windowId: string, options?: any) =>
     ipcRenderer.invoke("get-window-thumbnail", windowId, options),

@@ -1,11 +1,5 @@
-import React from "react";
-import {
-  Trash2,
-  ExternalLink,
-  RefreshCcw,
-  BrushCleaning,
-  Settings,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ExternalLink, BrushCleaning, Settings, X } from "lucide-react";
 
 interface DashboardHeaderProps {
   onRefreshWindows: () => void;
@@ -24,6 +18,35 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleSettings,
   isSettingsView,
 }) => {
+  const [hasPublishedWindows, setHasPublishedWindows] = useState(false);
+
+  // Check for published windows on mount and periodically
+  useEffect(() => {
+    const checkPublishedWindows = async () => {
+      try {
+        const status = await (
+          window.electronAPI as any
+        ).checkPublishedWindows();
+        setHasPublishedWindows(status.hasActivePublications);
+      } catch (error) {
+        console.error("Error checking published windows:", error);
+      }
+    };
+
+    checkPublishedWindows();
+    const interval = setInterval(checkPublishedWindows, 1000); // Check every second
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCloseProjection = async () => {
+    try {
+      await (window.electronAPI as any).closePublishedWindows();
+      setHasPublishedWindows(false);
+    } catch (error) {
+      console.error("Error closing published windows:", error);
+    }
+  };
   return (
     <div className="col-span-12 row-span-1 backdrop-blur-2xl bg-gradient-to-r from-theme-primary-900/80 via-stone-900/70 to-theme-primary-900/80 border border-theme-primary-400/50 rounded-2xl p-4 flex items-center justify-between shadow-md shadow-theme-primary-500/30">
       <div className="flex gap-3">
@@ -44,6 +67,17 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <ExternalLink className="w-4 h-4 flex-shrink-0" />
           Publish ({selectedWindowsCount})
         </button>
+
+        {hasPublishedWindows && (
+          <button
+            onClick={handleCloseProjection}
+            className="flex items-center gap-1.5 cursor-pointer px-3 py-2 bg-gradient-to-r from-orange-600/90 to-orange-500/90 hover:from-orange-500 hover:to-orange-400 text-white rounded-full text-sm font-medium transition-all backdrop-blur-md border border-orange-400/40 shadow-lg shadow-orange-500/30 whitespace-nowrap"
+            title="Close projection window"
+          >
+            <X className="w-4 h-4 flex-shrink-0" />
+            Close Projection
+          </button>
+        )}
       </div>
 
       {/* Right side - Settings toggle */}

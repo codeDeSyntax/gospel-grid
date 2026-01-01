@@ -16,6 +16,7 @@ function App() {
     windows: WindowInfo[];
     layout: string;
     focusedWindowId: string | null;
+    layoutId?: string;
   } | null>(null);
 
   // Initialize theme on app start and check for published layout
@@ -39,6 +40,7 @@ function App() {
               windows: layoutData.windows,
               layout: layoutData.layout,
               focusedWindowId: layoutData.focusedWindowId,
+              layoutId,
             });
             setCurrentScreen("published");
             systemLogger.log(
@@ -160,10 +162,7 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="app no-scrollbar">
-        {renderScreen()}
-      
-      </div>
+      <div className="app no-scrollbar">{renderScreen()}</div>
     </ThemeProvider>
   );
 }

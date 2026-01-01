@@ -8,6 +8,7 @@ interface PublishedLayoutProps {
   windows: WindowInfo[];
   layout: string;
   focusedWindowId: string | null;
+  layoutId?: string;
   onMinimize: () => void; // ESC key - minimize and focus main window
   onClose: () => void; // Close button - close window and focus main window
 }
@@ -16,6 +17,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
   windows,
   layout,
   focusedWindowId,
+  layoutId,
   onMinimize,
   onClose,
 }) => {
@@ -65,7 +67,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-black text-white z-50 overflow-hidden focus:outline-none"
+      className="fixed inset-0 text-white z-50 overflow-hidden focus:outline-none"
       tabIndex={-1}
     >
       {/* Window Controls */}
@@ -93,6 +95,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
       <LiveWindowGrid
         windows={windows.filter((w) => w.isSelected)}
         className="w-full h-full"
+        layoutId={layoutId}
       />
     </div>
   );

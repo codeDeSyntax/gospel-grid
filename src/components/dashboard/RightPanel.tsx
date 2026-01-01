@@ -1,16 +1,5 @@
 import React, { useState } from "react";
-import {
-  Plus,
-  Sparkles,
-  Users,
-  Trash2,
-  ExternalLink,
-  Settings,
-  Palette,
-  Clock,
-  Shield,
-  RefreshCcw,
-} from "lucide-react";
+import { Sparkles, Palette, Clock, Shield, RefreshCcw } from "lucide-react";
 import { type WindowInfo } from "./WindowList";
 import { DashboardHeader } from "./DashboardHeader";
 import { AutoFitWindowLayout } from "./AutoFitWindowLayoutOptimized";
@@ -449,8 +438,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             </div>
           </div>
         </div>
-
-      
       </div>
     </div>
   );

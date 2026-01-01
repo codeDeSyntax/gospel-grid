@@ -13,6 +13,7 @@ import { useAppSelector } from "@/store/hooks";
 interface LiveWindowGridProps {
   windows: WindowInfo[];
   className?: string;
+  layoutId?: string;
 }
 
 interface LiveWindowThumbnail {
@@ -24,6 +25,7 @@ interface LiveWindowThumbnail {
 export function LiveWindowGrid({
   windows,
   className = "",
+  layoutId,
 }: LiveWindowGridProps) {
   const publishedQuality = useAppSelector(
     (state) => state.app.publishedQuality
@@ -304,6 +306,10 @@ export function LiveWindowGrid({
 
   // Start live updates when component mounts
   useEffect(() => {
+    // If this grid is part of a published layout, the main process
+    // will drive captures and broadcast via IPC. Skip local capture loop.
+    if (layoutId) return;
+
     const updateInterval = getOptimalUpdateInterval();
 
     systemLogger.thumbnail(
@@ -342,10 +348,14 @@ export function LiveWindowGrid({
     type,
     gridWindows.length,
     getOptimalUpdateInterval,
+    layoutId,
   ]);
 
   // Recapture when window resizes with proper debounce
   useEffect(() => {
+    // If published, main process drives captures - skip local resize-triggered captures
+    if (layoutId) return;
+
     const handleResize = () => {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
@@ -365,10 +375,69 @@ export function LiveWindowGrid({
     };
   }, [captureThumbnails]);
 
+  // Subscription to published thumbnails (main process broadcast)
+  useEffect(() => {
+    if (!layoutId) return;
+
+    // Subscribe to both published and main window thumbnails for synchronized real-time view
+    const offPublished = (window as any).electronAPI?.onPublishedThumbnails?.(
+      (payload: any) => {
+        try {
+          if (!payload || payload.layoutId !== layoutId) return;
+
+          const mapped: Record<string, LiveWindowThumbnail> = {};
+          (payload.thumbnails || []).forEach((t: any) => {
+            if (t && t.windowId && t.dataUrl) {
+              mapped[t.windowId] = {
+                windowId: t.windowId,
+                dataUrl: t.dataUrl,
+                timestamp: t.timestamp || Date.now(),
+              };
+            }
+          });
+
+          setThumbnails(mapped);
+          setIsLoading(false);
+        } catch (err) {
+          console.error("Error handling published thumbnails:", err);
+        }
+      }
+    );
+
+    const offMainWindow = (window as any).electronAPI?.onMainWindowThumbnails?.(
+      (payload: any) => {
+        try {
+          if (!payload || payload.layoutId !== layoutId) return;
+
+          const mapped: Record<string, LiveWindowThumbnail> = {};
+          (payload.thumbnails || []).forEach((t: any) => {
+            if (t && t.windowId && t.dataUrl) {
+              mapped[t.windowId] = {
+                windowId: t.windowId,
+                dataUrl: t.dataUrl,
+                timestamp: t.timestamp || Date.now(),
+              };
+            }
+          });
+
+          setThumbnails(mapped);
+          setIsLoading(false);
+        } catch (err) {
+          console.error("Error handling main window thumbnails:", err);
+        }
+      }
+    );
+
+    return () => {
+      if (typeof offPublished === "function") offPublished();
+      if (typeof offMainWindow === "function") offMainWindow();
+    };
+  }, [layoutId]);
+
   if (gridWindows.length === 0) {
     return (
       <div
-        className={`${className} flex items-center justify-center h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/30 to-gray-800 text-white`}
+        className={`${className} flex items-center justify-center h-full text-white`}
       >
         <div className="text-center">
           <div className="text-6xl mb-4">📺</div>
@@ -389,20 +458,14 @@ export function LiveWindowGrid({
     customStyle?: React.CSSProperties
   ) => {
     const thumbnail = thumbnails[window.id];
+    const isSingle = type === "single";
 
     // Intelligent color correction based on application type
     const getSmartFilters = () => {
-      const baseFilters = [
+      // Minimal filters - just contrast and brightness, no saturation manipulation
+      return [
         `contrast(${publishedQuality.contrast})`,
         `brightness(${publishedQuality.brightness})`,
-      ];
-
-      // Default applications - general enhancement
-      return [
-        ...baseFilters,
-        "saturate(1.1)", // Standard saturation boost
-        "unsharp-mask(amount=1.2, radius=1px, threshold=0)", // General sharpening
-        "gamma(0.9)", // Slight gamma correction
       ];
     };
 
@@ -428,56 +491,38 @@ export function LiveWindowGrid({
     return (
       <div
         key={window.id}
-        className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 shadow-inner shadow-theme-primary-900"
+        className={`relative ${
+          isSingle ? "rounded-none" : "rounded-xl"
+        } overflow-hidden ${
+          isSingle ? "" : "flex items-center justify-center flex-shrink-0"
+        }`}
         style={{
           ...customStyle,
-          // boxSizing: "border-box",
-          // border: "3px solid transparent",
-          backgroundClip: "padding-box",
           position: "relative",
-          // Enhanced shadow and glow effect
-          // boxShadow: [
-          //   "0 3px 5px -2px rgb(var(--theme-primary-600))", // Main shadow
-          //   "0 4px 6px -1px rgb(var(--theme-primary-600))", // Secondary shadow
-          // ].join(", "),
         }}
       >
-        {/* Animated border gradient with theme colors */}
-        <div
-          className="absolute inset-0 rounded-xl opacity-75"
-          style={{
-            background: `linear-gradient(45deg, 
-              rgb(var(--theme-primary-500)), 
-              rgb(var(--theme-primary-400)), 
-              rgb(var(--theme-primary-600)), 
-              rgb(var(--theme-primary-500))
-            )`,
-            backgroundSize: "300% 300%",
-            animation: "gradientShift 6s ease infinite",
-            zIndex: -1,
-          }}
-        />
-
         {/* Content container */}
-        <div className="absolute inset-[3px] bg-gray-900 rounded-lg overflow-hidden">
+        <div className={`w-full h-full`}>
           {/* Live thumbnail */}
           {thumbnail ? (
             <img
               src={thumbnail.dataUrl}
               alt={`${window.name} - ${window.app}`}
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-full"
               style={{
-                WebkitBackfaceVisibility: "hidden", // Improve rendering performance
-                WebkitTransform: "translateZ(0)", // Hardware acceleration hint
+                WebkitBackfaceVisibility: "hidden",
+                WebkitTransform: "translateZ(0)",
                 backfaceVisibility: "hidden",
                 transform: "translateZ(0)",
                 imageRendering: "high-quality" as any,
-                filter: getSmartFilters().join(" "),
+                filter: "none",
                 display: "block",
-                // marginTop: "10px", // Account for enhanced title bar
-                transition: "filter 0.3s ease", // Smooth transition when quality changes
+                width: "100%",
+                height: "100%",
+                objectFit: isSingle ? "fill" : "contain",
+                objectPosition: "center",
+                transition: "filter 0.3s ease",
                 ...({
-                  // Browser-specific image rendering optimizations
                   "-webkit-image-rendering": "high-quality",
                   "-moz-image-rendering": "-moz-crisp-edges",
                   "-ms-interpolation-mode": "bicubic",
@@ -487,14 +532,16 @@ export function LiveWindowGrid({
           ) : (
             <div
               className="flex flex-col items-center justify-center text-gray-400 h-full"
-              style={{ marginTop: "32px" }}
+              style={{ marginTop: isSingle ? "0px" : "32px" }}
             >
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-primary-500 mb-4"></div>
-                  <div className="text-sm text-theme-primary-200">
-                    Loading window...
-                  </div>
+                  <img
+                    src="./empty.svg"
+                    alt="Loading window thumbnail"
+                    className="animate-pulse h-1/2"
+                  />
                 </>
               ) : (
                 <>
@@ -608,20 +655,8 @@ export function LiveWindowGrid({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`${className} w-full h-full bg-gradient-to-br from-gray-900 via-theme-primary-900/20 to-gray-800 ${
-        type === "single" ? "" : "pt-4 px-4 pb-8"
-      }`}
-    >
+    <div ref={containerRef} className={`${className} w-full h-full`}>
       {renderLayout()}
-
-      {/* Status indicator with theme styling */}
-      {isLoading && (
-        <div className="absolute top-4 left-4 bg-theme-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium border border-theme-primary-500 shadow-lg">
-          Updating...
-        </div>
-      )}
     </div>
   );
 }

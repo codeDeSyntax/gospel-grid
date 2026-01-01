@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from "electron";
+import { app, BrowserWindow, shell, ipcMain, screen } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -24,6 +24,7 @@ import {
   ThumbnailOptions,
 } from "./thumbnailCapture";
 import { getWindowsWithThumbnails } from "./windowMapper";
+import { detectInternalDisplay, detectExternalDisplay } from "./displayManager";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -75,6 +76,87 @@ let win: BrowserWindow | null = null;
 
 let publishedWindows: BrowserWindow[] = []; // Track published layout windows
 const publishedLayoutData = new Map<string, any>(); // Store layout data temporarily
+// Map of active capture loops per published layout
+const publishCaptureLoops = new Map<string, NodeJS.Timeout>();
+
+/**
+ * Real-time continuous capture stream at consistent frame rate
+ * Simulates a live camera feed with smooth updates on both views
+ */
+async function startContinuousCapture(
+  selectedWindows: any[],
+  layoutId: string,
+  publishWindow: BrowserWindow,
+  mainWindow: BrowserWindow
+) {
+  let isCapturing = true;
+  let lastCaptureTime = 0;
+  const CAPTURE_INTERVAL = 33; // ~30 FPS for smooth camera-like feel (33ms = ~30fps)
+  const QUALITY_SETTINGS = {
+    width: 1920,
+    height: 1080,
+    scaleFactor: 1.5,
+    quality: 95,
+    forceRefresh: true,
+  };
+
+  const captureLoop = async () => {
+    if (!isCapturing || publishWindow.isDestroyed()) {
+      return;
+    }
+
+    const now = Date.now();
+    const timeSinceLastCapture = now - lastCaptureTime;
+
+    // Only capture if enough time has passed for the desired frame rate
+    if (timeSinceLastCapture >= CAPTURE_INTERVAL) {
+      try {
+        lastCaptureTime = now;
+
+        // Capture all windows in parallel for speed
+        const thumbnails = await Promise.all(
+          selectedWindows.map((window: any) =>
+            captureWindowThumbnail(window.id, QUALITY_SETTINGS).catch((err) => {
+              console.error(`Failed to capture window ${window.id}:`, err);
+              return null;
+            })
+          )
+        );
+
+        // Filter out any failed captures but keep nulls for proper ordering
+        const payload = {
+          layoutId,
+          thumbnails: thumbnails.filter((t) => t !== null),
+          timestamp: now,
+        };
+
+        // Send to published window (projection view)
+        if (!publishWindow.isDestroyed()) {
+          publishWindow.webContents.send("published-thumbnails", payload);
+        }
+
+        // Also send to main window for synchronized display
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("main-window-thumbnails", payload);
+        }
+      } catch (err) {
+        console.error("Capture error in continuous stream:", err);
+      }
+    }
+
+    // Schedule next capture using requestIdleCallback or setTimeout for smooth updates
+    setImmediate(() => captureLoop());
+  };
+
+  // Start the capture loop
+  captureLoop();
+
+  // Return a stop function
+  return () => {
+    isCapturing = false;
+    console.log(`Stopped continuous capture for layout: ${layoutId}`);
+  };
+}
 
 // IPC request debouncing for batch captures
 const captureDebounceMap = new Map<
@@ -90,28 +172,33 @@ const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
 async function createWindow() {
+  // Detect internal (laptop) display for main controller window
+  const controllerDisplay = detectInternalDisplay();
+
+  console.log("🖥️ Main Window Display Selection:", {
+    displayId: controllerDisplay.id,
+    isInternal: controllerDisplay.internal,
+    bounds: controllerDisplay.bounds,
+  });
+
   win = new BrowserWindow({
     title: "Wingrid",
     icon: path.join(process.env.VITE_PUBLIC, "wingrid.ico"),
     frame: false, // Remove default title bar
     titleBarStyle: "hidden", // Hide title bar while keeping window controls
-    width: 1600,
-    height: 800,
-    minWidth: 1000,
-    minHeight: 800,
+    // Position on internal display (controller screen)
+    x: controllerDisplay.bounds.x,
+    y: controllerDisplay.bounds.y,
+    width: controllerDisplay.bounds.width,
+    height: controllerDisplay.bounds.height,
     webPreferences: {
       preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
-
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      // contextIsolation: false,
     },
   });
 
   // Remove the menu bar
   win.setMenuBarVisibility(false);
+  win.maximize();
 
   if (VITE_DEV_SERVER_URL) {
     // #298
@@ -166,6 +253,7 @@ ipcMain.handle("open-win", (_, arg) => {
   const childWindow = new BrowserWindow({
     frame: false, // Remove default title bar for child windows too
     titleBarStyle: "hidden",
+    icon: path.join(process.env.VITE_PUBLIC, "wingrid.ico"),
     webPreferences: {
       preload,
       nodeIntegration: true,
@@ -175,6 +263,7 @@ ipcMain.handle("open-win", (_, arg) => {
 
   // Remove the menu bar for child windows
   childWindow.setMenuBarVisibility(false);
+  childWindow.maximize();
 
   if (VITE_DEV_SERVER_URL) {
     childWindow.loadURL(`${VITE_DEV_SERVER_URL}#${arg}`);
@@ -462,11 +551,31 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
     const { windows: selectedWindows, layout, focusedWindowId } = layoutData;
 
     console.log("Creating new publish window...");
+
+    // Detect external display for projection window
+    const externalDisplay = detectExternalDisplay();
+
+    if (!externalDisplay) {
+      console.warn(
+        "⚠️ No external display detected - publishing to primary display"
+      );
+    } else {
+      console.log("📺 Publishing to external display", {
+        displayId: externalDisplay.id,
+        isInternal: externalDisplay.internal,
+        bounds: externalDisplay.bounds,
+      });
+    }
+
+    const publishDisplay = externalDisplay || screen.getPrimaryDisplay();
+
     // Create a new fullscreen window for the published layout
     const publishWindow = new BrowserWindow({
       title: "StreamSpire - Published Layout",
-      width: 1920,
-      height: 1080,
+      x: publishDisplay.bounds.x,
+      y: publishDisplay.bounds.y,
+      width: publishDisplay.bounds.width,
+      height: publishDisplay.bounds.height,
       fullscreen: true,
       frame: false,
       show: true, // Show immediately instead of waiting
@@ -518,7 +627,34 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
     });
 
     publishWindow.webContents.once("did-finish-load", () => {
-      console.log("Published window content loaded");
+      console.log(
+        "Published window content loaded - Starting real-time continuous capture stream (30 FPS)"
+      );
+
+      // Start continuous capture for smooth real-time camera-like feed
+      let stopCapture: (() => void) | null = null;
+      startContinuousCapture(selectedWindows, layoutId, publishWindow, win!)
+        .then((stop) => {
+          stopCapture = stop;
+          console.log(
+            "✅ Continuous capture stream started for smooth real-time view"
+          );
+        })
+        .catch((err) => {
+          console.error("Failed to start continuous capture:", err);
+        });
+
+      // Cleanup on window close
+      publishWindow.once("closed", () => {
+        if (stopCapture) {
+          stopCapture();
+        }
+        const loop = publishCaptureLoops.get(layoutId);
+        if (loop) {
+          clearInterval(loop);
+          publishCaptureLoops.delete(layoutId);
+        }
+      });
 
       // Additional focus insurance after content loads
       setTimeout(() => {
@@ -569,6 +705,13 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       publishedLayoutData.delete(layoutId);
       // Remove from tracking array
       publishedWindows = publishedWindows.filter((w) => w !== publishWindow);
+      // Stop and clean up any capture loop for this layout
+      const loop = publishCaptureLoops.get(layoutId);
+      if (loop) {
+        clearInterval(loop);
+        publishCaptureLoops.delete(layoutId);
+        console.log(`Cleared publish capture loop for ${layoutId}`);
+      }
     });
 
     // Add to tracking array

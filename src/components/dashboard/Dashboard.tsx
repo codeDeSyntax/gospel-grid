@@ -6,15 +6,9 @@ import { RightPanel } from "./RightPanel/RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
-import { SimpleThemeToggle } from "../ThemeToggle";
 import { NotificationModalComponent } from "@/components/ui/NotificationModal";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  showNotification,
-  removeNotification,
-  handlePublishLayout as reduxHandlePublishLayout,
-  type NotificationAction,
-} from "@/store/slices/notificationSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { handlePublishLayout as reduxHandlePublishLayout } from "@/store/slices/notificationSlice";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -42,9 +36,6 @@ export const Dashboard: React.FC = () => {
 
   // Redux hooks for notifications
   const dispatch = useAppDispatch();
-  const notifications = useAppSelector(
-    (state) => state.notification.notifications
-  );
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
@@ -202,7 +193,6 @@ export const Dashboard: React.FC = () => {
             className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             strokeWidth={3}
           />
-          {/* <SimpleThemeToggle/> */}
         </div>
 
         {/* Maximize button */}
@@ -275,24 +265,6 @@ export const Dashboard: React.FC = () => {
           DEMO MODE - No windows detected
         </div>
       )}
-
-      {/* Debug: Test Notification Button */}
-      {/* <button
-        onClick={() => {
-          console.log("🧪 Testing notification system...");
-          dispatch(
-            showNotification({
-              type: "info",
-              title: "Test Notification",
-              message: "If you see this, the notification system is working!",
-              autoClose: 3000,
-            })
-          );
-        }}
-        className="fixed bottom-6 left-6 bg-theme-primary-600 hover:bg-theme-primary-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors z-20"
-      >
-        Test Notification
-      </button> */}
 
       {/* Custom Notification Modal */}
       <NotificationModalComponent />
