@@ -7,7 +7,7 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { useAppSelector } from "@/store";
+import { useAppSelector } from "@/store/hooks";
 
 type ThemeContextType = {
   isDarkMode: boolean;

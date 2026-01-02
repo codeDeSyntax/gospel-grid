@@ -183,7 +183,7 @@ async function createWindow() {
 
   win = new BrowserWindow({
     title: "Wingrid",
-    icon: path.join(process.env.VITE_PUBLIC, "wingrid.ico"),
+    icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
     frame: false, // Remove default title bar
     titleBarStyle: "hidden", // Hide title bar while keeping window controls
     // Position on internal display (controller screen)
@@ -253,7 +253,7 @@ ipcMain.handle("open-win", (_, arg) => {
   const childWindow = new BrowserWindow({
     frame: false, // Remove default title bar for child windows too
     titleBarStyle: "hidden",
-    icon: path.join(process.env.VITE_PUBLIC, "wingrid.ico"),
+    icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
     webPreferences: {
       preload,
       nodeIntegration: true,
@@ -572,6 +572,7 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
     // Create a new fullscreen window for the published layout
     const publishWindow = new BrowserWindow({
       title: "StreamSpire - Published Layout",
+      icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
       x: publishDisplay.bounds.x,
       y: publishDisplay.bounds.y,
       width: publishDisplay.bounds.width,
