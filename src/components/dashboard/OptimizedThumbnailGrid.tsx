@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LazyThumbnail } from "@/components/common/LazyThumbnail";
 import { WindowInfo } from "@/components/dashboard/WindowList";
 import { WindowThumbnail } from "@/hooks/useThumbnails";
 import { CosmicGridBackground } from "@/components/dashboard/CosmicGridBackground";
@@ -59,6 +58,56 @@ export function OptimizedThumbnailGrid({
     });
   }, [windows]);
 
+  // Batch capture thumbnails when windows change
+  React.useEffect(() => {
+    const captureBatch = async () => {
+      if (windows.length === 0) return;
+
+      if (!window.electronAPI?.batchCaptureThumbnails) {
+        return;
+      }
+
+      const windowIds = windows.map((w) => w.id);
+
+      const options = enableHighQuality
+        ? {
+            width: 640,
+            height: 360,
+            scaleFactor: 1.5,
+            quality: 95,
+            forceRefresh: true,
+          }
+        : {
+            width: 480,
+            height: 270,
+            scaleFactor: 1.2,
+            quality: 85,
+            forceRefresh: false,
+          };
+
+      try {
+        const result = await window.electronAPI.batchCaptureThumbnails(
+          windowIds,
+          options
+        );
+
+        if (result && result.success && Array.isArray(result.thumbnails)) {
+          const newThumbnails: Record<string, WindowThumbnail> = {};
+          result.thumbnails.forEach((thumbnail: any) => {
+            if (thumbnail && thumbnail.windowId) {
+              newThumbnails[thumbnail.windowId] = thumbnail;
+            }
+          });
+          setLoadedThumbnails(newThumbnails);
+        }
+      } catch (error) {
+        console.error("[OptimizedThumbnailGrid] Batch capture failed:", error);
+      }
+    };
+
+    captureBatch();
+  }, [windows, enableHighQuality]);
+
   // Calculate grid layout using the same approach as LiveWindowGrid
   const gridConfig = useMemo(() => {
     const count = Math.min(windows.length, 4); // Limit to 4 windows
@@ -102,24 +151,6 @@ export function OptimizedThumbnailGrid({
   }, [gridConfig.type]);
 
   const { width: windowWidth, height: windowHeight } = calculateDimensions();
-
-  const handleThumbnailLoad = useCallback(
-    (windowId: string, thumbnail: WindowThumbnail) => {
-      setLoadedThumbnails((prev) => ({
-        ...prev,
-        [windowId]: thumbnail,
-      }));
-    },
-    []
-  );
-
-  const handleThumbnailError = useCallback(
-    (windowId: string, error: string) => {
-      console.warn(`Thumbnail load failed for ${windowId}:`, error);
-      setFailedThumbnails((prev) => new Set([...prev, windowId]));
-    },
-    []
-  );
 
   const handleWindowClick = useCallback(
     (window: WindowInfo, event: React.MouseEvent) => {
@@ -204,17 +235,25 @@ export function OptimizedThumbnailGrid({
             transition: { duration: 0.2 },
           }}
         >
-          {/* Thumbnail */}
-          <LazyThumbnail
-            windowId={window.id}
-            title={window.name}
-            className="w-full h-full object-cover"
-            fallbackClassName="w-full h-full"
-            options={getThumbnailOptions()}
-            onLoad={(thumbnail) => handleThumbnailLoad(window.id, thumbnail)}
-            onError={(error) => handleThumbnailError(window.id, error)}
-            enabled={enableLazyLoading}
-          />
+          {/* Thumbnail - Direct rendering from batch capture */}
+          {loadedThumbnails[window.id] ? (
+            <img
+              src={loadedThumbnails[window.id].dataUrl}
+              alt={window.name}
+              className="w-full h-full object-cover"
+              style={{ filter: "none" }}
+            />
+          ) : failedThumbnails.has(window.id) ? (
+            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <div className="text-xs text-gray-500">Failed to load</div>
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <div className="animate-pulse text-xs text-gray-500">
+                Loading...
+              </div>
+            </div>
+          )}
 
           {/* Overlay with window info */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent">
@@ -271,16 +310,7 @@ export function OptimizedThumbnailGrid({
         </motion.div>
       );
     },
-    [
-      itemClassName,
-      loadedThumbnails,
-      failedThumbnails,
-      handleWindowClick,
-      getThumbnailOptions,
-      handleThumbnailLoad,
-      handleThumbnailError,
-      enableLazyLoading,
-    ]
+    [itemClassName, loadedThumbnails, failedThumbnails, handleWindowClick]
   );
 
   // Render layout based on type (like LiveWindowGrid)

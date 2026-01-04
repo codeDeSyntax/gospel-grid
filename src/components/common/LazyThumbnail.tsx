@@ -46,6 +46,8 @@ export function LazyThumbnail({
       setIsLoading(true);
       setError(null);
 
+      console.log(`[LazyThumbnail] Capturing thumbnail for window ${windowId}`);
+
       const result = await window.electronAPI?.getWindowThumbnail?.(windowId, {
         width: 300,
         height: 200,
@@ -54,16 +56,20 @@ export function LazyThumbnail({
         ...options,
       });
 
+      console.log(`[LazyThumbnail] Capture result for ${windowId}:`, result);
+
       if (result?.success && result.thumbnail) {
         setThumbnail(result.thumbnail);
         onLoad?.(result.thumbnail);
       } else {
         const errorMsg = result?.error || "Failed to capture thumbnail";
+        console.error(`[LazyThumbnail] Error for ${windowId}:`, errorMsg);
         setError(errorMsg);
         onError?.(errorMsg);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      console.error(`[LazyThumbnail] Exception for ${windowId}:`, err);
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {

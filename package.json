@@ -18,7 +18,7 @@
     "preview": "vite preview",
     "pretest": "vite build --mode=test",
     "test": "vitest run",
-    "package": "electron-packager . wingrid --platform=win32 --arch=x64  --icon=J:\\electron\\streamspire\\public\\wingrid.ico --out=release/ --overwrite --asar"
+    "package": "electron-packager . wingrid --platform=win32 --arch=x64  --icon=J:\\electron\\wingrid\\public\\wingrid.ico --out=release/ --overwrite --asar"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.0",
