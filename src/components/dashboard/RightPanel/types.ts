@@ -12,6 +12,10 @@ export interface RightPanelProps {
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => void;
   onPublishLayout: () => void;
+  showSettings?: boolean;
+  onToggleSettings?: () => void;
+  isProjectionOn?: boolean;
+  onCloseProjection?: () => void;
 }
 
 export interface WindowLayoutCardProps {

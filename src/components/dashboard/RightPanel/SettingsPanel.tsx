@@ -19,6 +19,9 @@ const THEME_COLORS: Record<ColorTheme, string> = {
   "fire-red": "#EF4444",
   "steel-gray": "#6B7280",
   "earth-brown": "#D97706",
+  "violet-purple": "#A855F7",
+  "sunset-orange": "#F97316",
+  "midnight-black": "#1F2937",
 };
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
@@ -43,11 +46,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar backdrop-blur-xl  border border-theme-primary-400/30 text-white">
+    <div className="h-full w-full overflow-y-auto no-scrollbar backdrop-blur-xl  border border-theme-primary-400/30 text-white">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-base font-semibold text-white uppercase tracking-wider">
+          <h2 className="text-base font-bold text-white uppercase tracking-wider">
             Display & Settings
           </h2>
         </div>
@@ -55,7 +58,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
         <div className="space-y-8">
           {/* Theme Section */}
           <div>
-            <h3 className="text-sm font-medium text-white mb-4 uppercase tracking-wide">
+            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">
               Theme
             </h3>
             <div className="flex items-center justify-between">
@@ -64,7 +67,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
                   className="w-5 h-5 rounded-full border border-stone-600"
                   style={{ backgroundColor: THEME_COLORS[colorTheme] }}
                 />
-                <span className="text-sm font-medium text-white uppercase tracking-wide">
+                <span className="text-sm font-bold text-white uppercase tracking-wide">
                   Color Theme
                 </span>
               </div>
@@ -89,13 +92,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
 
           {/* Refresh Interval Section */}
           <div>
-            <h3 className="text-sm font-medium text-white mb-4 uppercase tracking-wide">
+            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">
               Refresh Settings
             </h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-theme-primary-400" />
-                <span className="text-sm font-medium text-white uppercase tracking-wide">
+                <span className="text-sm font-bold text-white uppercase tracking-wide">
                   Refresh Interval
                 </span>
               </div>
@@ -117,7 +120,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
 
           {/* Published Quality Section */}
           <div>
-            <h3 className="text-sm font-medium text-white mb-4 uppercase tracking-wide">
+            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wide">
               Published Quality
             </h3>
             <div className="space-y-4">

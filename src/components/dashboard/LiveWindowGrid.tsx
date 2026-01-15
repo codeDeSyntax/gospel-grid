@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { WindowInfo } from "./WindowList";
 import { systemLogger } from "@/hooks/useSystemLogger";
 import { useAppSelector } from "@/store/hooks";
+import { WindowLayoutSkeleton } from "./WindowLayoutSkeleton";
 
 /**
  * PERFORMANCE OPTIMIZATION:
@@ -535,14 +536,7 @@ export function LiveWindowGrid({
               style={{ marginTop: isSingle ? "0px" : "32px" }}
             >
               {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-primary-500 mb-4"></div>
-                  <img
-                    src="./empty.svg"
-                    alt="Loading window thumbnail"
-                    className="animate-pulse h-1/2"
-                  />
-                </>
+                <WindowLayoutSkeleton columns={2} rows={2} />
               ) : (
                 <>
                   <div className="text-4xl mb-2">🖥️</div>

@@ -5,7 +5,10 @@ export type ColorTheme =
   | "matrix-green"
   | "fire-red"
   | "steel-gray"
-  | "earth-brown";
+  | "earth-brown"
+  | "violet-purple"
+  | "sunset-orange"
+  | "midnight-black";
 
 export const THEME_NAMES: Record<ColorTheme, string> = {
   "cosmic-blue": "Cosmic Blue",
@@ -13,6 +16,9 @@ export const THEME_NAMES: Record<ColorTheme, string> = {
   "fire-red": "Fire Red",
   "steel-gray": "Steel Gray",
   "earth-brown": "Earth Brown",
+  "violet-purple": "Violet Purple",
+  "sunset-orange": "Sunset Orange",
+  "midnight-black": "Midnight Black",
 };
 
 interface AppState {

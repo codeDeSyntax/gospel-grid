@@ -48,33 +48,33 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     }
   };
   return (
-    <div className="col-span-12 row-span-1 backdrop-blur-2xl bg-gradient-to-r from-theme-primary-900/80 via-stone-900/70 to-theme-primary-900/80 border border-theme-primary-400/50 rounded-2xl p-4 flex items-center justify-between shadow-md shadow-theme-primary-500/30">
-      <div className="flex gap-3">
+    <div className="flex items-center justify-between w-full">
+      <div className="flex gap-2">
         <button
           onClick={onClearAll}
-          className="flex items-center cursor-pointer  gap-1.5 px-3 py-2 bg-gradient-to-r from-red-600/90 to-red-500/90 hover:from-red-500 hover:to-red-400 text-white rounded-full text-sm font-medium transition-all backdrop-blur-md border border-red-400/40 shadow-lg shadow-red-500/30 whitespace-nowrap"
+          className="flex items-center cursor-pointer gap-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-all border border-red-700 shadow-sm whitespace-nowrap"
         >
-          <BrushCleaning className="w-4 h-4 flex-shrink-0" />
+          <BrushCleaning className="w-3 h-3 flex-shrink-0" />
           Clear All
         </button>
 
         <button
           onClick={onPublishLayout}
           disabled={selectedWindowsCount === 0}
-          className="flex items-center gap-1.5 cursor-pointer  px-3 py-2 bg-gradient-to-r from-theme-primary-600/90 to-theme-primary-500/90  disabled:from-stone-600/90 disabled:to-stone-500/90 disabled:cursor-not-allowed text-white rounded-full text-sm font-medium transition-all backdrop-blur-md border border-emerald-400/40 disabled:border-stone-400/40 shadow-lg shadow-emerald-500/30 disabled:shadow-stone-500/30 whitespace-nowrap"
+          className="flex items-center gap-1.5 cursor-pointer px-2.5 py-1 bg-theme-primary-800 hover:bg-theme-primary-700 disabled:bg-theme-primary-900 disabled:cursor-not-allowed text-white rounded text-xs font-medium transition-all border border-theme-primary-700 border-solid disabled:border-gray-500 shadow-sm whitespace-nowrap"
           title="Publish layout to full-screen window"
         >
-          <ExternalLink className="w-4 h-4 flex-shrink-0" />
+          <ExternalLink className="w-3 h-3 flex-shrink-0" />
           Publish ({selectedWindowsCount})
         </button>
 
         {hasPublishedWindows && (
           <button
             onClick={handleCloseProjection}
-            className="flex items-center gap-1.5 cursor-pointer px-3 py-2 bg-gradient-to-r from-orange-600/90 to-orange-500/90 hover:from-orange-500 hover:to-orange-400 text-white rounded-full text-sm font-medium transition-all backdrop-blur-md border border-orange-400/40 shadow-lg shadow-orange-500/30 whitespace-nowrap"
+            className="flex items-center gap-1.5 cursor-pointer px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded text-xs font-medium transition-all border border-orange-700 shadow-sm whitespace-nowrap"
             title="Close projection window"
           >
-            <X className="w-4 h-4 flex-shrink-0" />
+            <X className="w-3 h-3 flex-shrink-0" />
             Close Projection
           </button>
         )}
@@ -84,14 +84,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <div className="flex items-center">
         <button
           onClick={onToggleSettings}
-          className={`flex items-center cursor-pointer gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all backdrop-blur-md border shadow-lg whitespace-nowrap ${
+          className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all border shadow-sm whitespace-nowrap ${
             isSettingsView
-              ? "bg-gradient-to-r from-theme-primary-600/90 to-theme-primary-500/90 hover:from-theme-primary-500 hover:to-theme-primary-400 text-white border-theme-primary-400/40 shadow-theme-primary-500/30"
-              : "bg-white text-black border-stone-400/40 shadow-stone-500/30"
+              ? "bg-theme-primary-700 hover:bg-theme-primary-800 text-white border-theme-primary-800"
+              : "bg-theme-primary-800 text-white border-theme-primary-900 hover:bg-theme-primary-900"
           }`}
           title={isSettingsView ? "Back to Window Layout" : "Open Settings"}
         >
-          <Settings className="w-4 h-4 flex-shrink-0" />
+          <Settings className="w-3 h-3 flex-shrink-0" />
           {isSettingsView ? "Back" : "Settings"}
         </button>
       </div>
