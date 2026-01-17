@@ -8,6 +8,7 @@ import {
   THEME_NAMES,
   setPublishedContrast,
   setPublishedBrightness,
+  setCaptureQuality,
 } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
 import type { SettingsPanelProps } from "./types";
@@ -30,6 +31,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   const publishedQuality = useAppSelector(
     (state) => state.app.publishedQuality
   );
+  const captureQuality = useAppSelector((state) => state.app.captureQuality);
   const [refreshInterval, setRefreshInterval] = useState("60");
 
   const handleThemeChange = (newTheme: ColorTheme) => {
@@ -43,6 +45,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
 
   const handleBrightnessChange = (value: number) => {
     dispatch(setPublishedBrightness(value));
+  };
+
+  const handleCaptureQualityChange = (value: number) => {
+    dispatch(setCaptureQuality(value));
   };
 
   return (
@@ -152,9 +158,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
                 />
               </div>
 
+              {/* Capture Quality Control */}
+              <div>
+                <CustomSlider
+                  min={50}
+                  max={100}
+                  step={5}
+                  value={captureQuality}
+                  onChange={handleCaptureQualityChange}
+                  label={"Capture Quality"}
+                  marks={[50, 65, 80, 100]}
+                  unit="%"
+                />
+              </div>
+
               <div className="text-xs text-stone-400 italic">
                 These settings affect the visual quality of published layout
-                windows
+                windows. Higher quality = sharper but slower.
               </div>
             </div>
           </div>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WinGrid Compositor</title>
+    <link rel="stylesheet" href="compositor.css" />
+  </head>
+  <body data-theme="cosmic-blue">
+    <!-- Top Controls -->
+    <div class="top-bar">
+      <div class="logo">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+        <span>WinGrid Compositor</span>
+      </div>
+
+      <div class="controls">
+        <!-- Present Mode Button -->
+        <button
+          id="presentModeBtn"
+          class="present-btn"
+          title="Enter Present Mode (Full Screen)"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"
+            />
+          </svg>
+          <span>Present Mode</span>
+        </button>
+
+        <!-- Action Buttons -->
+        <button id="clearBtn" class="icon-btn" title="Clear all windows">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+            />
+          </svg>
+        </button>
+
+        <button id="settingsBtn" class="icon-btn" title="Settings">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v6m0 6v6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Left Panel: Captured Windows List -->
+      <div class="left-panel">
+        <div class="panel-header">
+          <h3>Captured Windows</h3>
+          <button id="addWindowBtn" class="add-btn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Add Window</span>
+          </button>
+        </div>
+
+        <div id="windowList" class="window-list">
+          <!-- Windows will be added here dynamically -->
+        </div>
+      </div>
+
+      <!-- Right Panel: Layout Preview (like AutoFitWindowLayout) -->
+      <div class="right-panel">
+        <div class="preview-container">
+          <div id="windowLayoutPreview" class="layout-preview">
+            <!-- Thumbnails will be positioned here absolutely based on layout -->
+          </div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-state-content">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <h3>No Windows Captured</h3>
+              <p>Click "Add Window" to start capturing</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-controls">
+          <div class="layout-selector">
+            <label>Layout:</label>
+            <select id="layoutSelect">
+              <option value="2x2">2x2 Grid</option>
+              <option value="1x1">Single</option>
+              <option value="2x1">Side by Side</option>
+              <option value="1x2">Top & Bottom</option>
+              <option value="3x1">Triple</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Panel (Hidden by default) -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-content">
+        <div class="settings-header">
+          <h2>Settings</h2>
+          <button id="closeSettings" class="close-btn">&times;</button>
+        </div>
+
+        <div class="setting-group">
+          <h3>Theme</h3>
+          <div class="theme-selector">
+            <button
+              class="theme-btn"
+              data-theme="cosmic-blue"
+              title="Cosmic Blue"
+            >
+              <span class="theme-color" style="background: #3b82f6"></span>
+            </button>
+            <button
+              class="theme-btn"
+              data-theme="matrix-green"
+              title="Matrix Green"
+            >
+              <span class="theme-color" style="background: #10b981"></span>
+            </button>
+            <button
+              class="theme-btn"
+              data-theme="violet-purple"
+              title="Violet Purple"
+            >
+              <span class="theme-color" style="background: #a855f7"></span>
+            </button>
+            <button
+              class="theme-btn"
+              data-theme="sunset-orange"
+              title="Sunset Orange"
+            >
+              <span class="theme-color" style="background: #f97316"></span>
+            </button>
+            <button
+              class="theme-btn"
+              data-theme="midnight-black"
+              title="Midnight Black"
+            >
+              <span class="theme-color" style="background: #1f2937"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Video Quality</h3>
+          <div class="quality-controls">
+            <label>
+              <span>Frame Rate:</span>
+              <select id="frameRateSelect">
+                <option value="30">30 FPS</option>
+                <option value="60" selected>60 FPS</option>
+              </select>
+            </label>
+            <label>
+              <span>Resolution:</span>
+              <select id="resolutionSelect">
+                <option value="1280x720">720p</option>
+                <option value="1920x1080" selected>1080p</option>
+                <option value="2560x1440">1440p</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="compositor.js"></script>
+  </body>
+</html>

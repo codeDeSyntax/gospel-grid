@@ -21,7 +21,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Close button */}
         <div
           onClick={close}
-          className="w-4 h-4 cursor-pointer rounded-full bg-red-500 hover:bg-red-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-red-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
           title="Close"
         >
           <X
@@ -34,7 +34,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Minimize button */}
         <div
           onClick={minimize}
-          className="w-4 h-4 cursor-pointer rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-yellow-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
           title="Minimize"
         >
           <Minus
@@ -47,7 +47,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Maximize button */}
         <div
           onClick={maximize}
-          className="w-4 h-4 cursor-pointer rounded-full bg-green-500 hover:bg-green-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-green-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
           title="Maximize"
         >
           <Maximize2

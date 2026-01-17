@@ -161,7 +161,6 @@ export default {
         "dashboard-focus": "2fr 1fr",
       },
       fontFamily: {
-       
         mono: [
           "JetBrains Mono",
           "ui-monospace",
@@ -171,7 +170,6 @@ export default {
           "Roboto Mono",
           "monospace",
         ],
-     
       },
       // Background gradients for mesh design
       backgroundImage: {
@@ -308,4 +306,5 @@ export default {
       });
     },
   ],
+  plugins: [],
 };

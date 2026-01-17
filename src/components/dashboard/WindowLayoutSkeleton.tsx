@@ -13,18 +13,22 @@ export const WindowLayoutSkeleton: React.FC<WindowLayoutSkeletonProps> = ({
     {
       shade: "bg-theme-primary-500/30",
       borderShade: "border-theme-primary-500/30",
+      isAd: false,
     },
     {
       shade: "bg-theme-primary-500/30",
       borderShade: "border-theme-primary-500/30",
+      isAd: false,
     },
     {
       shade: "bg-theme-primary-500/30",
       borderShade: "border-theme-primary-500/30",
+      isAd: false,
     },
     {
-      shade: "bg-theme-primary-500/30",
-      borderShade: "border-theme-primary-500/30",
+      shade: "bg-theme-primary-500/40",
+      borderShade: "border-theme-primary-500/40",
+      isAd: true, // Last card is the ad
     },
   ];
 
@@ -33,43 +37,79 @@ export const WindowLayoutSkeleton: React.FC<WindowLayoutSkeletonProps> = ({
       <div className="flex flex-col items-center justify-center gap-6">
         {/* Window Grid Layout */}
         <div className="relative grid grid-cols-2 gap-3">
-          {windows.map((window, index) => (
-            <div
-              key={index}
-              className={`relative w-64 h-40  rounded-xl ${window.shade} borde-solid border-2 ${window.borderShade} overflow-hidden transition-all duration-300 hover:scale-105  `}
-            >
-              {/* Title bar */}
-              <div className="absolute top-0 left-0 right-0 h-8  border-b border-theme-primary-500/40 flex items-center px-2 gap-1">
-                <div className="w-2 h-2 rounded-full bg-theme-primary-500/70" />
-                <div className="w-2 h-2 rounded-full bg-theme-primary-500/60" />
-                <div className="w-2 h-2 rounded-full bg-theme-primary-500/50" />
-              </div>
+          {windows.map((window, index) =>
+            window.isAd ? (
+              <div
+                key={index}
+                className="relative w-64 h-40 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 border-2 border-indigo-400/60 overflow-hidden transition-all duration-300 hover:scale-105 hover:border-indigo-300 hover:shadow-lg hover:shadow-purple-500/30"
+              >
+                {/* Browser Extension Ad Card */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-t from-black/30 to-transparent">
+                  <div className="text-center space-y-2.5">
+                    {/* Chrome Icon */}
+                    <div className="flex justify-center mb-1">
+                      <div className="p-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
+                        <svg
+                          className="w-8 h-8 text-white drop-shadow-lg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2.4c5.302 0 9.6 4.298 9.6 9.6 0 5.302-4.298 9.6-9.6 9.6-5.302 0-9.6-4.298-9.6-9.6 0-5.302 4.298-9.6 9.6-9.6z" />
+                          <circle cx="12" cy="12" r="4.8" fill="currentColor" />
+                        </svg>
+                      </div>
+                    </div>
 
-              {/* Content area with shimmer boxes */}
-              <div className="absolute top-10 left-3 right-3 bottom-3 flex flex-col gap-2">
-                {/* Shimmer bar 1 */}
-                <div
-                  className="h-3 bg-theme-primary-600/30 rounded shimmer-box"
-                  style={{ animationDelay: `${index * 0.2}s` }}
-                />
-                {/* Shimmer bar 2 */}
-                <div
-                  className="h-3 w-3/4 bg-theme-primary-600/30 rounded shimmer-box"
-                  style={{ animationDelay: `${index * 0.2 + 0.1}s` }}
-                />
-                {/* Shimmer bar 3 */}
-                <div
-                  className="h-3 w-5/6 bg-theme-primary-600/30 rounded shimmer-box"
-                  style={{ animationDelay: `${index * 0.2 + 0.2}s` }}
-                />
-                {/* Shimmer block */}
-                {/* <div
-                  className="h-12 mt-2 bg-theme-primary-600/30 rounded shimmer-box"
-                  style={{ animationDelay: `${index * 0.2 + 0.3}s` }}
-                /> */}
+                    {/* Title */}
+                    <h4 className="text-sm font-bold text-white drop-shadow-md">
+                      Try Browser Extension
+                    </h4>
+
+                    {/* Description */}
+                    <p className="text-xs text-gray-100 leading-relaxed">
+                      Capture & share windows in your browser
+                    </p>
+
+                    {/* Button */}
+                    <button className="mt-2 px-4 py-1.5 bg-white text-indigo-700 hover:bg-gray-100 text-xs font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-xl hover:scale-105">
+                      Get Extension
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ) : (
+              <div
+                key={index}
+                className={`relative w-64 h-40 rounded-xl ${window.shade} borde-solid border-2 ${window.borderShade} overflow-hidden transition-all duration-300 hover:scale-105`}
+              >
+                {/* Title bar */}
+                <div className="absolute top-0 left-0 right-0 h-8  border-b border-theme-primary-500/40 flex items-center px-2 gap-1">
+                  <div className="w-2 h-2 rounded-full bg-theme-primary-500/70" />
+                  <div className="w-2 h-2 rounded-full bg-theme-primary-500/60" />
+                  <div className="w-2 h-2 rounded-full bg-theme-primary-500/50" />
+                </div>
+
+                {/* Content area with shimmer boxes */}
+                <div className="absolute top-10 left-3 right-3 bottom-3 flex flex-col gap-2">
+                  {/* Shimmer bar 1 */}
+                  <div
+                    className="h-3 bg-theme-primary-600/30 rounded shimmer-box"
+                    style={{ animationDelay: `${index * 0.2}s` }}
+                  />
+                  {/* Shimmer bar 2 */}
+                  <div
+                    className="h-3 w-3/4 bg-theme-primary-600/30 rounded shimmer-box"
+                    style={{ animationDelay: `${index * 0.2 + 0.1}s` }}
+                  />
+                  {/* Shimmer bar 3 */}
+                  <div
+                    className="h-3 w-5/6 bg-theme-primary-600/30 rounded shimmer-box"
+                    style={{ animationDelay: `${index * 0.2 + 0.2}s` }}
+                  />
+                </div>
+              </div>
+            )
+          )}
 
           {/* Centered Text Overlay */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

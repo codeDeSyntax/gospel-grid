@@ -382,7 +382,7 @@ export const Dashboard: React.FC = () => {
         {/* Left Panel - Window List */}
         <div
           style={{ width: `${sidebarWidth}px` }}
-          className="bg-theme-primary-900  flex flex-col overflow-hidden shrink-0 relative"
+          className="bg-theme-primary-900 flex flex-col overflow-hidden shrink-0 relative @container/sidebar"
         >
           <WindowList
             windows={state.windows}

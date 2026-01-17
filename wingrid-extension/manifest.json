@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "WinGrid - Multi-Window Compositor",
+  "version": "1.0.0",
+  "description": "Capture and composite multiple windows into a shareable grid layout for streaming and presentations",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon128.ico"
+  },
+  "icons": {
+    "128": "icons/icon128.ico"
+  }
+}

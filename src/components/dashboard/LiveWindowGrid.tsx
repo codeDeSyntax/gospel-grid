@@ -31,6 +31,7 @@ export function LiveWindowGrid({
   const publishedQuality = useAppSelector(
     (state) => state.app.publishedQuality
   );
+  const captureQuality = useAppSelector((state) => state.app.captureQuality);
   const [thumbnails, setThumbnails] = useState<
     Record<string, LiveWindowThumbnail>
   >({});
@@ -121,10 +122,10 @@ export function LiveWindowGrid({
     const minWidth = 300;
     const minHeight = 200;
 
-    // Calculate higher resolution for capture while maintaining aspect ratio
-    const baseScale = 2.0; // Increased base scale for better quality
-    const maxCaptureWidth = 1920; // Higher max resolution
-    const maxCaptureHeight = 1080;
+    // Calculate resolution for capture - balanced for quality and smoothness
+    const baseScale = 1.8; // Higher scale for better quality
+    const maxCaptureWidth = 1600; // Higher resolution for quality
+    const maxCaptureHeight = 900;
 
     const captureWidth = Math.max(
       Math.min(width * baseScale, maxCaptureWidth),
@@ -135,15 +136,27 @@ export function LiveWindowGrid({
       minHeight * 1.5
     );
 
-    // Dynamic quality based on layout type
+    // Dynamic quality based on layout type - uses user setting from Redux
+    // Base quality comes from settings slider (50-100%)
+    // Then apply reduction based on window count for performance
+    const qualityReduction: Record<string, number> = {
+      single: 0, // No reduction for single window
+      dual: 5, // -5% for dual
+      triple: 10, // -10% for triple
+      quad: 15, // -15% for quad
+    };
+
+    const reduction = qualityReduction[type] || 15;
+    const adjustedQuality = Math.max(50, captureQuality - reduction);
+
     const qualitySettings: Record<
       string,
       { quality: number; scaleFactor: number }
     > = {
-      single: { quality: 99, scaleFactor: 1.5 },
-      dual: { quality: 98, scaleFactor: 1.4 },
-      triple: { quality: 97, scaleFactor: 1.3 },
-      quad: { quality: 96, scaleFactor: 1.2 },
+      single: { quality: captureQuality, scaleFactor: 1.0 },
+      dual: { quality: Math.max(50, captureQuality - 5), scaleFactor: 0.9 },
+      triple: { quality: Math.max(50, captureQuality - 10), scaleFactor: 0.85 },
+      quad: { quality: Math.max(50, captureQuality - 15), scaleFactor: 0.8 },
     };
 
     const currentQuality = qualitySettings[type] || qualitySettings.quad;
@@ -189,7 +202,7 @@ export function LiveWindowGrid({
           height: captureHeight,
           scaleFactor: currentQuality.scaleFactor,
           quality: currentQuality.quality,
-          forceRefresh: true, // Always get fresh capture
+          forceRefresh: true, // Always get fresh capture for live streaming
         }
       );
 
@@ -269,24 +282,25 @@ export function LiveWindowGrid({
     } finally {
       setIsLoading(false);
     }
-  }, [gridWindows, calculateDimensions]);
+  }, [gridWindows, calculateDimensions, type, captureQuality]);
 
   // Performance-aware update intervals based on window count and layout
   const getOptimalUpdateInterval = useCallback(() => {
-    const baseInterval = 2000; // 2 seconds base
+    // Balanced intervals for smooth streaming with high quality (16-33ms = 30-60fps)
+    const baseInterval = 33; // 33ms = ~30fps
 
     // Adjust based on layout complexity and window count
     switch (type) {
       case "single":
-        return baseInterval; // Most responsive for single window
+        return 16; // 16ms = 60fps for single window
       case "dual":
-        return Math.max(baseInterval * 1.2, 2400); // Slightly slower for dual
+        return 20; // 20ms = 50fps for dual
       case "triple":
-        return Math.max(baseInterval * 1.5, 3000); // 3 seconds for triple
+        return 25; // 25ms = 40fps for triple
       case "quad":
-        return Math.max(baseInterval * 2, 4000); // 4 seconds for quad to reduce load
+        return 33; // 33ms = 30fps for quad
       default:
-        return baseInterval * 2;
+        return baseInterval;
     }
   }, [type]);
 
@@ -509,7 +523,7 @@ export function LiveWindowGrid({
             <img
               src={thumbnail.dataUrl}
               alt={`${window.name} - ${window.app}`}
-              className="w-full h-full"
+              className="w-full h-full m-auto"
               style={{
                 WebkitBackfaceVisibility: "hidden",
                 WebkitTransform: "translateZ(0)",
@@ -518,9 +532,9 @@ export function LiveWindowGrid({
                 imageRendering: "high-quality" as any,
                 filter: "none",
                 display: "block",
-                width: "100%",
-                height: "100%",
-                objectFit: isSingle ? "fill" : "contain",
+                width: "98%",
+                height: "98%",
+                objectFit: isSingle ? "cover" : "contain",
                 objectPosition: "center",
                 transition: "filter 0.3s ease",
                 ...({

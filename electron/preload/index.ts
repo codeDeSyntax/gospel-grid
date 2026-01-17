@@ -82,6 +82,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   batchCaptureThumbnails: (windowIds: string[], options?: any) =>
     ipcRenderer.invoke("batch-capture-thumbnails", windowIds, options),
 
+  // Desktop capturer sources for video streaming
+  getDesktopSources: (options: any) =>
+    ipcRenderer.invoke("get-desktop-sources", options),
+
   // Subscribe to published thumbnails broadcast from main
   onPublishedThumbnails: (callback: (payload: any) => void) => {
     const listener = (_: any, payload: any) => callback(payload);

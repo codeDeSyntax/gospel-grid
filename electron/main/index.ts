@@ -1,4 +1,11 @@
-import { app, BrowserWindow, shell, ipcMain, screen } from "electron";
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  screen,
+  desktopCapturer,
+} from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -329,6 +336,17 @@ ipcMain.handle("window-is-minimized", (event) => {
   return currentWindow ? currentWindow.isMinimized() : false;
 });
 
+// Desktop capturer sources for video streaming
+ipcMain.handle("get-desktop-sources", async (event, options) => {
+  try {
+    const sources = await desktopCapturer.getSources(options);
+    return sources;
+  } catch (error) {
+    console.error("Failed to get desktop sources:", error);
+    return [];
+  }
+});
+
 // Window enumeration IPC handlers
 ipcMain.handle("enumerate-windows", async (event, options) => {
   try {
@@ -549,6 +567,14 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
   try {
     console.log("Received publish-layout request:", layoutData);
     const { windows: selectedWindows, layout, focusedWindowId } = layoutData;
+    console.log(
+      "📋 Selected windows for publish:",
+      selectedWindows.map((w: any) => ({
+        id: w.id,
+        name: w.name,
+        app: w.app,
+      }))
+    );
 
     console.log("Creating new publish window...");
 
@@ -612,6 +638,7 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       await publishWindow.loadURL(
         `${VITE_DEV_SERVER_URL}?layoutId=${layoutId}`
       );
+      publishWindow.webContents.openDevTools();
     } else {
       await publishWindow.loadFile(indexHtml, {
         query: { layoutId: layoutId },

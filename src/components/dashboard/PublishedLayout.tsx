@@ -71,23 +71,23 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
       tabIndex={-1}
     >
       {/* Window Controls */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
+      <div className="absolute top-1 right-20 z-10 flex gap-2">
         {/* Minimize button */}
         <button
           onClick={handleMinimizeButton}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          className="bg-white hover:bg-yellow-600 text-black  h-5  flex items-center justify-center transition-colors"
           title="Minimize Published Layout (ESC)"
         >
-          <Minimize2 size={16} />
+          Minimize
         </button>
 
         {/* Close button */}
         <button
           onClick={handleCloseButton}
-          className="bg-red-600 hover:bg-red-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          className="bg-red-500 hover:bg-red-700 text-white  h-5  flex items-center justify-center transition-colors"
           title="Close Published Layout"
         >
-          <X size={16} />
+          close
         </button>
       </div>
 

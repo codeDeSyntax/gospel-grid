@@ -31,6 +31,7 @@ interface AppState {
     contrast: number; // 0.5 to 2.0, default 1.3
     brightness: number; // 0.5 to 2.0, default 1.5
   };
+  captureQuality: number; // 50 to 100, default 80 (JPEG quality %)
 }
 
 const initialState: AppState = {
@@ -43,6 +44,7 @@ const initialState: AppState = {
     contrast: 1.3, // Default values matching current hardcoded values
     brightness: 1.5,
   },
+  captureQuality: 80, // Default 80% JPEG quality
 };
 
 const appSlice = createSlice({
@@ -97,6 +99,9 @@ const appSlice = createSlice({
         2.0
       );
     },
+    setCaptureQuality: (state, action: PayloadAction<number>) => {
+      state.captureQuality = Math.min(Math.max(action.payload, 50), 100); // Clamp between 50 and 100
+    },
   },
 });
 
@@ -110,5 +115,6 @@ export const {
   setPublishedContrast,
   setPublishedBrightness,
   setPublishedQuality,
+  setCaptureQuality,
 } = appSlice.actions;
 export default appSlice.reducer;
