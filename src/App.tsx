@@ -5,12 +5,18 @@ import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
 import { PublishedLayout } from "./components/dashboard/PublishedLayout";
 import { WindowInfo } from "./components/dashboard/WindowList";
+import { useAppDispatch } from "./store/hooks";
+import {
+  setPublishedQuality,
+  setCaptureQuality,
+} from "./store/slices/appSlice";
 
 import { systemLogger } from "./hooks/useSystemLogger";
 
 type AppScreen = "welcome" | "dashboard" | "settings" | "published";
 
 function App() {
+  const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
   const [publishedLayoutData, setPublishedLayoutData] = useState<{
     windows: WindowInfo[];
@@ -75,7 +81,28 @@ function App() {
       "App",
       "✅ Application initialization complete"
     );
-  }, []);
+
+    // Listen for quality settings changes from main window (for published layouts)
+    const isPublishedLayout = layoutId;
+
+    if (isPublishedLayout) {
+      const unsubscribe = (
+        window.electronAPI as any
+      )?.onQualitySettingsChanged?.((settings: any) => {
+        console.log("📊 App received quality settings via IPC:", settings);
+        if (settings.publishedQuality) {
+          dispatch(setPublishedQuality(settings.publishedQuality));
+        }
+        if (settings.captureQuality !== undefined) {
+          dispatch(setCaptureQuality(settings.captureQuality));
+        }
+      });
+
+      return () => {
+        if (typeof unsubscribe === "function") unsubscribe();
+      };
+    }
+  }, [dispatch]);
 
   const handleGetStarted = () => {
     systemLogger.log(

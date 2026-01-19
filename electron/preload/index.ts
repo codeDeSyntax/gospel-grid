@@ -100,6 +100,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => ipcRenderer.off("main-window-thumbnails", listener);
   },
 
+  // Subscribe to quality settings changes
+  onQualitySettingsChanged: (callback: (settings: any) => void) => {
+    const listener = (_: any, settings: any) => callback(settings);
+    ipcRenderer.on("quality-settings-changed", listener);
+    return () => ipcRenderer.off("quality-settings-changed", listener);
+  },
+
+  // Update quality settings (from settings panel)
+  updateQualitySettings: (settings: any) =>
+    ipcRenderer.invoke("update-quality-settings", settings),
+
   // Wrapper for compatibility
   captureWindowThumbnail: (windowId: string, options?: any) =>
     ipcRenderer.invoke("get-window-thumbnail", windowId, options),

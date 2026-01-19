@@ -6,8 +6,8 @@ import { RightPanel } from "./RightPanel/RightPanel";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
-import { NotificationModalComponent } from "@/components/ui/NotificationModal";
-import { useAppDispatch } from "@/store/hooks";
+import { NotifierContainer } from "@/components/ui/NotifierContainer";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { handlePublishLayout as reduxHandlePublishLayout } from "@/store/slices/notificationSlice";
 
 interface DashboardState {
@@ -36,6 +36,10 @@ export const Dashboard: React.FC = () => {
 
   // Redux hooks for notifications
   const dispatch = useAppDispatch();
+  const publishedQuality = useAppSelector(
+    (state) => state.app.publishedQuality
+  );
+  const captureQuality = useAppSelector((state) => state.app.captureQuality);
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
@@ -242,16 +246,25 @@ export const Dashboard: React.FC = () => {
   );
 
   const handlePublishLayout = useCallback(async () => {
-    // Use Redux async thunk for publish layout
+    // Use Redux async thunk for publish layout with quality settings
     dispatch(
       reduxHandlePublishLayout({
         selectedWindows,
         currentLayout: state.currentLayout,
         focusedWindowId: state.focusedWindowId,
+        publishedQuality,
+        captureQuality,
       })
     );
     setIsProjectionOn(true);
-  }, [dispatch, selectedWindows, state.currentLayout, state.focusedWindowId]);
+  }, [
+    dispatch,
+    selectedWindows,
+    state.currentLayout,
+    state.focusedWindowId,
+    publishedQuality,
+    captureQuality,
+  ]);
 
   const handleCloseProjection = useCallback(async () => {
     try {
@@ -382,7 +395,7 @@ export const Dashboard: React.FC = () => {
         {/* Left Panel - Window List */}
         <div
           style={{ width: `${sidebarWidth}px` }}
-          className="bg-theme-primary-900 flex flex-col overflow-hidden shrink-0 relative @container/sidebar"
+          className="bg-theme-primary-900 flex flex-col overflow-hidden shrink-0 relative "
         >
           <WindowList
             windows={state.windows}
@@ -482,8 +495,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Custom Notification Modal */}
-      <NotificationModalComponent />
+      {/* Toast Notifications */}
+      <NotifierContainer />
     </div>
   );
 };

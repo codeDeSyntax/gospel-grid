@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CustomSlider } from "@/components/ui/CustomSlider";
-import { Clock } from "lucide-react";
+import { Clock, RotateCcw } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   setColorTheme,
@@ -9,6 +9,7 @@ import {
   setPublishedContrast,
   setPublishedBrightness,
   setCaptureQuality,
+  resetQualitySettings,
 } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
 import type { SettingsPanelProps } from "./types";
@@ -41,14 +42,59 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
 
   const handleContrastChange = (value: number) => {
     dispatch(setPublishedContrast(value));
+    // Notify published windows via IPC
+    (window.electronAPI as any)?.updateQualitySettings?.({
+      publishedQuality: {
+        contrast: value,
+        brightness: publishedQuality.brightness,
+      },
+      captureQuality,
+    });
   };
 
   const handleBrightnessChange = (value: number) => {
     dispatch(setPublishedBrightness(value));
+    // Notify published windows via IPC
+    (window.electronAPI as any)?.updateQualitySettings?.({
+      publishedQuality: {
+        contrast: publishedQuality.contrast,
+        brightness: value,
+      },
+      captureQuality,
+    });
   };
 
   const handleCaptureQualityChange = (value: number) => {
     dispatch(setCaptureQuality(value));
+    // Notify published windows via IPC
+    (window.electronAPI as any)?.updateQualitySettings?.({
+      publishedQuality,
+      captureQuality: value,
+    });
+  };
+
+  const handleResetQuality = () => {
+    console.log("Reset button clicked - dispatching resetQualitySettings");
+    console.log(
+      "BEFORE reset - publishedQuality:",
+      publishedQuality,
+      "captureQuality:",
+      captureQuality
+    );
+    dispatch(resetQualitySettings());
+
+    // Notify published windows via IPC
+    (window.electronAPI as any)?.updateQualitySettings?.({
+      publishedQuality: { contrast: 1.0, brightness: 1.0 },
+      captureQuality: 80,
+    });
+
+    // Check values immediately after dispatch (may not update yet due to async)
+    setTimeout(() => {
+      console.log(
+        "AFTER reset (100ms delay) - should see updated values in component re-render"
+      );
+    }, 100);
   };
 
   return (
@@ -171,6 +217,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
                   unit="%"
                 />
               </div>
+
+              {/* Reset to Defaults Button */}
+              <button
+                onClick={handleResetQuality}
+                className="w-full mt-2 flex items-center justify-center gap-2 backdrop-blur-md bg-gradient-to-r from-stone-800/80 to-stone-700/80 hover:from-stone-700/80 hover:to-stone-600/80 border border-stone-600/50 hover:border-theme-primary-400/50 rounded-lg px-4 py-2.5 text-white text-sm font-medium transition-all duration-200"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset to Defaults
+              </button>
 
               <div className="text-xs text-stone-400 italic">
                 These settings affect the visual quality of published layout

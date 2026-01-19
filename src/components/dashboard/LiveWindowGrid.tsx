@@ -3,6 +3,10 @@ import { WindowInfo } from "./WindowList";
 import { systemLogger } from "@/hooks/useSystemLogger";
 import { useAppSelector } from "@/store/hooks";
 import { WindowLayoutSkeleton } from "./WindowLayoutSkeleton";
+import { SingleWindowLayoutLive } from "./layouts/live/SingleWindowLayoutLive";
+import { DualWindowLayoutLive } from "./layouts/live/DualWindowLayoutLive";
+import { TripleWindowLayoutLive } from "./layouts/live/TripleWindowLayoutLive";
+import { QuadWindowLayoutLive } from "./layouts/live/QuadWindowLayoutLive";
 
 /**
  * PERFORMANCE OPTIMIZATION:
@@ -32,6 +36,16 @@ export function LiveWindowGrid({
     (state) => state.app.publishedQuality
   );
   const captureQuality = useAppSelector((state) => state.app.captureQuality);
+
+  console.log(
+    "LiveWindowGrid RENDER - contrast:",
+    publishedQuality.contrast,
+    "brightness:",
+    publishedQuality.brightness,
+    "quality:",
+    captureQuality
+  );
+
   const [thumbnails, setThumbnails] = useState<
     Record<string, LiveWindowThumbnail>
   >({});
@@ -390,6 +404,26 @@ export function LiveWindowGrid({
     };
   }, [captureThumbnails]);
 
+  // Immediate capture when quality settings change
+  useEffect(() => {
+    // Skip if layoutId is present (main process handles captures)
+    if (layoutId) return;
+
+    // Trigger immediate capture when captureQuality changes
+    // This ensures instant visual feedback when user adjusts quality slider
+    captureThumbnails();
+
+    systemLogger.thumbnail(
+      "quality-change",
+      `Capture quality changed to ${captureQuality}% - triggering immediate capture`,
+      {
+        captureQuality,
+        layoutType: type,
+        windowCount: gridWindows.length,
+      }
+    );
+  }, [captureQuality, layoutId]); // Only depend on captureQuality to avoid infinite loops
+
   // Subscription to published thumbnails (main process broadcast)
   useEffect(() => {
     if (!layoutId) return;
@@ -449,6 +483,16 @@ export function LiveWindowGrid({
     };
   }, [layoutId]);
 
+  // Force re-render when quality settings change (even for published layouts with IPC)
+  useEffect(() => {
+    console.log(
+      "Quality settings changed - forcing re-render",
+      publishedQuality
+    );
+    // This effect exists solely to trigger re-renders when publishedQuality changes
+    // The filter is applied in the render function via getSmartFilters()
+  }, [publishedQuality.contrast, publishedQuality.brightness]);
+
   if (gridWindows.length === 0) {
     return (
       <div
@@ -478,10 +522,12 @@ export function LiveWindowGrid({
     // Intelligent color correction based on application type
     const getSmartFilters = () => {
       // Minimal filters - just contrast and brightness, no saturation manipulation
-      return [
+      const filters = [
         `contrast(${publishedQuality.contrast})`,
         `brightness(${publishedQuality.brightness})`,
       ];
+      console.log("getSmartFilters called:", filters);
+      return filters;
     };
 
     // Debug logging for dual layout
@@ -507,7 +553,9 @@ export function LiveWindowGrid({
       <div
         key={window.id}
         className={`relative ${
-          isSingle ? "rounded-none" : "rounded-xl"
+          isSingle
+            ? "rounded-none"
+            : " border-solid border-2 border-theme-primary-600 bg-theme-primary-600/40"
         } overflow-hidden ${
           isSingle ? "" : "flex items-center justify-center flex-shrink-0"
         }`}
@@ -517,26 +565,27 @@ export function LiveWindowGrid({
         }}
       >
         {/* Content container */}
-        <div className={`w-full h-full`}>
+        <div className={`w-full h-full flex justify-center items-center`}>
           {/* Live thumbnail */}
           {thumbnail ? (
             <img
+              key={`${window.id}-${publishedQuality.contrast}-${publishedQuality.brightness}`}
               src={thumbnail.dataUrl}
               alt={`${window.name} - ${window.app}`}
-              className="w-full h-full m-auto"
+              className="w-[98%] h-[98%] m-auto"
               style={{
                 WebkitBackfaceVisibility: "hidden",
                 WebkitTransform: "translateZ(0)",
                 backfaceVisibility: "hidden",
                 transform: "translateZ(0)",
                 imageRendering: "high-quality" as any,
-                filter: "none",
+                filter: getSmartFilters().join(" "),
                 display: "block",
-                width: "98%",
-                height: "98%",
-                objectFit: isSingle ? "cover" : "contain",
+                width: "100%",
+                height: "100%",
+                objectFit: isSingle ? "contain" : "contain",
                 objectPosition: "center",
-                transition: "filter 0.3s ease",
+                transition: "filter 0.1s ease-out",
                 ...({
                   "-webkit-image-rendering": "high-quality",
                   "-moz-image-rendering": "-moz-crisp-edges",
@@ -571,90 +620,50 @@ export function LiveWindowGrid({
     );
   };
 
-  // Render layout based on type
+  // Render layout based on type using modular components
   const renderLayout = () => {
     const { width, height } = calculateDimensions();
+    const windowDimensions = { width, height };
 
     switch (type) {
       case "single":
         return (
-          <div className="w-full h-full flex items-center justify-center">
-            {renderWindow(gridWindows[0], {
-              width: "100%",
-              height: "100%",
-            })}
-          </div>
+          <SingleWindowLayoutLive
+            window={gridWindows[0]}
+            renderWindow={renderWindow}
+          />
         );
 
       case "dual":
         return (
-          <div
-            className="w-full h-full flex justify-center items-center"
-            style={{ gap: "16px" }}
-          >
-            {gridWindows[0] &&
-              renderWindow(gridWindows[0], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-            {gridWindows[1] &&
-              renderWindow(gridWindows[1], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-          </div>
+          <DualWindowLayoutLive
+            windows={[gridWindows[0], gridWindows[1]]}
+            windowDimensions={windowDimensions}
+            renderWindow={renderWindow}
+          />
         );
 
       case "triple":
         return (
-          <div className="w-full h-full flex flex-col" style={{ gap: "8px" }}>
-            {/* Top row - 2 windows */}
-            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
-              {renderWindow(gridWindows[0], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-              {renderWindow(gridWindows[1], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-            </div>
-            {/* Bottom row - 1 window on the left */}
-            <div className="flex" style={{ height: `${height}px` }}>
-              {renderWindow(gridWindows[2], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-            </div>
-          </div>
+          <TripleWindowLayoutLive
+            windows={[gridWindows[0], gridWindows[1], gridWindows[2]]}
+            windowDimensions={windowDimensions}
+            renderWindow={renderWindow}
+          />
         );
 
       case "quad":
         return (
-          <div className="w-full h-full flex flex-col" style={{ gap: "8px" }}>
-            {/* Top row */}
-            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
-              {renderWindow(gridWindows[0], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-              {renderWindow(gridWindows[1], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-            </div>
-            {/* Bottom row */}
-            <div className="flex" style={{ gap: "8px", height: `${height}px` }}>
-              {renderWindow(gridWindows[2], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-              {renderWindow(gridWindows[3], {
-                width: `${width}px`,
-                height: `${height}px`,
-              })}
-            </div>
-          </div>
+          <QuadWindowLayoutLive
+            windows={[
+              gridWindows[0],
+              gridWindows[1],
+              gridWindows[2],
+              gridWindows[3],
+            ]}
+            windowDimensions={windowDimensions}
+            renderWindow={renderWindow}
+          />
         );
 
       default:

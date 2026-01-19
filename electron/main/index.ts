@@ -562,11 +562,31 @@ ipcMain.handle("close-published-windows", async () => {
   }
 });
 
+// Update quality settings and broadcast to all published windows
+ipcMain.handle("update-quality-settings", async (event, settings) => {
+  console.log("📊 Quality settings updated:", settings);
+
+  // Broadcast to all published windows
+  publishedWindows.forEach((window) => {
+    if (!window.isDestroyed()) {
+      window.webContents.send("quality-settings-changed", settings);
+    }
+  });
+
+  return { success: true };
+});
+
 // Publish layout handler - creates a new fullscreen window with the layout
 ipcMain.handle("publish-layout", async (event, layoutData) => {
   try {
     console.log("Received publish-layout request:", layoutData);
-    const { windows: selectedWindows, layout, focusedWindowId } = layoutData;
+    const {
+      windows: selectedWindows,
+      layout,
+      focusedWindowId,
+      publishedQuality,
+      captureQuality,
+    } = layoutData;
     console.log(
       "📋 Selected windows for publish:",
       selectedWindows.map((w: any) => ({
@@ -575,6 +595,7 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
         app: w.app,
       }))
     );
+    console.log("🎨 Quality settings:", { publishedQuality, captureQuality });
 
     console.log("Creating new publish window...");
 
@@ -626,6 +647,8 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       layout,
       focusedWindowId,
       isPublished: true,
+      publishedQuality: publishedQuality || { contrast: 1.0, brightness: 1.0 },
+      captureQuality: captureQuality || 80,
     });
 
     console.log("Loading window with layout ID...", { layoutId });

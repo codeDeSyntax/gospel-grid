@@ -67,7 +67,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 text-white z-50 overflow-hidden focus:outline-none"
+      className="fixed inset-0 text-white z-50 overflow-hidden focus:outline-none border-dashed border-2 border-theme-primary-600"
       tabIndex={-1}
     >
       {/* Window Controls */}

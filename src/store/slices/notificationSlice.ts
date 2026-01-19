@@ -49,10 +49,18 @@ export const handlePublishLayout = createAsyncThunk(
       selectedWindows: any[];
       currentLayout: string;
       focusedWindowId: string | null;
+      publishedQuality?: { contrast: number; brightness: number };
+      captureQuality?: number;
     },
     { dispatch }
   ) => {
-    const { selectedWindows, currentLayout, focusedWindowId } = layoutData;
+    const {
+      selectedWindows,
+      currentLayout,
+      focusedWindowId,
+      publishedQuality,
+      captureQuality,
+    } = layoutData;
 
     console.log(
       "🚀 handlePublishLayout called with",
@@ -127,7 +135,13 @@ export const handlePublishLayout = createAsyncThunk(
       // No existing publications, proceed directly
       console.log("✅ No existing publications, proceeding with publish");
       return await dispatch(
-        performPublish({ selectedWindows, currentLayout, focusedWindowId })
+        performPublish({
+          selectedWindows,
+          currentLayout,
+          focusedWindowId,
+          publishedQuality,
+          captureQuality,
+        })
       ).unwrap();
     } catch (error) {
       console.error("❌ Failed to check published windows:", error);
@@ -152,10 +166,18 @@ export const performPublish = createAsyncThunk(
       selectedWindows: any[];
       currentLayout: string;
       focusedWindowId: string | null;
+      publishedQuality?: { contrast: number; brightness: number };
+      captureQuality?: number;
     },
     { dispatch }
   ) => {
-    const { selectedWindows, currentLayout, focusedWindowId } = layoutData;
+    const {
+      selectedWindows,
+      currentLayout,
+      focusedWindowId,
+      publishedQuality,
+      captureQuality,
+    } = layoutData;
 
     try {
       console.log(
@@ -178,7 +200,9 @@ export const performPublish = createAsyncThunk(
       const result = await window.electronAPI.publishLayout({
         windows: selectedWindows,
         layout: currentLayout,
-        focusedWindowId: focusedWindowId,
+        focusedWindowId,
+        publishedQuality,
+        captureQuality,
       });
 
       console.log("📤 publishLayout result:", result);

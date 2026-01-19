@@ -179,7 +179,7 @@ export const WindowList: React.FC<WindowListProps> = ({
       </div>
 
       {/* Scrollable Window List */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-1">
+      <div className="flex-1 overflow-y-scroll no-scrollbar px-1">
         {filteredWindows.length === 0 && !isLoading ? (
           <div className="text-center py-6 text-stone-400">
             <MdMonitor size={40} className="mx-auto mb-2 opacity-50" />
@@ -200,7 +200,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-1 pb-2">
+          <div className="space-y-1 pb-2 ">
             <AnimatePresence mode="popLayout">
               {filteredWindows.map((window, index) => (
                 <motion.div

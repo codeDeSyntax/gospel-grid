@@ -121,9 +121,9 @@ export function OptimizedThumbnailGrid({
 
   // Calculate dimensions like LiveWindowGrid does
   const calculateDimensions = useCallback(() => {
-    const containerWidth = 450; // Approximate container width
-    const containerHeight = 300; // Approximate container height
-    const gap = 8; // 0.5rem = 8px
+    const containerWidth = 700; // Increased from 450 for bigger thumbnails
+    const containerHeight = 500; // Increased from 300 for bigger thumbnails
+    const gap = 12; // Increased gap for better spacing
 
     let windowWidth, windowHeight;
 
@@ -140,7 +140,7 @@ export function OptimizedThumbnailGrid({
       case "quad":
         const availableWidth = containerWidth - gap;
         windowWidth = Math.floor(availableWidth / 2);
-        windowHeight = Math.floor(windowWidth / 1.8); // 16:9 aspect ratio
+        windowHeight = Math.floor(windowWidth / 1.78); // 16:9 aspect ratio
         break;
       default:
         windowWidth = containerWidth;
@@ -326,7 +326,7 @@ export function OptimizedThumbnailGrid({
     switch (gridConfig.type) {
       case "single":
         return (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-[80%] h-full flex items-center justify-center">
             <AnimatePresence mode="wait">
               {displayWindows[0] &&
                 renderWindow(displayWindows[0], windowStyle)}
@@ -337,8 +337,8 @@ export function OptimizedThumbnailGrid({
       case "dual":
         return (
           <div
-            className="w-full h-full flex flex-col items-center justify-center"
-            style={{ gap: "8px" }}
+            className="w-[80%] h-full flex flex-col items-center justify-center"
+            style={{ gap: "12px" }}
           >
             <AnimatePresence mode="wait">
               {displayWindows[0] &&
@@ -353,7 +353,7 @@ export function OptimizedThumbnailGrid({
         return (
           <div
             className="w-full h-full flex flex-col justify-center items-center"
-            style={{ gap: "8px" }}
+            style={{ gap: "12px" }}
           >
             <AnimatePresence>
               <div key="triple-layout" className="contents">
@@ -361,7 +361,7 @@ export function OptimizedThumbnailGrid({
                 <div
                   key="triple-top-row"
                   className="flex"
-                  style={{ gap: "8px" }}
+                  style={{ gap: "12px" }}
                 >
                   {displayWindows[0] &&
                     renderWindow(displayWindows[0], windowStyle)}
@@ -372,7 +372,7 @@ export function OptimizedThumbnailGrid({
                 <div
                   key="triple-bottom-row"
                   className="flex"
-                  style={{ width: `${windowWidth * 2 + 8}px` }}
+                  style={{ width: `${windowWidth * 2 + 12}px` }}
                 >
                   {displayWindows[2] &&
                     renderWindow(displayWindows[2], windowStyle)}
@@ -386,7 +386,7 @@ export function OptimizedThumbnailGrid({
         return (
           <div
             className="w-full h-full flex flex-col justify-center"
-            style={{ gap: "8px" }}
+            style={{ gap: "12px" }}
           >
             <AnimatePresence>
               <div key="quad-layout" className="contents">
@@ -394,7 +394,7 @@ export function OptimizedThumbnailGrid({
                 <div
                   key="quad-top-row"
                   className="flex justify-center"
-                  style={{ gap: "8px" }}
+                  style={{ gap: "12px" }}
                 >
                   {displayWindows[0] &&
                     renderWindow(displayWindows[0], windowStyle)}
@@ -405,7 +405,7 @@ export function OptimizedThumbnailGrid({
                 <div
                   key="quad-bottom-row"
                   className="flex justify-center"
-                  style={{ gap: "8px" }}
+                  style={{ gap: "12px" }}
                 >
                   {displayWindows[2] &&
                     renderWindow(displayWindows[2], windowStyle)}

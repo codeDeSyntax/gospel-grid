@@ -102,6 +102,25 @@ const appSlice = createSlice({
     setCaptureQuality: (state, action: PayloadAction<number>) => {
       state.captureQuality = Math.min(Math.max(action.payload, 50), 100); // Clamp between 50 and 100
     },
+    resetQualitySettings: (state) => {
+      // Reset all quality settings to normal (no filters)
+      console.log(
+        "REDUX ACTION: resetQualitySettings - BEFORE:",
+        JSON.stringify(state.publishedQuality),
+        state.captureQuality
+      );
+      // Create a new object to ensure React detects the change
+      state.publishedQuality = {
+        contrast: 1.0,
+        brightness: 1.0,
+      };
+      state.captureQuality = 80;
+      console.log(
+        "REDUX ACTION: resetQualitySettings - AFTER:",
+        JSON.stringify(state.publishedQuality),
+        state.captureQuality
+      );
+    },
   },
 });
 
@@ -116,5 +135,6 @@ export const {
   setPublishedBrightness,
   setPublishedQuality,
   setCaptureQuality,
+  resetQualitySettings,
 } = appSlice.actions;
 export default appSlice.reducer;
