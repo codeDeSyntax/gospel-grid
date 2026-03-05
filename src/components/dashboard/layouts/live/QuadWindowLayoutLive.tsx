@@ -3,53 +3,26 @@ import { WindowInfo } from "../../WindowList";
 
 interface QuadWindowLayoutLiveProps {
   windows: [WindowInfo, WindowInfo, WindowInfo, WindowInfo];
-  windowDimensions: { width: number; height: number };
+  windowDimensions?: { width: number; height: number };
   renderWindow: (
     window: WindowInfo,
-    style: React.CSSProperties
+    style: React.CSSProperties,
   ) => React.ReactNode;
 }
 
 export const QuadWindowLayoutLive: React.FC<QuadWindowLayoutLiveProps> = ({
   windows,
-  windowDimensions,
   renderWindow,
 }) => {
-  const { width, height } = windowDimensions;
-
   return (
     <div
-      className="w-full h-full flex flex-col justify-center items-center p-8"
-      style={{ gap: "16px" }}
+      className="w-full h-full grid grid-cols-2 grid-rows-2"
+      style={{ gap: "2px" }}
     >
-      {/* Top row */}
-      <div
-        className="flex justify-center"
-        style={{ gap: "16px", height: `${height}px` }}
-      >
-        {renderWindow(windows[0], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-        {renderWindow(windows[1], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-      </div>
-      {/* Bottom row */}
-      <div
-        className="flex justify-center"
-        style={{ gap: "16px", height: `${height}px` }}
-      >
-        {renderWindow(windows[2], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-        {renderWindow(windows[3], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-      </div>
+      {renderWindow(windows[0], { width: "100%", height: "100%" })}
+      {renderWindow(windows[1], { width: "100%", height: "100%" })}
+      {renderWindow(windows[2], { width: "100%", height: "100%" })}
+      {renderWindow(windows[3], { width: "100%", height: "100%" })}
     </div>
   );
 };

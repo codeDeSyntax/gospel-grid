@@ -5,6 +5,11 @@ import {
   ipcMain,
   screen,
   desktopCapturer,
+  globalShortcut,
+  powerSaveBlocker,
+  Tray,
+  Menu,
+  nativeImage,
 } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -41,11 +46,11 @@ config({ path: path.join(process.cwd(), ".env") });
 
 console.log(
   "🔧 Loading environment variables from:",
-  path.join(process.cwd(), ".env")
+  path.join(process.cwd(), ".env"),
 );
 console.log(
   "🔑 AssemblyAI API Key loaded:",
-  process.env.ASSEMBLYAI_API_KEY ? "✅ Present" : "❌ Missing"
+  process.env.ASSEMBLYAI_API_KEY ? "✅ Present" : "❌ Missing",
 );
 
 // The built directory structure
@@ -86,84 +91,145 @@ const publishedLayoutData = new Map<string, any>(); // Store layout data tempora
 // Map of active capture loops per published layout
 const publishCaptureLoops = new Map<string, NodeJS.Timeout>();
 
-/**
- * Real-time continuous capture stream at consistent frame rate
- * Simulates a live camera feed with smooth updates on both views
- */
-async function startContinuousCapture(
-  selectedWindows: any[],
-  layoutId: string,
-  publishWindow: BrowserWindow,
-  mainWindow: BrowserWindow
-) {
-  let isCapturing = true;
-  let lastCaptureTime = 0;
-  const CAPTURE_INTERVAL = 33; // ~30 FPS for smooth camera-like feel (33ms = ~30fps)
-  const QUALITY_SETTINGS = {
-    width: 1920,
-    height: 1080,
-    scaleFactor: 1.5,
-    quality: 95,
-    forceRefresh: true,
-  };
+// ── powerSaveBlocker — prevent display sleep while projecting ─────────────
+let powerSaveBlockerId: number | null = null;
 
-  const captureLoop = async () => {
-    if (!isCapturing || publishWindow.isDestroyed()) {
+function startPowerSaveBlocker() {
+  if (powerSaveBlockerId !== null) return; // already active
+  powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep");
+  console.log("⚡ powerSaveBlocker started (id:", powerSaveBlockerId, ")");
+}
+
+function stopPowerSaveBlocker() {
+  if (powerSaveBlockerId === null) return;
+  powerSaveBlocker.stop(powerSaveBlockerId);
+  console.log("⚡ powerSaveBlocker stopped (id:", powerSaveBlockerId, ")");
+  powerSaveBlockerId = null;
+}
+
+// ── System Tray ───────────────────────────────────────────────────────────
+let tray: Tray | null = null;
+
+// ── Projection state (blackout / freeze / overlay) ──────────────────────────────────────
+let projectionState = {
+  isBlackout: false,
+  isFrozen: false,
+  overlayText: "",
+  overlayVisible: false,
+};
+
+function buildTrayMenu() {
+  const hasProjection = publishedWindows.some((w) => !w.isDestroyed());
+  return Menu.buildFromTemplate([
+    {
+      label: "Show StreamSpire",
+      click: () => {
+        if (win && !win.isDestroyed()) {
+          win.show();
+          win.focus();
+        }
+      },
+    },
+    { type: "separator" },
+    {
+      label: hasProjection ? "⏹ Stop Projection" : "▶ No Active Projection",
+      enabled: hasProjection,
+      click: () => {
+        const windowsToClose = [...publishedWindows];
+        publishedWindows = [];
+        windowsToClose.forEach((w) => {
+          if (!w.isDestroyed()) w.close();
+        });
+        stopPowerSaveBlocker();
+        updateTrayMenu();
+        // Notify renderer
+        if (win && !win.isDestroyed()) {
+          win.webContents.send("tray-action", "stop-projection");
+        }
+      },
+    },
+    {
+      label: projectionState.isBlackout ? "✦ Blackout ON" : "Blackout",
+      enabled: hasProjection,
+      click: () => {
+        projectionState.isBlackout = !projectionState.isBlackout;
+        broadcastProjectionState();
+        updateTrayMenu();
+      },
+    },
+    {
+      label: projectionState.isFrozen ? "❄ Freeze ON" : "Freeze",
+      enabled: hasProjection,
+      click: () => {
+        projectionState.isFrozen = !projectionState.isFrozen;
+        broadcastProjectionState();
+        updateTrayMenu();
+      },
+    },
+    { type: "separator" },
+    {
+      label: "Quit StreamSpire",
+      click: () => {
+        stopPowerSaveBlocker();
+        app.quit();
+      },
+    },
+  ]);
+}
+
+function updateTrayMenu() {
+  if (tray && !tray.isDestroyed()) {
+    tray.setContextMenu(buildTrayMenu());
+  }
+}
+
+function createTray() {
+  try {
+    const iconPath = path.join(
+      process.env.VITE_PUBLIC || "public",
+      "wingrid.ico",
+    );
+    const icon = nativeImage.createFromPath(iconPath);
+    if (icon.isEmpty()) {
+      console.warn("⚠️ Tray icon is empty, skipping tray creation");
       return;
     }
-
-    const now = Date.now();
-    const timeSinceLastCapture = now - lastCaptureTime;
-
-    // Only capture if enough time has passed for the desired frame rate
-    if (timeSinceLastCapture >= CAPTURE_INTERVAL) {
-      try {
-        lastCaptureTime = now;
-
-        // Capture all windows in parallel for speed
-        const thumbnails = await Promise.all(
-          selectedWindows.map((window: any) =>
-            captureWindowThumbnail(window.id, QUALITY_SETTINGS).catch((err) => {
-              console.error(`Failed to capture window ${window.id}:`, err);
-              return null;
-            })
-          )
-        );
-
-        // Filter out any failed captures but keep nulls for proper ordering
-        const payload = {
-          layoutId,
-          thumbnails: thumbnails.filter((t) => t !== null),
-          timestamp: now,
-        };
-
-        // Send to published window (projection view)
-        if (!publishWindow.isDestroyed()) {
-          publishWindow.webContents.send("published-thumbnails", payload);
-        }
-
-        // Also send to main window for synchronized display
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send("main-window-thumbnails", payload);
-        }
-      } catch (err) {
-        console.error("Capture error in continuous stream:", err);
+    tray = new Tray(icon.resize({ width: 16, height: 16 }));
+    tray.setToolTip("StreamSpire");
+    tray.setContextMenu(buildTrayMenu());
+    tray.on("click", () => {
+      if (win && !win.isDestroyed()) {
+        win.show();
+        win.focus();
       }
-    }
-
-    // Schedule next capture using requestIdleCallback or setTimeout for smooth updates
-    setImmediate(() => captureLoop());
-  };
-
-  // Start the capture loop
-  captureLoop();
-
-  // Return a stop function
-  return () => {
-    isCapturing = false;
-    console.log(`Stopped continuous capture for layout: ${layoutId}`);
-  };
+    });
+    console.log("🔲 System tray created");
+  } catch (err) {
+    console.error("Failed to create system tray:", err);
+  }
 }
+
+/** Helper: broadcast current projectionState to all published + main windows */
+function broadcastProjectionState() {
+  publishedWindows.forEach((window) => {
+    if (!window.isDestroyed()) {
+      window.webContents.send("projection-state-changed", projectionState);
+    }
+  });
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("projection-state-changed", projectionState);
+  }
+}
+
+/**
+ * NOTE: The old startContinuousCapture() IPC-based thumbnail loop has been
+ * removed. Both the main window and published window now use a GPU-accelerated
+ * MediaStream pipeline (getUserMedia + <video srcObject>) in the renderer
+ * process. Frames are delivered directly by Chromium's compositor — no IPC
+ * transfer, no base64 encoding, no React re-renders per frame.
+ *
+ * See: src/hooks/useMediaStreams.ts  and  src/components/dashboard/VideoWindow.tsx
+ */
 
 // IPC request debouncing for batch captures
 const captureDebounceMap = new Map<
@@ -431,7 +497,7 @@ ipcMain.handle(
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  }
+  },
 );
 
 // New handler for multiple window thumbnails
@@ -441,7 +507,7 @@ ipcMain.handle(
     try {
       const thumbnails = await captureMultipleWindowThumbnails(
         windowIds,
-        options
+        options,
       );
       return { success: true, thumbnails };
     } catch (error) {
@@ -451,7 +517,7 @@ ipcMain.handle(
         thumbnails: [],
       };
     }
-  }
+  },
 );
 
 // New handler for all window thumbnails
@@ -468,7 +534,7 @@ ipcMain.handle(
         results: [],
       };
     }
-  }
+  },
 );
 
 ipcMain.handle("maximize-window-external", async (event, handle) => {
@@ -521,7 +587,6 @@ ipcMain.handle("hide-window-external", async (event, handle) => {
 
 // Get published layout data by ID
 ipcMain.handle("get-published-layout", async (event, layoutId: string) => {
-  console.log("Getting published layout data for ID:", layoutId);
   const layoutData = publishedLayoutData.get(layoutId);
   if (!layoutData) {
     console.error("Layout data not found for ID:", layoutId);
@@ -553,6 +618,9 @@ ipcMain.handle("close-published-windows", async () => {
       }
     });
 
+    stopPowerSaveBlocker();
+    updateTrayMenu();
+
     return { success: true, closedCount: windowsToClose.length };
   } catch (error) {
     return {
@@ -564,8 +632,6 @@ ipcMain.handle("close-published-windows", async () => {
 
 // Update quality settings and broadcast to all published windows
 ipcMain.handle("update-quality-settings", async (event, settings) => {
-  console.log("📊 Quality settings updated:", settings);
-
   // Broadcast to all published windows
   publishedWindows.forEach((window) => {
     if (!window.isDestroyed()) {
@@ -576,10 +642,62 @@ ipcMain.handle("update-quality-settings", async (event, settings) => {
   return { success: true };
 });
 
+ipcMain.handle("update-projection-state", async (event, state) => {
+  if (state.isBlackout !== undefined)
+    projectionState.isBlackout = state.isBlackout;
+  if (state.isFrozen !== undefined) projectionState.isFrozen = state.isFrozen;
+  if (state.overlayText !== undefined)
+    projectionState.overlayText = state.overlayText;
+  if (state.overlayVisible !== undefined)
+    projectionState.overlayVisible = state.overlayVisible;
+
+  broadcastProjectionState();
+  updateTrayMenu();
+
+  return { success: true, state: projectionState };
+});
+
+// ── capturePage — snapshot the first published window for confidence monitor ──
+ipcMain.handle("capture-projection-page", async () => {
+  try {
+    // Clean up destroyed windows first
+    publishedWindows = publishedWindows.filter((w) => !w.isDestroyed());
+    if (publishedWindows.length === 0) {
+      return { success: false, error: "No active projection windows" };
+    }
+    const target = publishedWindows[0];
+    const image = await target.webContents.capturePage();
+    if (image.isEmpty()) {
+      return { success: false, error: "Captured image is empty" };
+    }
+    // Resize to a sensible preview (max 640px wide) to keep IPC payload lean
+    const size = image.getSize();
+    const scale = Math.min(1, 640 / size.width);
+    const resized =
+      scale < 1
+        ? image.resize({
+            width: Math.round(size.width * scale),
+            height: Math.round(size.height * scale),
+          })
+        : image;
+    const dataUrl = `data:image/png;base64,${resized.toPNG().toString("base64")}`;
+    return {
+      success: true,
+      dataUrl,
+      width: resized.getSize().width,
+      height: resized.getSize().height,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
 // Publish layout handler - creates a new fullscreen window with the layout
 ipcMain.handle("publish-layout", async (event, layoutData) => {
   try {
-    console.log("Received publish-layout request:", layoutData);
     const {
       windows: selectedWindows,
       layout,
@@ -587,31 +705,14 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       publishedQuality,
       captureQuality,
     } = layoutData;
-    console.log(
-      "📋 Selected windows for publish:",
-      selectedWindows.map((w: any) => ({
-        id: w.id,
-        name: w.name,
-        app: w.app,
-      }))
-    );
-    console.log("🎨 Quality settings:", { publishedQuality, captureQuality });
-
-    console.log("Creating new publish window...");
 
     // Detect external display for projection window
     const externalDisplay = detectExternalDisplay();
 
     if (!externalDisplay) {
       console.warn(
-        "⚠️ No external display detected - publishing to primary display"
+        "⚠️ No external display detected - publishing to primary display",
       );
-    } else {
-      console.log("📺 Publishing to external display", {
-        displayId: externalDisplay.id,
-        isInternal: externalDisplay.internal,
-        bounds: externalDisplay.bounds,
-      });
     }
 
     const publishDisplay = externalDisplay || screen.getPrimaryDisplay();
@@ -653,13 +754,12 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
 
     console.log("Loading window with layout ID...", { layoutId });
 
-    // Focus the window but don't set alwaysOnTop for fullscreen windows
-    // Fullscreen windows are already on top and alwaysOnTop interferes with Alt+Tab
+    // Focus the window
     publishWindow.focus();
 
     if (VITE_DEV_SERVER_URL) {
       await publishWindow.loadURL(
-        `${VITE_DEV_SERVER_URL}?layoutId=${layoutId}`
+        `${VITE_DEV_SERVER_URL}?layoutId=${layoutId}`,
       );
       publishWindow.webContents.openDevTools();
     } else {
@@ -679,96 +779,57 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
 
     publishWindow.webContents.once("did-finish-load", () => {
       console.log(
-        "Published window content loaded - Starting real-time continuous capture stream (30 FPS)"
+        "Published window content loaded - using GPU-accelerated MediaStream pipeline (renderer-side getUserMedia)",
       );
 
-      // Start continuous capture for smooth real-time camera-like feed
-      let stopCapture: (() => void) | null = null;
-      startContinuousCapture(selectedWindows, layoutId, publishWindow, win!)
-        .then((stop) => {
-          stopCapture = stop;
-          console.log(
-            "✅ Continuous capture stream started for smooth real-time view"
-          );
-        })
-        .catch((err) => {
-          console.error("Failed to start continuous capture:", err);
-        });
-
-      // Cleanup on window close
-      publishWindow.once("closed", () => {
-        if (stopCapture) {
-          stopCapture();
-        }
-        const loop = publishCaptureLoops.get(layoutId);
-        if (loop) {
-          clearInterval(loop);
-          publishCaptureLoops.delete(layoutId);
-        }
-      });
+      // No main-process capture loop needed — the published window's renderer
+      // creates its own MediaStreams via useMediaStreams hook, just like the
+      // main window. Frames travel GPU → Chromium compositor → <video> element
+      // without ever crossing IPC.
 
       // Additional focus insurance after content loads
       setTimeout(() => {
         if (!publishWindow.isDestroyed()) {
           publishWindow.focus();
           publishWindow.moveTop();
-          console.log("🎯 Published window focused after content load");
         }
       }, 500);
 
       // Add keyboard shortcuts for better window management
       publishWindow.webContents.on("before-input-event", (event, input) => {
-        // Alt+Tab should work normally (don't prevent it)
-        // Escape key to exit fullscreen
         if (input.key === "Escape" && input.type === "keyDown") {
-          console.log("Escape pressed, exiting fullscreen...");
           publishWindow.setFullScreen(false);
         }
-
-        // Alt+F4 to close window
         if (input.key === "F4" && input.alt && input.type === "keyDown") {
-          console.log("Alt+F4 pressed, closing published window...");
           publishWindow.close();
-        }
-
-        // Windows key + M to minimize
-        if (input.key === "Meta" && input.type === "keyDown") {
-          console.log("Windows key pressed, allowing system shortcuts...");
-          // Don't prevent system shortcuts
         }
       });
     });
 
-    // Handle focus events to ensure Alt+Tab works properly
-    publishWindow.on("blur", () => {
-      console.log("Published window lost focus - Alt+Tab should work");
-      // Don't force focus back, allow user to switch windows
-    });
-
-    publishWindow.on("focus", () => {
-      console.log("Published window gained focus");
-    });
-
-    // Handle window closed
+    // Handle window closed — clean up resources
     publishWindow.on("closed", () => {
-      console.log("Published layout window closed");
-      // Clean up stored layout data
       publishedLayoutData.delete(layoutId);
-      // Remove from tracking array
       publishedWindows = publishedWindows.filter((w) => w !== publishWindow);
-      // Stop and clean up any capture loop for this layout
       const loop = publishCaptureLoops.get(layoutId);
       if (loop) {
         clearInterval(loop);
         publishCaptureLoops.delete(layoutId);
-        console.log(`Cleared publish capture loop for ${layoutId}`);
       }
+      // If no projection windows remain, release power blocker
+      const aliveCount = publishedWindows.filter(
+        (w) => !w.isDestroyed(),
+      ).length;
+      if (aliveCount === 0) stopPowerSaveBlocker();
+      updateTrayMenu();
     });
 
     // Add to tracking array
     publishedWindows.push(publishWindow);
 
-    console.log("Published window created successfully");
+    // Start powerSaveBlocker on first projection open
+    startPowerSaveBlocker();
+    updateTrayMenu();
+
     return { success: true, windowId: publishWindow.id };
   } catch (error) {
     console.error("Failed to publish layout:", error);
@@ -820,7 +881,7 @@ ipcMain.handle(
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  }
+  },
 );
 
 // Batch thumbnail capture with throttling and debouncing
@@ -872,9 +933,9 @@ ipcMain.handle(
           // Clean up
           captureDebounceMap.delete(key);
         }
-      }, 50); // 50ms debounce window
+      }, 300); // 300ms debounce window — lets rapid IPC calls coalesce
     });
-  }
+  },
 );
 
 // Preset storage functionality
@@ -985,5 +1046,53 @@ ipcMain.handle("delete-preset", async (event, presetId: string) => {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  }
+});
+
+// ── Global Hotkeys ──────────────────────────────────────────────────────────
+// Register global shortcuts that work even when the app is not focused.
+// Actions are forwarded to the main window renderer via IPC.
+
+function broadcastHotkey(action: string) {
+  // Send to main window
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("global-hotkey", action);
+  }
+}
+
+function registerGlobalHotkeys() {
+  const shortcuts: Record<string, string> = {
+    F5: "toggle-projection",
+    F6: "toggle-blackout",
+    F7: "toggle-freeze",
+    F8: "clear-all",
+  };
+
+  for (const [accelerator, action] of Object.entries(shortcuts)) {
+    const success = globalShortcut.register(accelerator, () => {
+      broadcastHotkey(action);
+    });
+    if (!success) {
+      console.warn(`⚠️ Failed to register global shortcut: ${accelerator}`);
+    }
+  }
+
+  console.log(
+    "⌨️ Global hotkeys registered:",
+    Object.keys(shortcuts).join(", "),
+  );
+}
+
+app.whenReady().then(() => {
+  registerGlobalHotkeys();
+  createTray();
+});
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+  stopPowerSaveBlocker();
+  if (tray && !tray.isDestroyed()) {
+    tray.destroy();
+    tray = null;
   }
 });

@@ -73,7 +73,7 @@ export interface PresetOperationResult {
 
 export interface ElectronAPI {
   enumerateWindows: (
-    options: EnumerateWindowsOptions
+    options: EnumerateWindowsOptions,
   ) => Promise<WindowEnumerationResult>;
   getWindowIcon: (handle: number) => Promise<WindowOperationResult>;
   getWindowThumbnail: (handle: number) => Promise<WindowOperationResult>;
@@ -85,10 +85,10 @@ export interface ElectronAPI {
   hideWindow: (handle: number) => Promise<WindowOperationResult>;
   moveWindow: (
     handle: number,
-    bounds: WindowBounds
+    bounds: WindowBounds,
   ) => Promise<WindowOperationResult>;
   publishLayout: (
-    layoutData: any
+    layoutData: any,
   ) => Promise<{ success: boolean; windowId?: number; error?: string }>;
   getPublishedLayout: (layoutId: string) => Promise<any | null>;
   checkPublishedWindows: () => Promise<{
@@ -104,6 +104,18 @@ export interface ElectronAPI {
   savePreset: (preset: SavedPreset) => Promise<PresetOperationResult>;
   loadPresets: () => Promise<PresetOperationResult>;
   deletePreset: (presetId: string) => Promise<PresetOperationResult>;
+
+  // capturePage — snapshot projection window
+  captureProjectionPage: () => Promise<{
+    success: boolean;
+    dataUrl?: string;
+    width?: number;
+    height?: number;
+    error?: string;
+  }>;
+
+  // Tray action events
+  onTrayAction: (callback: (action: string) => void) => () => void;
 }
 
 // Extend the global Window interface to include our APIs
@@ -136,11 +148,11 @@ export interface WhisperStatusResult {
 export interface SpeechToTextAPI {
   transcribe: (
     audioBuffer: ArrayBuffer,
-    options?: TranscriptionOptions
+    options?: TranscriptionOptions,
   ) => Promise<TranscriptionResult>;
   transcribeStream: (
     audioBuffer: ArrayBuffer,
-    options?: TranscriptionOptions
+    options?: TranscriptionOptions,
   ) => Promise<TranscriptionResult>;
 
   // AssemblyAI streaming controls
@@ -166,7 +178,7 @@ export interface SpeechToTextAPI {
       confidence?: number;
       isFinal?: boolean;
       error?: string;
-    }) => void
+    }) => void,
   ) => () => void;
 }
 
@@ -178,7 +190,7 @@ declare global {
     ipcRenderer: {
       on: (
         channel: string,
-        listener: (event: any, ...args: any[]) => void
+        listener: (event: any, ...args: any[]) => void,
       ) => void;
       off: (channel: string, ...args: any[]) => void;
       send: (channel: string, ...args: any[]) => void;

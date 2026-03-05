@@ -9,6 +9,7 @@ import {
   MdAdd,
   MdCheck,
   MdRefresh,
+  MdPushPin,
 } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { getAppIcon, getAppGradient } from "@/utils/appIconMapping";
@@ -19,6 +20,8 @@ export interface WindowInfo {
   name: string;
   app: string;
   isSelected: boolean;
+  /** Pinned windows always appear at the top of the list */
+  isPinned?: boolean;
   // Native window properties for aggregation
   handle?: number; // Window handle (HWND on Windows)
   processId?: number;
@@ -48,6 +51,7 @@ export interface WindowInfo {
 interface WindowListProps {
   windows: WindowInfo[];
   onWindowSelect: (windowId: string) => void;
+  onWindowPin?: (windowId: string) => void;
   onWindowFocus?: (windowHandle: number) => void;
   onWindowDragStart?: (window: WindowInfo) => void;
   onWindowDragEnd?: () => void;
@@ -61,6 +65,7 @@ interface WindowListProps {
 export const WindowList: React.FC<WindowListProps> = ({
   windows,
   onWindowSelect,
+  onWindowPin,
   onWindowFocus,
   onWindowDragStart,
   onWindowDragEnd,
@@ -75,7 +80,7 @@ export const WindowList: React.FC<WindowListProps> = ({
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
 
   const filteredWindows = useMemo(() => {
-    return windows.filter((window) => {
+    const filtered = windows.filter((window) => {
       // Search filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -94,86 +99,100 @@ export const WindowList: React.FC<WindowListProps> = ({
 
       return true;
     });
+
+    // Pinned windows always appear first
+    return filtered.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return 0;
+    });
   }, [windows, searchTerm, showOnlyVisible]);
 
   return (
     <div className="h-full flex flex-col p-2">
       {/* Fixed Header Section */}
-      <div className="flex-shrink-0 mb-2 px-1">
-        <h3 className="text-sm font-semibold text-theme-primary-200 mb-2 flex items-center justify-between">
+      <div className="flex-shrink-0 mb-2 px-1 space-y-2">
+        {/* Title row */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MdMonitor size={18} />
-            <span className="font-[impact]">Available Windows</span>
+            <MdMonitor size={16} className="text-theme-primary-400/80" />
+            <span className="font-[impact] text-sm tracking-wide text-theme-primary-200">
+              Available Windows
+            </span>
             {isLoading && (
               <AiOutlineLoading3Quarters
-                size={14}
-                className="animate-spin text-theme-primary-400"
+                size={12}
+                className="animate-spin text-theme-primary-400/60"
               />
             )}
           </div>
 
-          {/* Countdown Timer and Manual Refresh */}
-          <div className="flex items-center gap-3">
+          {/* Timer + Refresh — gamified */}
+          <div className="flex items-center gap-2">
             {countdownTime > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-theme-primary-800/30 border border-theme-primary-600/20">
                 <CircularCountdown
                   remainingTime={countdownTime}
                   totalTime={totalRefreshTime}
-                  size={24}
+                  size={26}
                   isLoading={isLoading}
                 />
-                {/* <span className="text-xs text-stone-400">
-                  {countdownTime}s
-                </span> */}
+                <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-300/80 leading-none">
+                  {Math.ceil(countdownTime)}s
+                </span>
               </div>
             )}
             {onManualRefresh && (
               <button
                 onClick={onManualRefresh}
-                className="rounded-lg bg-theme-primary-800/20 hover:bg-theme-primary-700/30 hover:scale-105 cursor-pointer hover:rotate-45 duration-200 border border-theme-primary-600/20 text-theme-primary-300 hover:text-theme-primary-200 hover:border-theme-primary-400/40 transition-all p-1"
                 title="Refresh now"
+                className="group relative w-8 h-8 flex items-center justify-center rounded-lg bg-theme-primary-800/30 border border-theme-primary-600/20 text-theme-primary-300/70 hover:text-white hover:bg-theme-primary-600/30 hover:border-theme-primary-400/50 hover:shadow-[0_0_10px_rgba(var(--theme-primary-rgb,99,102,241),0.25)] active:scale-95 transition-all duration-200"
               >
-                <MdRefresh size={20} />
+                <MdRefresh
+                  size={17}
+                  className="transition-transform duration-500 group-hover:rotate-180"
+                />
               </button>
             )}
           </div>
-        </h3>
+        </div>
 
-        {/* Search and Filter Controls */}
-        <div className="space-y-2">
-          {/* Search Input */}
-          <div className="relative">
+        {/* Search + filter row */}
+        <div className="flex items-center gap-1.5">
+          {/* Search input */}
+          <div className="relative flex-1">
             <MdSearch
-              size={14}
-              className="absolute left-2.5 top-1/2 transform -transtone-y-1/2 text-theme-primary-300"
+              size={13}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-theme-primary-400/40 pointer-events-none"
             />
             <input
               type="text"
-              placeholder="Search windows..."
+              placeholder="Search…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-xs bg-theme-primary-800/30 border border-theme-primary-600/20 rounded-lg text-theme-primary-100 placeholder-theme-primary-300 focus:border-theme-primary-400/50 focus:bg-theme-primary-800/40 focus:outline-none transition-all duration-200"
+              className="w-full pl-7 pr-2.5 py-1.5 text-[11px] bg-theme-primary-500/20 border border-theme-primary-600/15 rounded-lg text-white placeholder-theme-primary-400/35 focus:border-theme-primary-400/40 focus:bg-theme-primary-800/30 focus:outline-none transition-all duration-200"
             />
           </div>
 
-          {/* Filter Toggle */}
+          {/* Visibility filter pill */}
           <button
             onClick={() => setShowOnlyVisible(!showOnlyVisible)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-200 ${
+            title={showOnlyVisible ? "Showing visible only" : "Showing all"}
+            className={`flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${
               showOnlyVisible
-                ? "bg-theme-primary-500/30 border border-theme-primary-400/40 text-theme-primary-100 shadow-sm"
-                : "bg-theme-primary-800/20 border border-theme-primary-600/20 text-theme-primary-200 hover:text-theme-primary-100 hover:border-theme-primary-500/30 hover:bg-theme-primary-800/30"
+                ? "bg-theme-primary-500/20 border border-theme-primary-400/30 text-theme-primary-200"
+                : "bg-transparent border border-theme-primary-600/15 text-theme-primary-400/40 hover:text-theme-primary-300/70 hover:border-theme-primary-500/25"
             }`}
           >
-            <MdFilterList size={14} />
-            <span>Show visible only</span>
+            <MdFilterList size={13} />
+            <span>Visible</span>
           </button>
         </div>
 
         {error && (
-          <div className="mt-2 p-2 rounded-lg bg-red-500/10 border border-red-400/30 flex items-center gap-1.5 text-red-200">
-            <MdError size={14} />
-            <span className="text-xs">{error}</span>
+          <div className="p-2 rounded-lg bg-red-500/10 border border-red-400/25 flex items-center gap-1.5 text-red-300/80">
+            <MdError size={12} />
+            <span className="text-[11px]">{error}</span>
           </div>
         )}
       </div>
@@ -237,31 +256,14 @@ export const WindowList: React.FC<WindowListProps> = ({
                     onWindowSelect(window.id);
                   }}
                   className={`
-                    relative overflow-hidden transition-all duration-300
-                    flex items-center gap-2 pl-6 pr-3 py-2 rounded-xl group hover:scale-[1.01]
+                    relative overflow-hidden transition-all duration-200 border-solid
+                    flex items-center gap-2.5 pl-5 pr-8 py-1.5 rounded-xl group
                     cursor-pointer
-                    ${
-                      draggedWindow?.id === window.id
-                        ? "opacity-50 scale-95"
-                        : ""
-                    }
+                    ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
                       window.isSelected
-                        ? `
-                          bg-gradient-to-br from-theme-primary-400/25 via-theme-primary-500/15 to-theme-primary-600/20
-                          border border-theme-primary-300/40 shadow-md shadow-theme-primary-500/20
-                          backdrop-blur-lg before:absolute before:inset-0 
-                          before:bg-gradient-to-br before:from-white/5 before:to-transparent before:rounded-xl
-                        `
-                        : `
-                          
-                          border border-solid border-theme-primary-600/15 hover:border-theme-primary-400/30
-                          backdrop-blur-md bg-gradient-to-br from-theme-primary-900/15 via-theme-primary-800/10 to-theme-primary-900/20
-                        
-                          before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/3 before:to-transparent 
-                          before:rounded-xl before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300
-                          hover:shadow-sm hover:shadow-theme-primary-500/10
-                        `
+                        ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 border border-theme-primary-300/5 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                        : "border border-theme-primary-600/10 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/10 hover:bg-theme-primary-800/15 hover:shadow-sm hover:shadow-theme-primary-500/8"
                     }
                   `}
                 >
@@ -286,7 +288,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                         e.dataTransfer.setDragImage(
                           dragPreview,
                           card.offsetWidth / 2,
-                          card.offsetHeight / 2
+                          card.offsetHeight / 2,
                         );
 
                         // Clean up after drag starts
@@ -303,7 +305,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                       };
                       e.dataTransfer.setData(
                         "text/plain",
-                        JSON.stringify(dragData)
+                        JSON.stringify(dragData),
                       );
                       e.dataTransfer.effectAllowed = "copy";
                       setDraggedWindow(window);
@@ -327,71 +329,70 @@ export const WindowList: React.FC<WindowListProps> = ({
                       flex items-center justify-center
                       cursor-grab active:cursor-grabbing
                       transition-all duration-200
-                      hover:bg-theme-primary-400/30 active:bg-theme-primary-500/40
-                      border-r border-theme-primary-500/40 hover:border-theme-primary-300/60
-                      backdrop-blur-sm rounded-l-xl
-                      ${
-                        draggedWindow?.id === window.id
-                          ? "cursor-grabbing bg-theme-primary-500/40 border-theme-primary-300"
-                          : ""
-                      }
+                      hover:bg-theme-primary-400/20 active:bg-theme-primary-500/30
+                      border-r border-white/[0.04] hover:border-theme-primary-300/30
+                      rounded-l-xl
+                      ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
                     `}
                     title="Drag to add window to layout"
                   >
-                    {/* Dotted grip icon */}
-                    <div className="flex flex-col gap-0.5 pointer-events-none">
-                      <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
+                    {/* Grip dots */}
+                    <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
+                      <div className="flex gap-[3px]">
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
                       </div>
-                      <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
+                      <div className="flex gap-[3px]">
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
                       </div>
-                      <div className="flex gap-0.5">
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
-                        <div className="w-1 h-1 bg-theme-primary-100 rounded-full"></div>
+                      <div className="flex gap-[3px]">
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
                       </div>
                     </div>
                   </div>
 
                   {/* Magical shimmer effect */}
-                  <div
-                    className="
-                    absolute inset-0 opacity-0 group-hover:opacity-100
-                    bg-gradient-to-r from-transparent via-white/10 to-transparent
-                    transform -skew-x-12 transtone-x-[-100%] group-hover:transtone-x-[200%] 
-                    transition-all duration-1000 ease-out
-                  "
-                  />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none" />
 
-                  {/* App Icon with glow effect */}
-                  <div className="relative flex-shrink-0 w-10 h-10 flex items-center justify-center z-10">
+                  {/* Pin Button — absolute, doesn't affect layout */}
+                  {onWindowPin && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onWindowPin(window.id);
+                      }}
+                      className={`absolute top-1.5 right-7 z-20 p-0.5 rounded transition-all duration-200 ${
+                        window.isPinned
+                          ? "opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
+                          : "opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                      }`}
+                      title={window.isPinned ? "Unpin window" : "Pin to top"}
+                    >
+                      <MdPushPin
+                        size={14}
+                        className={window.isPinned ? "rotate-0" : "rotate-45"}
+                      />
+                    </button>
+                  )}
+
+                  {/* App Icon */}
+                  <div className="relative flex-shrink-0 w-8 h-8 flex items-center justify-center z-10">
                     <div
-                      className={`
-                    absolute inset-0 rounded-lg bg-gradient-to-br opacity-20 group-hover:opacity-40 transition-opacity duration-300
-                    ${
-                      window.isSelected
-                        ? "from-theme-primary-400 to-theme-primary-500"
-                        : "from-stone-500 to-stone-600"
-                    }
-                  `}
+                      className={`absolute inset-0 rounded-lg bg-gradient-to-br opacity-15 group-hover:opacity-30 transition-opacity duration-300 ${
+                        window.isSelected
+                          ? "from-theme-primary-400 to-theme-primary-600"
+                          : "from-white/10 to-transparent"
+                      }`}
                     />
-                    <div className="relative w-10 h-10 flex items-center justify-center">
+                    <div className="relative w-8 h-8 flex items-center justify-center">
                       {window.icon ? (
-                        // Use actual app icon from desktopCapturer
                         <img
                           src={window.icon}
                           alt={`${window.app} icon`}
-                          className="w-10 h-10 object-contain "
-                          style={{
-                            filter: "contrast(1.2) brightness(1.1) ",
-                          }}
+                          className="w-7 h-7 object-contain"
                           onError={(e) => {
-                            console.warn(
-                              `Failed to load native icon for ${window.app}, falling back to React icon`
-                            );
-                            // Fallback to React icon if image fails to load
                             e.currentTarget.style.display = "none";
                             const fallback = e.currentTarget
                               .nextElementSibling as HTMLElement;
@@ -399,96 +400,62 @@ export const WindowList: React.FC<WindowListProps> = ({
                           }}
                         />
                       ) : null}
-                      {/* Fallback React icon - shown if no native icon or if image fails */}
                       <div
                         style={{ display: window.icon ? "none" : "flex" }}
                         className="w-full h-full items-center justify-center"
-                        title={
-                          window.hasNativeIcon === false
-                            ? "No native icon available"
-                            : "Using fallback icon"
-                        }
                       >
-                        {getAppIcon(window.app, 24)}
+                        {getAppIcon(window.app, 20)}
                       </div>
                     </div>
                   </div>
 
-                  {/* App Content */}
-                  <div className="flex-1 min-w-0 relative z-10 font-">
-                    {/* Window State Indicators */}
-                    <div className="flex items-center gap-1 mb-1">
-                      {window.isMinimized && (
-                        <span className="text-yellow-300 text-xs px-2 py-0.5 bg-gradient-to-r from-yellow-500/30 to-amber-500/20 rounded-full border border-yellow-400/30 backdrop-blur-sm">
-                          MIN
-                        </span>
-                      )}
-                      {window.isMaximized && (
-                        <span className="text-green-300 text-xs px-2 py-0.5 bg-gradient-to-r from-green-500/30 to-blue-500/20 rounded-full border border-green-400/30 backdrop-blur-sm">
-                          MAX
-                        </span>
-                      )}
-                      {window.processId && (
-                        <span className="text-stone-300 text-xs opacity-70">
-                          PID: {window.processId}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* App Name with Enhanced Gradient */}
+                  {/* Text Content */}
+                  <div className="flex-1 min-w-0 z-10">
+                    {/* App Name */}
                     <div
-                      className={`
-                    text-sm font-bold bg-gradient-to-r ${getAppGradient(
-                      window.app
-                    )} 
-                    bg-clip-text text-transparent group-hover:brightness-110 transition-all duration-300
-                  `}
+                      className={`text-xs font-semibold bg-gradient-to-r ${getAppGradient(window.app)} bg-clip-text text-transparent truncate leading-tight`}
                     >
                       {window.app}
                     </div>
-
-                    {/* Window Title/Description - Small at bottom */}
-                    <div className="text-xs font-sans text-stone-300 truncate mt-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Window Title */}
+                    <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
                       {window.name}
                     </div>
-
-                    {/* Window Dimensions (if available) */}
-                    {window.bounds && (
-                      <div className="text-xs text-stone-400 mt-1 opacity-60">
-                        {window.bounds.width}×{window.bounds.height}
+                    {/* State pills */}
+                    {(window.isMinimized || window.isMaximized) && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {window.isMinimized && (
+                          <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
+                            MIN
+                          </span>
+                        )}
+                        {window.isMaximized && (
+                          <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
+                            MAX
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Select/Check Handle - Right side */}
+                  {/* Select / Check Handle — right side */}
                   <div
-                    className={`
-                      absolute right-0 top-0 w-6 h-full 
-                      flex items-center justify-center
-                      transition-all duration-200
-                      border-l border-stone-600/30 hover:border-theme-primary-400/50
-                      backdrop-blur-sm
-                      ${
-                        window.isSelected
-                          ? "opacity-100 bg-theme-primary-500/20 hover:bg-theme-primary-500/30"
-                          : "opacity-0 group-hover:opacity-100 hover:bg-white/10"
-                      }
-                    `}
+                    className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
+                      window.isSelected
+                        ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
+                        : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
+                    }`}
                   >
                     <div
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent card selection
+                        e.stopPropagation();
                         onWindowSelect(window.id);
                       }}
-                      className={`
-                        w-4 h-4 rounded-md flex items-center justify-center
-                        transition-all duration-200
-                        ${
-                          window.isSelected
-                            ? " hover:bg-theme-primary-400 text-white scale-100"
-                            : " hover:bg-theme-primary-500 text-white hover:scale-110"
-                        }
-                      `}
+                      className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-all duration-200 ${
+                        window.isSelected
+                          ? "text-theme-primary-300"
+                          : "text-white/40 hover:text-white/70"
+                      }`}
                       title={
                         window.isSelected
                           ? "Remove from selection"
@@ -496,9 +463,9 @@ export const WindowList: React.FC<WindowListProps> = ({
                       }
                     >
                       {window.isSelected ? (
-                        <MdCheck size={14} />
+                        <MdCheck size={13} />
                       ) : (
-                        <MdAdd size={14} />
+                        <MdAdd size={13} />
                       )}
                     </div>
                   </div>

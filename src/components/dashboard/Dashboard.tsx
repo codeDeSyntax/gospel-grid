@@ -8,7 +8,24 @@ import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
 import { NotifierContainer } from "@/components/ui/NotifierContainer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { handlePublishLayout as reduxHandlePublishLayout } from "@/store/slices/notificationSlice";
+import {
+  handlePublishLayout as reduxHandlePublishLayout,
+  showNotification,
+} from "@/store/slices/notificationSlice";
+import {
+  toggleBlackout,
+  toggleFrozen,
+  setBlackout,
+  setFrozen,
+  setProjectionOn,
+  setLastLoadedPresetId,
+  setScenePresets,
+  type ScenePreset,
+} from "@/store/slices/appSlice";
+import {
+  useSelectionHistory,
+  type SelectionMap,
+} from "@/hooks/useSelectionHistory";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -19,6 +36,17 @@ interface DashboardState {
 
 export const Dashboard: React.FC = () => {
   const { minimize, maximize, close } = useWindowControls();
+
+  // Redux hooks
+  const dispatch = useAppDispatch();
+  const publishedQuality = useAppSelector(
+    (state) => state.app.publishedQuality,
+  );
+  const captureQuality = useAppSelector((state) => state.app.captureQuality);
+  const refreshIntervalSetting = useAppSelector(
+    (state) => state.app.refreshInterval,
+  );
+
   const {
     windows: enumeratedWindows,
     isLoading: isLoadingWindows,
@@ -30,16 +58,9 @@ export const Dashboard: React.FC = () => {
   } = useWindowEnumeration({
     includeMinimized: false,
     includeSystemWindows: false,
-    refreshInterval: 60000, // 1 minute auto-refresh
+    refreshInterval: refreshIntervalSetting,
     smartRefresh: false, // Disable smart refresh to prevent frequent updates
   });
-
-  // Redux hooks for notifications
-  const dispatch = useAppDispatch();
-  const publishedQuality = useAppSelector(
-    (state) => state.app.publishedQuality
-  );
-  const captureQuality = useAppSelector((state) => state.app.captureQuality);
 
   const [state, setState] = useState<DashboardState>({
     windows: [],
@@ -52,9 +73,71 @@ export const Dashboard: React.FC = () => {
   const [sidebarWidth, setSidebarWidth] = useState(380);
   const [isResizing, setIsResizing] = useState(false);
 
-  // Projection state
-  const [isProjectionOn, setIsProjectionOn] = useState(false);
+  // Settings panel toggle
   const [showSettings, setShowSettings] = useState(false);
+
+  // Projection / Blackout / Freeze from Redux
+  const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
+  const isBlackout = useAppSelector((s) => s.app.isBlackout);
+  const isFrozen = useAppSelector((s) => s.app.isFrozen);
+  const overlayText = useAppSelector((s) => s.app.overlayText);
+  const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
+
+  // Broadcast overlay state to published window whenever it changes
+  useEffect(() => {
+    (window.electronAPI as any)?.updateProjectionState?.({
+      isBlackout,
+      isFrozen,
+      overlayText,
+      overlayVisible,
+    });
+  }, [overlayText, overlayVisible, isBlackout, isFrozen]);
+
+  // Undo / Redo selection history
+  const selectionHistory = useSelectionHistory();
+
+  /** Build a SelectionMap from the current windows array. */
+  const buildSelectionMap = useCallback((wins: WindowInfo[]): SelectionMap => {
+    const map: SelectionMap = {};
+    wins.forEach((w) => {
+      if (w.isSelected) map[w.id] = true;
+    });
+    return map;
+  }, []);
+
+  /** Apply a SelectionMap to the current windows. */
+  const applySelectionMap = useCallback((map: SelectionMap) => {
+    setState((prev) => ({
+      ...prev,
+      windows: prev.windows.map((w) => ({
+        ...w,
+        isSelected: !!map[w.id],
+      })),
+      focusedWindowId: null,
+    }));
+  }, []);
+
+  /** Push current selection to history (call after every mutation). */
+  const pushHistory = useCallback(
+    (wins: WindowInfo[]) => {
+      selectionHistory.push(buildSelectionMap(wins));
+    },
+    [selectionHistory.push, buildSelectionMap],
+  );
+
+  const handleUndo = useCallback(() => {
+    const map = selectionHistory.undo();
+    if (map) {
+      applySelectionMap(map);
+    }
+  }, [selectionHistory.undo, applySelectionMap]);
+
+  const handleRedo = useCallback(() => {
+    const map = selectionHistory.redo();
+    if (map) {
+      applySelectionMap(map);
+    }
+  }, [selectionHistory.redo, applySelectionMap]);
 
   // Update state when enumerated windows change
   // Use a ref to track the last enumerated windows to avoid unnecessary syncs
@@ -82,14 +165,41 @@ export const Dashboard: React.FC = () => {
 
         // Only sync if the windows list actually changed
         if (currentIds !== lastIds) {
-          console.log("🔄 Enumeration changed, syncing...");
+          // ── Auto-detect new windows ──
+          const lastIdSet = new Set(
+            lastEnumeratedWindowsRef.current.map((w) => w.id),
+          );
+          if (lastIdSet.size > 0) {
+            const newWindows = enumeratedWindows.filter(
+              (w) => !lastIdSet.has(w.id),
+            );
+            if (newWindows.length > 0) {
+              const names = newWindows
+                .map((w) => w.name)
+                .slice(0, 3)
+                .join(", ");
+              const suffix =
+                newWindows.length > 3
+                  ? ` and ${newWindows.length - 3} more`
+                  : "";
+              dispatch(
+                showNotification({
+                  type: "info",
+                  title: "New Windows Detected",
+                  message: `${names}${suffix}`,
+                  autoClose: 4000,
+                }),
+              );
+            }
+          }
+
           lastEnumeratedWindowsRef.current = enumeratedWindows;
 
           // Use functional setState to ensure we always read the latest state
           setState((prev) => {
             // Create a map of existing windows for quick lookup
             const existingWindowsMap = new Map(
-              prev.windows.map((w) => [w.id, w])
+              prev.windows.map((w) => [w.id, w]),
             );
 
             // Merge enumerated windows with existing state, preserving isSelected
@@ -102,25 +212,11 @@ export const Dashboard: React.FC = () => {
               };
             });
 
-            const selectedCount = mergedWindows.filter(
-              (w) => w.isSelected
-            ).length;
-            console.log(
-              "🔄 Synced enumerated windows:",
-              mergedWindows.length,
-              "selected:",
-              selectedCount,
-              "prev selected:",
-              prev.windows.filter((w) => w.isSelected).length
-            );
-
             return {
               ...prev,
               windows: mergedWindows,
             };
           });
-        } else {
-          console.log("⏭️ Skipping sync - same windows");
         }
       }, 100); // 100ms debounce
     }
@@ -131,6 +227,55 @@ export const Dashboard: React.FC = () => {
       }
     };
   }, [enumeratedWindows]);
+
+  // ── Startup profile: auto-load last preset once windows are available ──
+  const autoLoadLastPreset = useAppSelector((s) => s.app.autoLoadLastPreset);
+  const lastLoadedPresetId = useAppSelector((s) => s.app.lastLoadedPresetId);
+  const startupDoneRef = React.useRef(false);
+
+  useEffect(() => {
+    if (startupDoneRef.current) return;
+    if (!autoLoadLastPreset || !lastLoadedPresetId) return;
+    if (state.windows.length === 0) return; // wait for windows
+
+    startupDoneRef.current = true;
+
+    // Load presets from disk, find the last one, and apply it
+    (async () => {
+      try {
+        const result = await (window.electronAPI as any).loadPresets();
+        if (result.success && result.presets) {
+          dispatch(setScenePresets(result.presets));
+          const preset = (result.presets as ScenePreset[]).find(
+            (p) => p.id === lastLoadedPresetId,
+          );
+          if (preset) {
+            // Apply preset selection
+            let captured: WindowInfo[] = [];
+            setState((prev) => {
+              captured = prev.windows.map((w) => {
+                const match = preset.windows.find(
+                  (pw) =>
+                    pw.id === w.id || (pw.app === w.app && pw.name === w.name),
+                );
+                return { ...w, isSelected: !!match };
+              });
+              return { ...prev, windows: captured, focusedWindowId: null };
+            });
+            pushHistory(captured);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to auto-load startup preset:", err);
+      }
+    })();
+  }, [
+    autoLoadLastPreset,
+    lastLoadedPresetId,
+    state.windows.length,
+    dispatch,
+    pushHistory,
+  ]);
 
   // Section navigation handler
   const handleSectionChange = useCallback((section: string) => {
@@ -143,82 +288,54 @@ export const Dashboard: React.FC = () => {
   }, [refreshWindows]);
 
   const handleClearAll = useCallback(() => {
+    const newWindows = state.windows.map((w) => ({ ...w, isSelected: false }));
     setState((prev) => ({
       ...prev,
-      windows: prev.windows.map((w) => ({ ...w, isSelected: false })),
+      windows: newWindows,
       focusedWindowId: null,
     }));
-  }, []);
+    pushHistory(newWindows);
+  }, [state.windows, pushHistory]);
 
   const handleLayoutChange = useCallback((layout: string) => {
     setState((prev) => ({ ...prev, currentLayout: layout }));
   }, []);
 
   // Window handlers
-  const handleWindowSelect = useCallback((windowId: string) => {
-    setState((prev) => {
-      const updatedWindows = prev.windows.map((w) =>
-        w.id === windowId ? { ...w, isSelected: !w.isSelected } : w
+  const handleWindowSelect = useCallback(
+    (windowId: string) => {
+      const newWindows = state.windows.map((w) =>
+        w.id === windowId ? { ...w, isSelected: !w.isSelected } : w,
       );
-
-      // If deselecting, also remove from focus
-      const newFocusedId = updatedWindows.find((w) => w.id === windowId)
-        ?.isSelected
-        ? prev.focusedWindowId
-        : prev.focusedWindowId === windowId
-        ? null
-        : prev.focusedWindowId;
-
-      return {
+      const toggled = newWindows.find((w) => w.id === windowId);
+      const newFocusedId = toggled?.isSelected
+        ? state.focusedWindowId
+        : state.focusedWindowId === windowId
+          ? null
+          : state.focusedWindowId;
+      setState((prev) => ({
         ...prev,
-        windows: updatedWindows,
+        windows: newWindows,
         focusedWindowId: newFocusedId,
-      };
-    });
-  }, []);
+      }));
+      pushHistory(newWindows);
+    },
+    [state.windows, state.focusedWindowId, pushHistory],
+  );
 
-  const handleWindowAdd = useCallback((windowInfo: WindowInfo) => {
-    console.log(
-      "🎯 Dashboard.handleWindowAdd called with:",
-      windowInfo.name,
-      "id:",
-      windowInfo.id
-    );
-
-    // Use the same logic as handleWindowSelect - just set isSelected to true
-    setState((prev) => {
-      const windowExists = prev.windows.some((w) => w.id === windowInfo.id);
-      console.log("🔍 Window exists in state?", windowExists);
-
-      if (windowExists) {
-        // Window exists - mark it as selected (same as clicking)
-        const updatedWindows = prev.windows.map((w) =>
-          w.id === windowInfo.id ? { ...w, isSelected: true } : w
-        );
-
-        const selectedCount = updatedWindows.filter((w) => w.isSelected).length;
-        console.log(
-          "✏️ Marked window as selected, total selected:",
-          selectedCount
-        );
-
-        return {
-          ...prev,
-          windows: updatedWindows,
-        };
-      } else {
-        // Window doesn't exist in state - this shouldn't happen if enumeration is working
-        console.warn("⚠️ Window not found in state! Adding it manually.");
-        const newWindow = { ...windowInfo, isSelected: true };
-        const newWindows = [...prev.windows, newWindow];
-
-        return {
-          ...prev,
-          windows: newWindows,
-        };
-      }
-    });
-  }, []);
+  const handleWindowAdd = useCallback(
+    (windowInfo: WindowInfo) => {
+      const windowExists = state.windows.some((w) => w.id === windowInfo.id);
+      const newWindows = windowExists
+        ? state.windows.map((w) =>
+            w.id === windowInfo.id ? { ...w, isSelected: true } : w,
+          )
+        : [...state.windows, { ...windowInfo, isSelected: true }];
+      setState((prev) => ({ ...prev, windows: newWindows }));
+      pushHistory(newWindows);
+    },
+    [state.windows, pushHistory],
+  );
 
   // Grid handlers
   const handleWindowFocus = useCallback((windowId: string) => {
@@ -228,21 +345,37 @@ export const Dashboard: React.FC = () => {
     }));
   }, []);
 
-  const handleWindowRemove = useCallback((windowId: string) => {
+  // Pin / Unpin a window to keep it at the top of the list
+  const handleWindowPin = useCallback((windowId: string) => {
     setState((prev) => ({
       ...prev,
       windows: prev.windows.map((w) =>
-        w.id === windowId ? { ...w, isSelected: false } : w
+        w.id === windowId ? { ...w, isPinned: !w.isPinned } : w,
       ),
-      focusedWindowId:
-        prev.focusedWindowId === windowId ? null : prev.focusedWindowId,
     }));
   }, []);
+
+  const handleWindowRemove = useCallback(
+    (windowId: string) => {
+      const newWindows = state.windows.map((w) =>
+        w.id === windowId ? { ...w, isSelected: false } : w,
+      );
+      const newFocusedId =
+        state.focusedWindowId === windowId ? null : state.focusedWindowId;
+      setState((prev) => ({
+        ...prev,
+        windows: newWindows,
+        focusedWindowId: newFocusedId,
+      }));
+      pushHistory(newWindows);
+    },
+    [state.windows, state.focusedWindowId, pushHistory],
+  );
 
   // Memoize selected windows to prevent recalculation
   const selectedWindows = useMemo(
     () => state.windows.filter((w) => w.isSelected),
-    [state.windows]
+    [state.windows],
   );
 
   const handlePublishLayout = useCallback(async () => {
@@ -254,9 +387,9 @@ export const Dashboard: React.FC = () => {
         focusedWindowId: state.focusedWindowId,
         publishedQuality,
         captureQuality,
-      })
+      }),
     );
-    setIsProjectionOn(true);
+    dispatch(setProjectionOn(true));
   }, [
     dispatch,
     selectedWindows,
@@ -269,11 +402,113 @@ export const Dashboard: React.FC = () => {
   const handleCloseProjection = useCallback(async () => {
     try {
       await (window.electronAPI as any).closePublishedWindows();
-      setIsProjectionOn(false);
+      dispatch(setProjectionOn(false));
+      // Reset blackout/freeze when projection closes
+      dispatch(setBlackout(false));
+      dispatch(setFrozen(false));
     } catch (error) {
       console.error("Error closing published windows:", error);
     }
-  }, []);
+  }, [dispatch]);
+
+  // ── Blackout / Freeze toggles ──────────────────────────────────────────
+  const handleToggleBlackout = useCallback(() => {
+    const newVal = !isBlackout;
+    dispatch(toggleBlackout());
+    (window.electronAPI as any)?.updateProjectionState?.({
+      isBlackout: newVal,
+      isFrozen,
+    });
+  }, [dispatch, isBlackout, isFrozen]);
+
+  const handleToggleFrozen = useCallback(() => {
+    const newVal = !isFrozen;
+    dispatch(toggleFrozen());
+    (window.electronAPI as any)?.updateProjectionState?.({
+      isBlackout,
+      isFrozen: newVal,
+    });
+  }, [dispatch, isBlackout, isFrozen]);
+
+  // ── Load preset ────────────────────────────────────────────────────────
+  const handleLoadPreset = useCallback(
+    (preset: ScenePreset) => {
+      let captured: WindowInfo[] = [];
+      setState((prev) => {
+        // Match preset windows to current windows by app name + window name
+        captured = prev.windows.map((w) => {
+          const match = preset.windows.find(
+            (pw) => pw.id === w.id || (pw.app === w.app && pw.name === w.name),
+          );
+          return { ...w, isSelected: !!match };
+        });
+        return { ...prev, windows: captured, focusedWindowId: null };
+      });
+      pushHistory(captured);
+    },
+    [pushHistory],
+  );
+
+  // ── Global hotkey listener ─────────────────────────────────────────────
+  useEffect(() => {
+    const unsubscribe = (window.electronAPI as any)?.onGlobalHotkey?.(
+      (action: string) => {
+        switch (action) {
+          case "toggle-projection":
+            if (isProjectionOn) {
+              handleCloseProjection();
+            } else if (selectedWindows.length > 0) {
+              handlePublishLayout();
+            }
+            break;
+          case "toggle-blackout":
+            if (isProjectionOn) handleToggleBlackout();
+            break;
+          case "toggle-freeze":
+            if (isProjectionOn) handleToggleFrozen();
+            break;
+          case "clear-all":
+            handleClearAll();
+            break;
+          case "undo":
+            handleUndo();
+            break;
+          case "redo":
+            handleRedo();
+            break;
+        }
+      },
+    );
+
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [
+    isProjectionOn,
+    selectedWindows.length,
+    handleCloseProjection,
+    handlePublishLayout,
+    handleToggleBlackout,
+    handleToggleFrozen,
+    handleClearAll,
+    handleUndo,
+    handleRedo,
+  ]);
+
+  // ── Keyboard shortcuts (local — Ctrl+Z / Ctrl+Y) ──────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "z") {
+        e.preventDefault();
+        handleUndo();
+      } else if (e.ctrlKey && e.key === "y") {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleUndo, handleRedo]);
 
   // Resize handlers
   const handleMouseDown = useCallback(() => {
@@ -294,7 +529,7 @@ export const Dashboard: React.FC = () => {
         setSidebarWidth(newWidth);
       }
     },
-    [isResizing]
+    [isResizing],
   );
 
   // Add/remove event listeners for resize
@@ -400,13 +635,10 @@ export const Dashboard: React.FC = () => {
           <WindowList
             windows={state.windows}
             onWindowSelect={handleWindowSelect}
+            onWindowPin={handleWindowPin}
             onWindowFocus={focusWindowNative}
-            onWindowDragStart={(window) => {
-              console.log("Drag started for window:", window.name);
-            }}
-            onWindowDragEnd={() => {
-              console.log("Drag ended");
-            }}
+            onWindowDragStart={(window) => {}}
+            onWindowDragEnd={() => {}}
             isLoading={isLoadingWindows}
             error={windowError}
             countdownTime={countdownTime}
@@ -448,8 +680,14 @@ export const Dashboard: React.FC = () => {
             onPublishLayout={handlePublishLayout}
             showSettings={showSettings}
             onToggleSettings={() => setShowSettings(!showSettings)}
-            isProjectionOn={isProjectionOn}
             onCloseProjection={handleCloseProjection}
+            onToggleBlackout={handleToggleBlackout}
+            onToggleFrozen={handleToggleFrozen}
+            canUndo={selectionHistory.canUndo}
+            canRedo={selectionHistory.canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onLoadPreset={handleLoadPreset}
           />
         </div>
       </div>
@@ -458,15 +696,40 @@ export const Dashboard: React.FC = () => {
       <div className="h-8 bg-theme-primary-950 border-t-3 border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
         {/* Left side - Status indicators */}
         <div className="flex items-center gap-4">
+          {/* Projection status */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-2 h-2 rounded-full ${isProjectionOn ? "bg-green-400 animate-pulse" : "bg-gray-500"}`}
+            ></div>
+            <span>
+              {isProjectionOn ? "Projection: LIVE" : "Projection: OFF"}
+            </span>
+          </div>
+
+          {/* Blackout indicator */}
+          {isProjectionOn && isBlackout && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              <span className="text-yellow-400">Blackout</span>
+            </div>
+          )}
+
+          {/* Freeze indicator */}
+          {isProjectionOn && isFrozen && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+              <span className="text-cyan-400">Frozen</span>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="w-px h-3 bg-white/10"></div>
+
           {state.windows.length > 0 ? (
             <>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-theme-primary-400 rounded-full"></div>
-                <span>Server: ON (idle)</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Windows: {state.windows.length} detected</span>
+                <span>Windows: {state.windows.length}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-theme-primary-400 rounded-full"></div>
@@ -476,12 +739,12 @@ export const Dashboard: React.FC = () => {
           ) : isLoadingWindows ? (
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span>Loading windows...</span>
+              <span>Scanning...</span>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span>Server: ON (no windows)</span>
+              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+              <span>No windows</span>
             </div>
           )}
         </div>

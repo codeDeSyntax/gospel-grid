@@ -29,26 +29,26 @@
 
 /* Cosmic Blue Theme (Default) */
 [data-color-theme="cosmic-blue"] {
-  --theme-primary-50: 191 219 254; /* #bfdbfe */
-  --theme-primary-100: 191 219 254; /* #bfdbfe */
-  --theme-primary-200: 191 219 254; /* #bfdbfe */
-  --theme-primary-300: 96 165 250; /* #60a5fa */
-  --theme-primary-400: 96 165 250; /* #60a5fa */
-  --theme-primary-500: 37 99 235; /* #2563eb */
-  --theme-primary-600: 37 99 235; /* #2563eb */
-  --theme-primary-700: 37 99 235; /* #2563eb */
-  --theme-primary-800: 23 37 84; /* #172554 */
-  --theme-primary-900: 23 37 84; /* #172554 */
-  --theme-primary-950: 23 37 84; /* #172554 */
+  --theme-primary-50: 219 234 254; /* #dbeafe - blue-100 */
+  --theme-primary-100: 191 219 254; /* #bfdbfe - blue-200 */
+  --theme-primary-200: 147 197 253; /* #93c5fd - blue-300 */
+  --theme-primary-300: 96 165 250; /* #60a5fa - blue-400 */
+  --theme-primary-400: 59 130 246; /* #3b82f6 - blue-500 */
+  --theme-primary-500: 37 99 235; /* #2563eb - blue-600 */
+  --theme-primary-600: 29 78 216; /* #1d4ed8 - blue-700 */
+  --theme-primary-700: 30 64 175; /* #1e40af - blue-800 */
+  --theme-primary-800: 30 58 138; /* #1e3a8a - blue-900 */
+  --theme-primary-900: 23 37 84; /* #172554 - blue-950 */
+  --theme-primary-950: 15 23 42; /* #0f172a - slate-950 */
 
-  --theme-accent-light: 96 165 250; /* #60a5fa */
-  --theme-accent-medium: 37 99 235; /* #2563eb */
-  --theme-accent-dark: 23 37 84; /* #172554 */
+  --theme-accent-light: 96 165 250; /* #60a5fa - blue-400 */
+  --theme-accent-medium: 37 99 235; /* #2563eb - blue-600 */
+  --theme-accent-dark: 23 37 84; /* #172554 - blue-950 */
 
-  --theme-bg-gradient-1: 96 165 250; /* #60a5fa */
-  --theme-bg-gradient-2: 37 99 235; /* #2563eb */
-  --theme-bg-gradient-3: 37 99 235; /* #2563eb */
-  --theme-bg-gradient-4: 23 37 84; /* #172554 */
+  --theme-bg-gradient-1: 96 165 250; /* #60a5fa - blue-400 */
+  --theme-bg-gradient-2: 37 99 235; /* #2563eb - blue-600 */
+  --theme-bg-gradient-3: 29 78 216; /* #1d4ed8 - blue-700 */
+  --theme-bg-gradient-4: 15 23 42; /* #0f172a - slate-950 */
 }
 
 /* Matrix Green Theme */
@@ -123,76 +123,76 @@
   --theme-bg-gradient-4: 2 6 23; /* #020617 */
 }
 
-/* Earth Brown Theme */
+/* Earth Brown Theme — warm amber-to-deep-brown */
 [data-color-theme="earth-brown"] {
-  --theme-primary-50: 233 213 176; /* #e9d5b0 */
-  --theme-primary-100: 233 213 176; /* #e9d5b0 */
-  --theme-primary-200: 233 213 176; /* #e9d5b0 */
-  --theme-primary-300: 180 135 72; /* #b48748 */
-  --theme-primary-400: 180 135 72; /* #b48748 */
-  --theme-primary-500: 120 87 44; /* #78572c */
-  --theme-primary-600: 120 87 44; /* #78572c */
-  --theme-primary-700: 120 87 44; /* #78572c */
-  --theme-primary-800: 37 23 15; /* #25170f */
-  --theme-primary-900: 37 23 15; /* #25170f */
-  --theme-primary-950: 37 23 15; /* #25170f */
+  --theme-primary-50: 254 243 199; /* #fef3c7 - amber-100 */
+  --theme-primary-100: 253 230 138; /* #fde68a - amber-200 */
+  --theme-primary-200: 252 211 77; /* #fcd34d - amber-300 */
+  --theme-primary-300: 217 119 6; /* #d97706 - amber-600 */
+  --theme-primary-400: 180 83 9; /* #b45309 - amber-700 */
+  --theme-primary-500: 146 64 14; /* #92400e - amber-800 */
+  --theme-primary-600: 120 53 15; /* #78350f - amber-900 */
+  --theme-primary-700: 88 38 8; /* #582608 */
+  --theme-primary-800: 60 25 4; /* #3c1904 */
+  --theme-primary-900: 38 14 2; /* #260e02 */
+  --theme-primary-950: 22 8 0; /* #160800 */
 
-  --theme-accent-light: 180 135 72; /* #b48748 */
-  --theme-accent-medium: 120 87 44; /* #78572c */
-  --theme-accent-dark: 37 23 15; /* #25170f */
+  --theme-accent-light: 252 211 77; /* #fcd34d - amber-300 */
+  --theme-accent-medium: 217 119 6; /* #d97706 - amber-600 */
+  --theme-accent-dark: 120 53 15; /* #78350f - amber-900 */
 
-  --theme-bg-gradient-1: 180 135 72; /* #b48748 */
-  --theme-bg-gradient-2: 120 87 44; /* #78572c */
-  --theme-bg-gradient-3: 120 87 44; /* #78572c */
-  --theme-bg-gradient-4: 37 23 15; /* #25170f */
+  --theme-bg-gradient-1: 217 119 6; /* #d97706 - amber-600 */
+  --theme-bg-gradient-2: 146 64 14; /* #92400e - amber-800 */
+  --theme-bg-gradient-3: 88 38 8; /* #582608 */
+  --theme-bg-gradient-4: 22 8 0; /* #160800 */
 }
 
 /* Violet Purple Theme */
 [data-color-theme="violet-purple"] {
-  --theme-primary-50: 245 208 254; /* #f5d0fe */
-  --theme-primary-100: 245 208 254; /* #f5d0fe */
-  --theme-primary-200: 245 208 254; /* #f5d0fe */
-  --theme-primary-300: 232 121 249; /* #e879f9 */
-  --theme-primary-400: 232 121 249; /* #e879f9 */
-  --theme-primary-500: 168 85 247; /* #a855f7 */
-  --theme-primary-600: 147 51 234; /* #9333ea */
-  --theme-primary-700: 126 34 206; /* #7e22ce */
-  --theme-primary-800: 59 7 100; /* #3b0764 */
-  --theme-primary-900: 59 7 100; /* #3b0764 */
-  --theme-primary-950: 59 7 100; /* #3b0764 */
+  --theme-primary-50: 237 233 254; /* #ede9fe - violet-100 */
+  --theme-primary-100: 221 214 254; /* #ddd6fe - violet-200 */
+  --theme-primary-200: 196 181 253; /* #c4b5fd - violet-300 */
+  --theme-primary-300: 167 139 250; /* #a78bfa - violet-400 */
+  --theme-primary-400: 139 92 246; /* #8b5cf6 - violet-500 */
+  --theme-primary-500: 124 58 237; /* #7c3aed - violet-600 */
+  --theme-primary-600: 109 40 217; /* #6d28d9 - violet-700 */
+  --theme-primary-700: 91 33 182; /* #5b21b6 - violet-800 */
+  --theme-primary-800: 76 29 149; /* #4c1d95 - violet-900 */
+  --theme-primary-900: 46 16 101; /* #2e1065 - violet-950 */
+  --theme-primary-950: 22 8 56; /* #160838 - deep dark violet */
 
-  --theme-accent-light: 232 121 249; /* #e879f9 */
-  --theme-accent-medium: 168 85 247; /* #a855f7 */
-  --theme-accent-dark: 59 7 100; /* #3b0764 */
+  --theme-accent-light: 167 139 250; /* #a78bfa - violet-400 */
+  --theme-accent-medium: 124 58 237; /* #7c3aed - violet-600 */
+  --theme-accent-dark: 46 16 101; /* #2e1065 - violet-950 */
 
-  --theme-bg-gradient-1: 232 121 249; /* #e879f9 */
-  --theme-bg-gradient-2: 168 85 247; /* #a855f7 */
-  --theme-bg-gradient-3: 147 51 234; /* #9333ea */
-  --theme-bg-gradient-4: 59 7 100; /* #3b0764 */
+  --theme-bg-gradient-1: 167 139 250; /* #a78bfa - violet-400 */
+  --theme-bg-gradient-2: 124 58 237; /* #7c3aed - violet-600 */
+  --theme-bg-gradient-3: 91 33 182; /* #5b21b6 - violet-800 */
+  --theme-bg-gradient-4: 22 8 56; /* #160838 - deep dark violet */
 }
 
-/* Sunset Orange Theme */
+/* Sunset Orange Theme — vivid fiery orange */
 [data-color-theme="sunset-orange"] {
-  --theme-primary-50: 255 237 213; /* #ffedd5 */
-  --theme-primary-100: 255 237 213; /* #ffedd5 */
-  --theme-primary-200: 255 237 213; /* #ffedd5 */
-  --theme-primary-300: 251 146 60; /* #fb923c */
-  --theme-primary-400: 251 146 60; /* #fb923c */
-  --theme-primary-500: 249 115 22; /* #f97316 */
-  --theme-primary-600: 234 88 12; /* #ea580c */
-  --theme-primary-700: 194 65 12; /* #c2410c */
-  --theme-primary-800: 67 20 7; /* #431407 */
-  --theme-primary-900: 67 20 7; /* #431407 */
-  --theme-primary-950: 67 20 7; /* #431407 */
+  --theme-primary-50: 255 247 237; /* #fff7ed - orange-50 */
+  --theme-primary-100: 254 215 170; /* #fed7aa - orange-200 */
+  --theme-primary-200: 253 186 116; /* #fdba74 - orange-300 */
+  --theme-primary-300: 251 146 60; /* #fb923c - orange-400 */
+  --theme-primary-400: 249 115 22; /* #f97316 - orange-500 */
+  --theme-primary-500: 234 88 12; /* #ea580c - orange-600 */
+  --theme-primary-600: 194 65 12; /* #c2410c - orange-700 */
+  --theme-primary-700: 154 52 18; /* #9a3412 - orange-800 */
+  --theme-primary-800: 124 45 18; /* #7c2d12 - orange-900 */
+  --theme-primary-900: 72 22 8; /* #481608 */
+  --theme-primary-950: 40 10 2; /* #280a02 */
 
-  --theme-accent-light: 251 146 60; /* #fb923c */
-  --theme-accent-medium: 249 115 22; /* #f97316 */
-  --theme-accent-dark: 67 20 7; /* #431407 */
+  --theme-accent-light: 251 146 60; /* #fb923c - orange-400 */
+  --theme-accent-medium: 249 115 22; /* #f97316 - orange-500 */
+  --theme-accent-dark: 124 45 18; /* #7c2d12 - orange-900 */
 
-  --theme-bg-gradient-1: 251 146 60; /* #fb923c */
-  --theme-bg-gradient-2: 249 115 22; /* #f97316 */
-  --theme-bg-gradient-3: 234 88 12; /* #ea580c */
-  --theme-bg-gradient-4: 67 20 7; /* #431407 */
+  --theme-bg-gradient-1: 249 115 22; /* #f97316 - orange-500 */
+  --theme-bg-gradient-2: 234 88 12; /* #ea580c - orange-600 */
+  --theme-bg-gradient-3: 154 52 18; /* #9a3412 - orange-800 */
+  --theme-bg-gradient-4: 40 10 2; /* #280a02 */
 }
 
 /* Midnight Black Theme */
@@ -217,6 +217,30 @@
   --theme-bg-gradient-2: 87 83 78; /* #57534e - stone-600 */
   --theme-bg-gradient-3: 41 37 36; /* #292524 - stone-800 */
   --theme-bg-gradient-4: 12 10 9; /* #0c0a09 - stone-950 */
+}
+
+/* Pro Slate Theme — charcoal + teal (EasyWorship / OceanAudio / DaVinci style) */
+[data-color-theme="pro-slate"] {
+  --theme-primary-50: 153 246 228; /* #99f6e4 - teal-200 */
+  --theme-primary-100: 153 246 228; /* #99f6e4 - teal-200 */
+  --theme-primary-200: 94 234 212; /* #5eead4 - teal-300 */
+  --theme-primary-300: 45 212 191; /* #2dd4bf - teal-400 */
+  --theme-primary-400: 45 212 191; /* #2dd4bf - teal-400 */
+  --theme-primary-500: 20 184 166; /* #14b8a6 - teal-500 */
+  --theme-primary-600: 13 148 136; /* #0d9488 - teal-600 */
+  --theme-primary-700: 15 118 110; /* #0f766e - teal-700 */
+  --theme-primary-800: 17 94 89; /* #115e59 - teal-800 */
+  --theme-primary-900: 19 78 74; /* #134e4a - teal-900 */
+  --theme-primary-950: 4 47 46; /* #042f2e - teal-950 */
+
+  --theme-accent-light: 45 212 191; /* #2dd4bf - teal-400 */
+  --theme-accent-medium: 20 184 166; /* #14b8a6 - teal-500 */
+  --theme-accent-dark: 19 78 74; /* #134e4a - teal-900 */
+
+  --theme-bg-gradient-1: 45 212 191; /* #2dd4bf - teal-400 */
+  --theme-bg-gradient-2: 20 184 166; /* #14b8a6 - teal-500 */
+  --theme-bg-gradient-3: 15 118 110; /* #0f766e - teal-700 */
+  --theme-bg-gradient-4: 4 47 46; /* #042f2e - teal-950 */
 }
 
 /* Utility classes for theme colors */

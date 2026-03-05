@@ -9,6 +9,10 @@ import { useAppDispatch } from "./store/hooks";
 import {
   setPublishedQuality,
   setCaptureQuality,
+  setBlackout,
+  setFrozen,
+  setOverlayText,
+  setOverlayVisible,
 } from "./store/slices/appSlice";
 
 import { systemLogger } from "./hooks/useSystemLogger";
@@ -53,14 +57,14 @@ function App() {
               "app",
               "info",
               "Layout",
-              `📊 Published layout loaded with ${layoutData.windows.length} windows`
+              `📊 Published layout loaded with ${layoutData.windows.length} windows`,
             );
           } else {
             systemLogger.log(
               "app",
               "error",
               "Layout",
-              `❌ Failed to load published layout data for ID: ${layoutId}`
+              `❌ Failed to load published layout data for ID: ${layoutId}`,
             );
           }
         })
@@ -69,7 +73,7 @@ function App() {
             "app",
             "error",
             "Layout",
-            `❌ Error fetching published layout: ${error.message}`
+            `❌ Error fetching published layout: ${error.message}`,
           );
         });
     }
@@ -79,7 +83,7 @@ function App() {
       "app",
       "success",
       "App",
-      "✅ Application initialization complete"
+      "✅ Application initialization complete",
     );
 
     // Listen for quality settings changes from main window (for published layouts)
@@ -98,8 +102,27 @@ function App() {
         }
       });
 
+      // Listen for projection state changes (blackout / freeze / overlay)
+      const unsubscribeProjection = (
+        window.electronAPI as any
+      )?.onProjectionStateChanged?.(
+        (state: {
+          isBlackout: boolean;
+          isFrozen: boolean;
+          overlayText: string;
+          overlayVisible: boolean;
+        }) => {
+          dispatch(setBlackout(state.isBlackout));
+          dispatch(setFrozen(state.isFrozen));
+          dispatch(setOverlayText(state.overlayText ?? ""));
+          dispatch(setOverlayVisible(state.overlayVisible ?? false));
+        },
+      );
+
       return () => {
         if (typeof unsubscribe === "function") unsubscribe();
+        if (typeof unsubscribeProjection === "function")
+          unsubscribeProjection();
       };
     }
   }, [dispatch]);
@@ -109,7 +132,7 @@ function App() {
       "app",
       "info",
       "Navigation",
-      "🎯 User navigated to dashboard"
+      "🎯 User navigated to dashboard",
     );
     setCurrentScreen("dashboard");
   };
@@ -119,7 +142,7 @@ function App() {
       "app",
       "info",
       "Navigation",
-      "🏠 User navigated back to welcome"
+      "🏠 User navigated back to welcome",
     );
     setCurrentScreen("welcome");
   };
@@ -129,7 +152,7 @@ function App() {
       "app",
       "info",
       "Published",
-      "⬇️ Minimizing published layout window via ESC key"
+      "⬇️ Minimizing published layout window via ESC key",
     );
     // Minimize this window and focus main window
     if (window.windowControls) {
@@ -142,7 +165,7 @@ function App() {
       "app",
       "info",
       "Published",
-      "❌ Closing published layout window via close button"
+      "❌ Closing published layout window via close button",
     );
     // This handler is called before the window closes
     // The actual window closing is handled by the useWindowControls hook in PublishedLayout

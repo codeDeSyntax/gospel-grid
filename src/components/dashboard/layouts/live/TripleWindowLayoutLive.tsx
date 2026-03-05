@@ -3,45 +3,31 @@ import { WindowInfo } from "../../WindowList";
 
 interface TripleWindowLayoutLiveProps {
   windows: [WindowInfo, WindowInfo, WindowInfo];
-  windowDimensions: { width: number; height: number };
+  windowDimensions?: { width: number; height: number };
   renderWindow: (
     window: WindowInfo,
-    style: React.CSSProperties
+    style: React.CSSProperties,
   ) => React.ReactNode;
 }
 
 export const TripleWindowLayoutLive: React.FC<TripleWindowLayoutLiveProps> = ({
   windows,
-  windowDimensions,
   renderWindow,
 }) => {
-  const { width, height } = windowDimensions;
-
   return (
     <div
-      className="w-full h-full flex flex-col justify-center items-center p-8"
-      style={{ gap: "16px" }}
+      className="w-full h-full grid grid-cols-2 grid-rows-2"
+      style={{ gap: "2px" }}
     >
-      {/* Top row - 2 windows */}
-      <div
-        className="flex justify-center"
-        style={{ gap: "16px", height: `${height}px` }}
-      >
-        {renderWindow(windows[0], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-        {renderWindow(windows[1], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
-      </div>
-      {/* Bottom row - 1 window on the left */}
-      <div className="flex" style={{ height: `${height}px` }}>
-        {renderWindow(windows[2], {
-          width: `${width}px`,
-          height: `${height}px`,
-        })}
+      {/* Top-left */}
+      {renderWindow(windows[0], { width: "100%", height: "100%" })}
+      {/* Top-right */}
+      {renderWindow(windows[1], { width: "100%", height: "100%" })}
+      {/* Bottom — spans full width, centered content */}
+      <div className="col-span-2 flex justify-center">
+        <div className="w-1/2 h-full">
+          {renderWindow(windows[2], { width: "100%", height: "100%" })}
+        </div>
       </div>
     </div>
   );

@@ -2,13 +2,30 @@ import React, { useState } from "react";
 import {
   WindowLayoutCard,
   SettingsPanel,
+  PresetsPanel,
+  ConfidenceMonitor,
+  OverlayTextPanel,
   type RightPanelProps,
   type MainViewType,
 } from "./index";
-import { MdCleanHands, MdSettingsApplications } from "react-icons/md";
-import { BrushCleaningIcon } from "lucide-react";
-import { GiSettingsKnobs } from "react-icons/gi";
-import { FcSettings } from "react-icons/fc";
+import { useAppSelector } from "@/store/hooks";
+import {
+  Trash2,
+  Settings,
+  Cast,
+  MonitorOff,
+  EyeOff,
+  Eye,
+  Pause,
+  Play,
+  Undo2,
+  Redo2,
+  Bookmark,
+  Monitor,
+  Type,
+} from "lucide-react";
+
+type PanelView = "layout" | "settings" | "presets" | "monitor" | "overlay";
 
 export const RightPanel: React.FC<RightPanelProps> = ({
   windows,
@@ -24,128 +41,241 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   onPublishLayout,
   showSettings = false,
   onToggleSettings,
-  isProjectionOn = false,
   onCloseProjection,
+  onToggleBlackout,
+  onToggleFrozen,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
+  onLoadPreset,
 }) => {
-  const selectedWindows = windows.filter((w) => w.isSelected);
+  // Read projection state from Redux — no prop drilling
+  const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
+  const isBlackout = useAppSelector((s) => s.app.isBlackout);
+  const isFrozen = useAppSelector((s) => s.app.isFrozen);
+  const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
 
-  React.useEffect(() => {
-    console.log(
-      "🔵 RightPanel - windows:",
-      windows.length,
-      "selected:",
-      selectedWindows.length
-    );
-    console.log(
-      "🔵 RightPanel - selectedWindows:",
-      selectedWindows.map((w) => ({
-        id: w.id,
-        name: w.name,
-        isSelected: w.isSelected,
-      }))
-    );
-  }, [windows, selectedWindows]);
+  const selectedWindows = windows.filter((w) => w.isSelected);
+  const [activePanel, setActivePanel] = useState<PanelView>("layout");
+
+  const handleToggleSettings = () => {
+    if (activePanel === "settings") {
+      setActivePanel("layout");
+    } else {
+      setActivePanel("settings");
+    }
+    onToggleSettings?.();
+  };
+
+  const handleTogglePresets = () => {
+    setActivePanel((prev) => (prev === "presets" ? "layout" : "presets"));
+  };
+
+  const handleToggleMonitor = () => {
+    setActivePanel((prev) => (prev === "monitor" ? "layout" : "monitor"));
+  };
+
+  const handleToggleOverlay = () => {
+    setActivePanel((prev) => (prev === "overlay" ? "layout" : "overlay"));
+  };
 
   return (
     <div className="flex-1 h-full flex flex-col overflow-hidden">
-      {/* Fixed Top Bar with Controls */} 
-      <div className="shrink-0 h-10   bg-theme-primary-200 border-b-2 border-theme-primary-700/60 px-6 flex items-center justify-between shadow-xl">
-        {/* Left side - Projection Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-theme-primary-950 text-sm font-bold font-[impact] tracking-wide uppercase">
-            Projection
-          </span>
-
-          {/* Radio Button Group */}
-          <div className="flex items-center gap-">
-            {/* ON Radio */}
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <span
-                className={`text-base font-extrabold transition-colors ${
-                  isProjectionOn
-                    ? "text-theme-primary-600"
-                    : "text-theme-primary-800"
-                }`}
-              >
-                ON
-              </span>
-              <input
-                type="radio"
-                name="projection"
-                checked={isProjectionOn}
-                onChange={() => {
-                  if (!isProjectionOn && selectedWindows.length > 0) {
-                    onPublishLayout();
-                  }
-                }}
-                disabled={!isProjectionOn && selectedWindows.length === 0}
-                className="appearance-none w-8 h-8 rounded-full border-solid border-3 border-theme-primary-600 cursor-pointer
-                  checked:bg-theme-primary-500 checked:border-theme-primary-600 checked:shadow-[0_0_15px_var(--theme-primary-500)]
-                  unchecked:bg-theme-primary-100 transition-all duration-300
-                  disabled:opacity-40 disabled:cursor-not-allowed
-                  relative
-                  before:content-[''] before:absolute before:inset-0 before:rounded-full 
-                  checked:before:bg-theme-primary-400 checked:before:animate-ping checked:before:opacity-75"
-              />
-            </label>
-
-            {/* OFF Radio */}
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <input
-                type="radio"
-                name="projection"
-                checked={!isProjectionOn}
-                onChange={() => {
-                  if (isProjectionOn) {
-                    onCloseProjection?.();
-                  }
-                }}
-                className="appearance-none w-8 h-8 rounded-full border-solid border-3 border-theme-primary-700 cursor-pointer
-                  checked:bg-theme-primary-700 checked:border-theme-primary-800 checked:shadow-[0_0_10px_var(--theme-primary-700)]
-                  unchecked:bg-theme-primary-100 transition-all duration-300
-                  relative"
-              />
-              <span
-                className={`text-base font-extrabold transition-colors ${
-                  !isProjectionOn
-                    ? "text-theme-primary-800"
-                    : "text-theme-primary-700"
-                }`}
-              >
-                OFF
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Right side - Action Icons */}
-        <div className="flex items-center gap-2">
-          {/* Clear All Icon */}
+      {/* Fixed Top Bar */}
+      <div className="shrink-0 h-10 bg-white/[0.02] backdrop-blur-sm border-b border-white/[0.06] px-3 flex items-center justify-between">
+        {/* Left side - Projection Toggle + Live Controls */}
+        <div className="flex items-center gap-1">
+          {/* ON Button */}
           <button
-            onClick={onClearAll}
-            className=" cursor-pointer bg-transparent rounded-full hover:bg-theme-primary-300/60 transition-all flex items-center justify-center group shadow-sm hover:shadow-md"
-            title="Clear all selected windows"
+            onClick={() => {
+              if (!isProjectionOn && selectedWindows.length > 0) {
+                onPublishLayout();
+              }
+            }}
+            disabled={!isProjectionOn && selectedWindows.length === 0}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isProjectionOn
+                ? "bg-green-500/15 text-green-400"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            } disabled:opacity-25 disabled:cursor-not-allowed`}
+            title={
+              selectedWindows.length === 0
+                ? "Select windows first"
+                : "Start projection (F5)"
+            }
           >
-            <BrushCleaningIcon className="w-6 h-6 text-theme-primary-800 group-hover:text-theme-primary-950 transition-all" />
+            <Cast className="w-4 h-4" />
           </button>
 
-          {/* Settings Icon */}
+          {/* OFF Button */}
           <button
-            onClick={onToggleSettings}
-            className={` cursor-pointer  bg-transparent rounded-full hover:bg-theme-primary-300/60 transition-all flex items-center justify-center group shadow-sm hover:shadow-md ${
-              showSettings ? "bg-theme-primary-300/80 shadow-md" : ""
+            onClick={() => {
+              if (isProjectionOn) {
+                onCloseProjection?.();
+              }
+            }}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isProjectionOn
+                ? "text-white/30 hover:text-red-400 hover:bg-red-500/10"
+                : "bg-red-500/15 text-red-400"
+            }`}
+            title="Stop projection"
+          >
+            <MonitorOff className="w-4 h-4" />
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-white/[0.06] mx-0.5" />
+
+          {/* Blackout */}
+          <button
+            onClick={onToggleBlackout}
+            disabled={!isProjectionOn}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isBlackout
+                ? "bg-yellow-500/15 text-yellow-400"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            } disabled:opacity-20 disabled:cursor-not-allowed`}
+            title={
+              isBlackout ? "End blackout (F6)" : "Blackout projection (F6)"
+            }
+          >
+            {isBlackout ? (
+              <Eye className="w-4 h-4" />
+            ) : (
+              <EyeOff className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Freeze */}
+          <button
+            onClick={onToggleFrozen}
+            disabled={!isProjectionOn}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              isFrozen
+                ? "bg-cyan-500/15 text-cyan-400"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            } disabled:opacity-20 disabled:cursor-not-allowed`}
+            title={
+              isFrozen ? "Unfreeze projection (F7)" : "Freeze projection (F7)"
+            }
+          >
+            {isFrozen ? (
+              <Play className="w-4 h-4" />
+            ) : (
+              <Pause className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-white/[0.06] mx-0.5" />
+
+          {/* Undo */}
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-200"
+            title="Undo selection (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+          </button>
+
+          {/* Redo */}
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-200"
+            title="Redo selection (Ctrl+Y)"
+          >
+            <Redo2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Right side - Utility Icons */}
+        <div className="flex items-center gap-1">
+          {/* Confidence Monitor */}
+          <button
+            onClick={handleToggleMonitor}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              activePanel === "monitor"
+                ? "bg-theme-primary-500/15 text-theme-primary-300"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            }`}
+            title="Confidence Monitor"
+          >
+            <Monitor className="w-4 h-4" />
+          </button>
+
+          {/* Overlay Text */}
+          <button
+            onClick={handleToggleOverlay}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              activePanel === "overlay"
+                ? "bg-theme-primary-500/15 text-theme-primary-300"
+                : overlayVisible
+                  ? "bg-green-500/15 text-green-400"
+                  : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            }`}
+            title="Text Overlay"
+          >
+            <Type className="w-4 h-4" />
+          </button>
+
+          {/* Presets */}
+          <button
+            onClick={handleTogglePresets}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              activePanel === "presets"
+                ? "bg-theme-primary-500/15 text-theme-primary-300"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
+            }`}
+            title="Scene Presets"
+          >
+            <Bookmark className="w-4 h-4" />
+          </button>
+
+          {/* Clear All */}
+          <button
+            onClick={onClearAll}
+            className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+            title="Clear all selected windows (F8)"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+          {/* Settings */}
+          <button
+            onClick={handleToggleSettings}
+            className={`p-2 rounded-lg transition-all duration-200 ${
+              activePanel === "settings"
+                ? "bg-theme-primary-500/15 text-theme-primary-300"
+                : "text-white/30 hover:text-white/60 hover:bg-white/[0.04]"
             }`}
             title="Settings"
           >
-            <FcSettings className="w-6 h-6 text-theme-primary-800 group-hover:text-theme-primary-950 transition-all" />
+            <Settings
+              className={`w-4 h-4 transition-transform duration-200 ${
+                activePanel === "settings" ? "rotate-90" : ""
+              }`}
+            />
           </button>
         </div>
       </div>
 
       {/* Main Content Area - Scrollable */}
-      <div className="flex-1 overflow-auto flex items-center justify-center w-full">
-        {showSettings ? (
+      <div className="flex-1 overflow-hidden w-full">
+        {activePanel === "settings" ? (
           <SettingsPanel />
+        ) : activePanel === "presets" ? (
+          <PresetsPanel
+            selectedWindows={selectedWindows}
+            onLoadPreset={(preset) => onLoadPreset?.(preset)}
+          />
+        ) : activePanel === "monitor" ? (
+          <ConfidenceMonitor selectedWindows={selectedWindows} />
+        ) : activePanel === "overlay" ? (
+          <OverlayTextPanel />
         ) : (
           <WindowLayoutCard
             selectedWindows={selectedWindows}
@@ -153,6 +283,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             onWindowFocus={onWindowFocus}
             onWindowRemove={onWindowRemove}
             onWindowAdd={onWindowAdd}
+            isProjectionOn={isProjectionOn}
           />
         )}
       </div>

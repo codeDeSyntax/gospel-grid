@@ -9,7 +9,7 @@ interface Window {
     getWindowThumbnail: (windowId: string, options?: any) => Promise<any>;
     getMultipleWindowThumbnails: (
       windowIds: string[],
-      options?: any
+      options?: any,
     ) => Promise<any>;
     getAllWindowThumbnails: (options?: any) => Promise<any>;
     focusWindow: (handle: number) => Promise<any>;
@@ -29,8 +29,20 @@ interface Window {
     captureHighQualityThumbnail?: (windowId: string) => Promise<any>;
     batchCaptureThumbnails?: (
       windowIds: string[],
-      options?: any
+      options?: any,
     ) => Promise<any>;
     captureWindowThumbnail?: (windowId: string, options?: any) => Promise<any>;
+
+    // capturePage — pixel-accurate snapshot of projection window
+    captureProjectionPage: () => Promise<{
+      success: boolean;
+      dataUrl?: string;
+      width?: number;
+      height?: number;
+      error?: string;
+    }>;
+
+    // Tray action events
+    onTrayAction: (callback: (action: string) => void) => () => void;
   };
 }

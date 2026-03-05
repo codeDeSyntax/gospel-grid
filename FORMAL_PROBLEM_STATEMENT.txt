@@ -1,0 +1,242 @@
+================================================================================
+                    WINGRID - FORMAL PROBLEM STATEMENT
+                       Final Year Project Documentation
+================================================================================
+
+RESEARCH PROBLEM
+--------------------------------------------------------------------------------
+
+"How can a multi-display AV operator project any application window to an
+audience display — without altering the operating system display mode — and
+without exposing unintended desktop content to the audience?"
+
+No existing application provides a targeted, lightweight, and
+display-mode-agnostic answer to this question. WinGrid is built to answer it.
+
+
+================================================================================
+PROBLEM 1: DISPLAY MODE CONFLICT BETWEEN CO-RUNNING APPLICATIONS
+================================================================================
+
+CONTEXT
+--------------------------------------------------------------------------------
+
+In live AV environments such as churches, auditoriums, conference halls, and
+classrooms, operators routinely run multiple presentation and media applications
+simultaneously on a dual-display setup (laptop + projector or TV screen).
+
+These co-running applications have fundamentally incompatible display mode
+requirements:
+
+  - Application A (e.g., a worship/presentation software like ProPresenter or
+    EasyWorship) requires EXTEND MODE so that the operator and the audience see
+    different content. The operator controls slides on the laptop; the audience
+    sees only the output on the external display.
+
+  - Application B (e.g., a video player, a standalone Bible display app, a
+    slideshow tool) was designed assuming DUPLICATE MODE, where the same screen
+    content is mirrored to both displays. Its audience output only renders
+    correctly when it mirrors the operator screen.
+
+THE FUNDAMENTAL CONSTRAINT
+--------------------------------------------------------------------------------
+
+The Windows operating system applies a single, global display mode at any
+given time. A system is either in extend mode or duplicate mode — not both.
+Switching between them:
+
+  - Repositions and resizes ALL open application windows
+  - Disrupts any active presentation already in progress
+  - Requires manual operator intervention at the worst possible moment
+  - Introduces a visible disruption to the audience (black screen, flicker)
+  - Is a recurring, unavoidable problem whenever App A and App B are used
+    together in the same service or event
+  
+This is not an edge case. In a typical church service, a team may use a
+worship lyrics app (extend mode), a video player for announcements or sermon
+clips (duplicate mode), and a Bible reference app (duplicate mode) — all
+within the same 90-minute session. Switching display modes between each
+transition is:
+
+  - Unprofessional in a live, audience-facing setting
+  - Error-prone under time pressure
+  - A source of technical failure and operator anxiety
+
+EXISTING WORKAROUNDS AND WHY THEY FAIL
+--------------------------------------------------------------------------------
+
+  1. Manually switching display modes between apps:
+     - Causes window chaos and requires re-setup every switch
+     - Visible disruption to the audience
+
+  2. Using only apps that have native extend mode support:
+     - Eliminates useful or preferred tools from the workflow
+     - Not always possible due to software limitations
+
+  3. Using a second laptop dedicated to duplicate-mode apps:
+     - Significant hardware cost
+     - Doubles the complexity of the operator setup
+     - Not practical for volunteer-run AV teams
+
+  4. OBS Studio virtual display output:
+     - Steep learning curve; requires scene configuration
+     - Heavy CPU/GPU resource usage
+     - Overkill and fragile for simple window mirroring needs
+
+WHAT WINGRID SOLVES
+--------------------------------------------------------------------------------
+
+WinGrid operates entirely and permanently in EXTEND MODE. Using the Windows
+Desktop Duplication API and real-time window capture, it mirrors any target
+application window — including those designed for duplicate mode — and
+projects that mirror onto the audience display as a live, continuously-updated
+capture.
+
+The result:
+
+  - App A continues to use extend mode natively, with full
+    operator/audience view separation intact.
+
+  - App B's window is captured and projected by WinGrid onto the audience
+    display as a live mirror, without switching the OS display mode.
+
+  - The operator never touches display settings during a live session.
+
+  - The audience sees seamless, uninterrupted output throughout.
+
+This is the core technical contribution: SOFTWARE-LEVEL, PER-WINDOW MIRRORING
+AS A NON-DESTRUCTIVE SUBSTITUTE FOR HARDWARE-LEVEL DISPLAY DUPLICATION.
+
+No OS display mode change is made. No windows are disrupted. The problem is
+eliminated transparently.
+
+
+================================================================================
+PROBLEM 2: SINGLE-WINDOW SHARING CONSTRAINT IN ONLINE MEETING PLATFORMS
+================================================================================
+
+CONTEXT
+--------------------------------------------------------------------------------
+
+Online meeting platforms (Zoom, Microsoft Teams, Google Meet) limit users to
+sharing one window at a time, or sharing the entire desktop. In a hybrid
+church service, online class, or remote presentation, the host may need remote
+attendees to see multiple application windows simultaneously — for example:
+
+  - Worship lyrics being displayed
+  - A video clip being played
+  - A scripture or reference slide from a separate application
+
+THE CONSTRAINT
+--------------------------------------------------------------------------------
+
+  - Sharing one window at a time means the remote audience misses context
+    from all other application windows.
+
+  - Sharing the full desktop exposes the operator's entire screen:
+      * Taskbar, file names, private notifications
+      * Browser tabs, personal data
+      * Background applications and sensitive information
+    This is unprofessional and a privacy risk.
+
+  - There is no native mechanism to select a curated subset of windows and
+    share them as a single, clean output in any major meeting platform.
+
+EXISTING WORKAROUND: WINDOWS SNAP GROUPS (and why it is not equivalent)
+--------------------------------------------------------------------------------
+
+Windows 11 introduced Snap Groups, which allows sharing a snapped window
+group in Microsoft Teams. This may appear to address the same problem, but
+it does not:
+
+  Feature Comparison:
+
+  +------------------------------------------+--------------------+----------+
+  | Capability                               | Windows Snap Group | WinGrid  |
+  +------------------------------------------+--------------------+----------+
+  | Shares a clean, dedicated output window  | No                 | Yes      |
+  | Exposes desktop background and taskbar   | Yes (partially)    | No       |
+  | Works with display mode conflict (Prob 1)| No                 | Yes      |
+  | Simulates duplication while in extend    | No                 | Yes      |
+  | Selective window inclusion/exclusion     | No                 | Yes      |
+  | Works on Windows 10                      | No                 | Yes      |
+  | Dynamic layout switching mid-session     | No                 | Yes      |
+  | Works in Zoom, Meet (not just Teams)     | No                 | Yes      |
+  +------------------------------------------+--------------------+----------+
+
+Windows Snap Groups is a layout sharing convenience for a single platform
+(Teams) on a single OS version (Windows 11). WinGrid solves a display mode
+conflict and selective window projection problem that is entirely outside the
+scope of Snap Groups.
+
+WHAT WINGRID SOLVES
+--------------------------------------------------------------------------------
+
+WinGrid aggregates any selection of application windows into a single
+dedicated projection window. The operator shares only that one WinGrid
+projection window in the meeting platform.
+
+  - Remote attendees see a clean, curated, multi-window layout.
+  - No desktop background, taskbar, or private content is exposed.
+  - Works on any meeting platform that supports window sharing.
+  - Works on Windows 10 and Windows 11.
+  - The operator can change the layout dynamically during the session.
+
+
+================================================================================
+WHY WINGRID IS A UNIQUE SOLUTION
+================================================================================
+
+WinGrid is unique because it addresses BOTH problems with a single, cohesive
+tool, and does so in a way that no existing application — OBS, Snap Groups,
+FancyZones, or any screen-sharing utility — achieves:
+
+  1. It eliminates the need to switch OS display modes by using live window
+     capture and projection as a software-layer substitute for duplication.
+
+  2. It aggregates multiple windows into a single shareable output window,
+     enabling curated, private, multi-window sharing in any meeting platform.
+
+  3. It requires zero configuration, zero scripting, and zero AV expertise.
+     It is operable by a volunteer with no technical background.
+
+  4. It is lightweight, running as an Electron desktop application with
+     minimal CPU/GPU overhead compared to broadcast tools like OBS.
+
+  5. It is designed specifically for the live, audience-facing, time-critical
+     environment where errors and disruptions are unacceptable.
+
+
+================================================================================
+TARGET PROBLEM ENVIRONMENT
+================================================================================
+
+Primary Context:
+  - Churches and religious organisations with dual-display AV setups
+  - Volunteer-operated presentations with multiple co-running applications
+  - Hybrid services where both physical and remote audiences must be served
+
+Secondary Context:
+  - Hybrid classrooms and online lectures
+  - Remote technical presentations and software demonstrations
+  - Any live event requiring multi-application output to a shared display
+
+
+================================================================================
+CONCLUSION
+================================================================================
+
+The problem WinGrid solves is specific, real, recurring, and unsolved by any
+existing general-purpose or specialised tool. It is not a multi-window
+organiser. It is not a streaming tool. It is not a screen recorder.
+
+WinGrid is a display-mode-conflict eliminator and a selective window
+projection engine — purpose-built for live, audience-facing, multi-application
+AV environments where professional continuity is non-negotiable.
+
+The problem is clear. The gap in existing solutions is demonstrable. The
+implementation is working. WinGrid solves it.
+
+================================================================================
+                           END OF DOCUMENT
+================================================================================

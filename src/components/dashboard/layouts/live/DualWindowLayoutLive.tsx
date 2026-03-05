@@ -3,34 +3,28 @@ import { WindowInfo } from "../../WindowList";
 
 interface DualWindowLayoutLiveProps {
   windows: [WindowInfo, WindowInfo];
-  windowDimensions: { width: number; height: number };
+  windowDimensions?: { width: number; height: number };
   renderWindow: (
     window: WindowInfo,
-    style: React.CSSProperties
+    style: React.CSSProperties,
   ) => React.ReactNode;
 }
 
 export const DualWindowLayoutLive: React.FC<DualWindowLayoutLiveProps> = ({
   windows,
-  windowDimensions,
   renderWindow,
 }) => {
-  const { width, height } = windowDimensions;
-
   return (
-    <div
-      className="w-full h-full flex justify-center items-center p-8"
-      style={{ gap: "16px" }}
-    >
+    <div className="w-full h-full grid grid-cols-2" style={{ gap: "2px" }}>
       {windows[0] &&
         renderWindow(windows[0], {
-          width: `${width}px`,
-          height: `${height}px`,
+          width: "100%",
+          height: "100%",
         })}
       {windows[1] &&
         renderWindow(windows[1], {
-          width: `${width}px`,
-          height: `${height}px`,
+          width: "100%",
+          height: "100%",
         })}
     </div>
   );

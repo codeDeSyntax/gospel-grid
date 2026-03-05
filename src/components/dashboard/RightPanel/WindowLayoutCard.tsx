@@ -9,18 +9,8 @@ export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
     onWindowFocus,
     onWindowRemove,
     onWindowAdd,
+    isProjectionOn = false,
   }) => {
-    React.useEffect(() => {
-      console.log(
-        "🟢 WindowLayoutCard - selectedWindows:",
-        selectedWindows.length
-      );
-      console.log(
-        "🟢 WindowLayoutCard - windows:",
-        selectedWindows.map((w) => ({ id: w.id, name: w.name }))
-      );
-    }, [selectedWindows]);
-
     // Always render AutoFitWindowLayout so drop zone is always available
     return (
       <AutoFitWindowLayout
@@ -30,7 +20,8 @@ export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
         onWindowRemove={onWindowRemove}
         onWindowAdd={onWindowAdd}
         maxDisplayWindows={4}
+        isProjectionOn={isProjectionOn}
       />
     );
-  }
+  },
 );

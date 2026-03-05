@@ -28,7 +28,7 @@ export const DualWindowLayout: React.FC<DualWindowLayoutProps> = ({
         const availableHeight = container.clientHeight - 32; // padding + gaps
 
         // Calculate responsive dimensions maintaining 16:9 aspect ratio
-        const maxWidth = Math.min(availableWidth * 0.45, 600); // 45% of width, max 600px
+        const maxWidth = Math.min(availableWidth * 0.65, 600); // 45% of width, max 600px
         const width = Math.max(maxWidth, 300); // minimum 300px
         const height = Math.min(width / 1.78, availableHeight - 20); // 16:9 ratio
 

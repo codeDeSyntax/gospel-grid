@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args: Parameters<typeof ipcRenderer.on>) {
     const [channel, listener] = args;
     return ipcRenderer.on(channel, (event, ...args) =>
-      listener(event, ...args)
+      listener(event, ...args),
     );
   },
   off(...args: Parameters<typeof ipcRenderer.off>) {
@@ -111,6 +111,44 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateQualitySettings: (settings: any) =>
     ipcRenderer.invoke("update-quality-settings", settings),
 
+  // Projection state control (blackout / freeze / overlay)
+  updateProjectionState: (state: {
+    isBlackout?: boolean;
+    isFrozen?: boolean;
+    overlayText?: string;
+    overlayVisible?: boolean;
+  }) => ipcRenderer.invoke("update-projection-state", state),
+
+  onProjectionStateChanged: (
+    callback: (state: {
+      isBlackout: boolean;
+      isFrozen: boolean;
+      overlayText: string;
+      overlayVisible: boolean;
+    }) => void,
+  ) => {
+    const listener = (_: any, state: any) => callback(state);
+    ipcRenderer.on("projection-state-changed", listener);
+    return () => ipcRenderer.off("projection-state-changed", listener);
+  },
+
+  // Global hotkey events forwarded from main process
+  onGlobalHotkey: (callback: (action: string) => void) => {
+    const listener = (_: any, action: string) => callback(action);
+    ipcRenderer.on("global-hotkey", listener);
+    return () => ipcRenderer.off("global-hotkey", listener);
+  },
+
+  // Capture a screenshot of the first active projection window
+  captureProjectionPage: () => ipcRenderer.invoke("capture-projection-page"),
+
+  // Tray action events (e.g. "stop-projection" when user clicks tray)
+  onTrayAction: (callback: (action: string) => void) => {
+    const listener = (_: any, action: string) => callback(action);
+    ipcRenderer.on("tray-action", listener);
+    return () => ipcRenderer.off("tray-action", listener);
+  },
+
   // Wrapper for compatibility
   captureWindowThumbnail: (windowId: string, options?: any) =>
     ipcRenderer.invoke("get-window-thumbnail", windowId, options),
@@ -124,7 +162,7 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
     options?: {
       language?: string;
       task?: "transcribe" | "translate";
-    }
+    },
   ) => {
     const buffer = Buffer.from(audioBuffer);
     return ipcRenderer.invoke("whisper-transcribe", buffer, options || {});
@@ -136,13 +174,13 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
     options?: {
       language?: string;
       isLast?: boolean;
-    }
+    },
   ) => {
     const buffer = Buffer.from(audioBuffer);
     return ipcRenderer.invoke(
       "whisper-transcribe-stream",
       buffer,
-      options || {}
+      options || {},
     );
   },
 
@@ -182,7 +220,7 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
     interimResults?: boolean;
   }) => {
     console.warn(
-      "startRecognition is deprecated. Use audio recording + transcribe instead."
+      "startRecognition is deprecated. Use audio recording + transcribe instead.",
     );
     return Promise.resolve({
       success: false,
@@ -192,7 +230,7 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
 
   stopRecognition: () => {
     console.warn(
-      "stopRecognition is deprecated. Use audio recording + transcribe instead."
+      "stopRecognition is deprecated. Use audio recording + transcribe instead.",
     );
     return Promise.resolve({
       success: false,
@@ -203,21 +241,21 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
   // Legacy event listeners for compatibility
   onTranscriptionResult: (callback: (result: any) => void) => {
     console.warn(
-      "onTranscriptionResult is deprecated. Use transcribe method directly."
+      "onTranscriptionResult is deprecated. Use transcribe method directly.",
     );
     return () => {}; // No-op
   },
 
   onTranscriptionError: (callback: (error: any) => void) => {
     console.warn(
-      "onTranscriptionError is deprecated. Use transcribe method directly."
+      "onTranscriptionError is deprecated. Use transcribe method directly.",
     );
     return () => {}; // No-op
   },
 
   onRecognitionStateChange: (callback: (state: string) => void) => {
     console.warn(
-      "onRecognitionStateChange is deprecated. Use transcribe method directly."
+      "onRecognitionStateChange is deprecated. Use transcribe method directly.",
     );
     return () => {}; // No-op
   },
@@ -240,7 +278,7 @@ contextBridge.exposeInMainWorld("speechAPI", {
     options: {
       targetLanguage: string;
       sourceLanguage?: string;
-    }
+    },
   ) => ipcRenderer.invoke("translate-text", text, options),
 
   // Language utilities
@@ -269,7 +307,7 @@ contextBridge.exposeInMainWorld("speechAPI", {
 
 // --------- Preload scripts loading ---------
 function domReady(
-  condition: DocumentReadyState[] = ["complete", "interactive"]
+  condition: DocumentReadyState[] = ["complete", "interactive"],
 ) {
   return new Promise((resolve) => {
     if (condition.includes(document.readyState)) {
@@ -374,7 +412,7 @@ function useLoading() {
     if (result) {
       return `${parseInt(result[1], 16)}, ${parseInt(
         result[2],
-        16
+        16,
       )}, ${parseInt(result[3], 16)}`;
     }
     return "0, 0, 0";

@@ -8,10 +8,19 @@ import { QuadWindowLayout } from "./layouts/QuadWindowLayout";
 import { motion } from "framer-motion";
 
 /**
- * PERFORMANCE OPTIMIZATION:
- * This preview component shows thumbnails for SELECTED windows only (max 4).
- * Thumbnails use lazy loading via LazyThumbnail component (loads when visible).
- * This is intentional - users need to see what they selected before publishing.
+ * PREVIEW PANEL — one-time snapshot approach (debounced).
+ *
+ * Shows a static thumbnail of selected windows (max 4) so the user can verify
+ * their selection before publishing.  Deliberately does NOT use the live
+ * MediaStream/getUserMedia path — that is reserved for the projection window
+ * (LiveWindowGrid).  Running two concurrent WGC capture sessions for the same
+ * window handle causes ProcessFrame errors on Windows.
+ *
+ * Optimisations:
+ * - Single desktopCapturer.getSources() call per batch (not per-window)
+ * - 400 ms React-side debounce so rapid select/deselect doesn't spam IPC
+ * - Captures are SKIPPED entirely when the projection is live (no WGC contention)
+ * - Stable dependency on window-ID string instead of object reference
  */
 
 interface AutoFitWindowLayoutProps {
@@ -21,6 +30,8 @@ interface AutoFitWindowLayoutProps {
   onWindowRemove: (windowId: string) => void;
   onWindowAdd?: (window: WindowInfo) => void;
   maxDisplayWindows?: number;
+  /** When true, skip batch captures to avoid WGC contention with live streams */
+  isProjectionOn?: boolean;
 }
 
 export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
@@ -30,44 +41,60 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   onWindowRemove,
   onWindowAdd,
   maxDisplayWindows = 4,
+  isProjectionOn = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const [loadedThumbnails, setLoadedThumbnails] = React.useState<
-    Record<string, any>
+    Record<string, { dataUrl?: string }>
   >({});
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get display windows with limit
   const displayWindows = useMemo(() => {
     return selectedWindows.slice(0, maxDisplayWindows);
   }, [selectedWindows, maxDisplayWindows]);
 
-  // Batch capture thumbnails when windows change
+  // Stable string key — only changes when the actual window IDs change
+  const displayWindowIdKey = useMemo(
+    () => displayWindows.map((w) => w.id).join(","),
+    [displayWindows],
+  );
+
+  // Debounced snapshot capture — skipped entirely when projection is live
   React.useEffect(() => {
-    const captureBatch = async () => {
-      if (displayWindows.length === 0) return;
+    // Clear any pending debounce
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
 
-      if (!window.electronAPI?.batchCaptureThumbnails) return;
+    // Skip capture entirely when projection is on (live streams are active)
+    if (isProjectionOn) return;
+    if (displayWindows.length === 0) return;
+    if (!window.electronAPI?.batchCaptureThumbnails) return;
 
+    // 400 ms debounce — lets rapid select/deselect settle before firing IPC
+    debounceTimerRef.current = setTimeout(async () => {
       const windowIds = displayWindows.map((w) => w.id);
       const options = {
-        width: 640,
-        height: 360,
-        scaleFactor: 1.5,
-        quality: 90,
-        forceRefresh: false,
+        width: 1920,
+        height: 1080,
+        scaleFactor: 2.0,
+        quality: 100,
+        forceRefresh: false, // Use cache when available
       };
 
       try {
-        const result = await window.electronAPI.batchCaptureThumbnails(
+        const result = await window.electronAPI?.batchCaptureThumbnails?.(
           windowIds,
-          options
+          options,
         );
 
-        if (result && result.success && Array.isArray(result.thumbnails)) {
-          const newThumbnails: Record<string, any> = {};
+        if (result?.success && Array.isArray(result.thumbnails)) {
+          const newThumbnails: Record<string, { dataUrl?: string }> = {};
           result.thumbnails.forEach((thumbnail: any) => {
-            if (thumbnail && thumbnail.windowId) {
+            if (thumbnail?.windowId) {
               newThumbnails[thumbnail.windowId] = thumbnail;
             }
           });
@@ -76,10 +103,17 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       } catch (error) {
         console.error("[AutoFitWindowLayout] Batch capture failed:", error);
       }
-    };
+    }, 400);
 
-    captureBatch();
-  }, [displayWindows]);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+    };
+    // Depend on the stable ID string, not the object reference
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayWindowIdKey, isProjectionOn]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -125,14 +159,14 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     onWindowFocus(window.id);
   };
 
-  // Render individual window thumbnail
+  // Render individual window with static snapshot thumbnail
   const renderWindow = (window: WindowInfo, style: React.CSSProperties) => {
     const thumbnail = loadedThumbnails[window.id];
 
     return (
       <motion.div
         key={window.id}
-        className="relative group cursor-pointer border-solid border-[6px] border-theme-primary-600 hover:border-theme-primary-400/60  overflow-hidden transition-all duration-200 bg-theme-primary-600/40 backdrop-blur-sm w-[50%]"
+        className="relative group cursor-pointer border-solid border-[6px] border-theme-primary-600 hover:border-theme-primary-400/60 overflow-hidden transition-all duration-200 bg-theme-primary-600/40 backdrop-blur-sm w-[50%]"
         style={style}
         onClick={() => handleWindowClick(window)}
         initial={{ opacity: 0, scale: 0.9 }}
@@ -140,12 +174,14 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         exit={{ opacity: 0, scale: 0.9 }}
         whileHover={{ scale: 1.02 }}
       >
-        {/* Thumbnail */}
+        {/* Static snapshot thumbnail */}
         {thumbnail?.dataUrl ? (
           <img
             src={thumbnail.dataUrl}
             alt={window.name}
-            className="w-full h-full object-contain "
+            className="w-full h-full object-contain"
+            style={{ imageRendering: "-webkit-optimize-contrast" }}
+            draggable={false}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-theme-primary-800/50">

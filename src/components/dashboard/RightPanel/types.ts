@@ -1,4 +1,5 @@
 import { type WindowInfo } from "../WindowList";
+import { type ScenePreset } from "@/store/slices/appSlice";
 
 export interface RightPanelProps {
   windows: WindowInfo[];
@@ -14,8 +15,17 @@ export interface RightPanelProps {
   onPublishLayout: () => void;
   showSettings?: boolean;
   onToggleSettings?: () => void;
-  isProjectionOn?: boolean;
   onCloseProjection?: () => void;
+  /** Blackout / Freeze toggles (actions that also update IPC) */
+  onToggleBlackout?: () => void;
+  onToggleFrozen?: () => void;
+  /** Undo / Redo */
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  /** Scene Presets */
+  onLoadPreset?: (preset: ScenePreset) => void;
 }
 
 export interface WindowLayoutCardProps {
@@ -24,6 +34,7 @@ export interface WindowLayoutCardProps {
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => void;
+  isProjectionOn?: boolean;
 }
 
 export interface SettingsPanelProps {

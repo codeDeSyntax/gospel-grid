@@ -5,7 +5,7 @@ interface SingleWindowLayoutLiveProps {
   window: WindowInfo;
   renderWindow: (
     window: WindowInfo,
-    style: React.CSSProperties
+    style: React.CSSProperties,
   ) => React.ReactNode;
 }
 
@@ -14,7 +14,7 @@ export const SingleWindowLayoutLive: React.FC<SingleWindowLayoutLiveProps> = ({
   renderWindow,
 }) => {
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-full">
       {renderWindow(window, {
         width: "100%",
         height: "100%",
