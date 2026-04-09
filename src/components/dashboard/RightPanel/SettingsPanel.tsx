@@ -364,7 +364,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
         <div className="px-4 pb-4">
           <div className="rounded-2xl border border-theme-primary-500/15 bg-theme-primary-900/30 p-3">
             <img
-              src="/adjustsettings.svg"
+              src="./adjustsettings.svg"
               alt="Adjust settings"
               className="h-24 w-full object-contain"
             />
