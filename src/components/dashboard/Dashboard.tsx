@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { X, Minus, Maximize2 } from "lucide-react";
 import { WindowList, type WindowInfo } from "./WindowList";
 import { CosmicBackground } from "./CosmicBackground";
 import { RightPanel } from "./RightPanel/RightPanel";
-import { useWindowControls } from "@/hooks/useWindowControls";
+import type { PanelView } from "./RightPanel/types";
+import { TitleBar } from "@/shared/TitleBar";
+import { DepthSurface } from "@/shared/DepthSurface";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { PublishedLayout } from "./PublishedLayout";
 import { NotifierContainer } from "@/components/ui/NotifierContainer";
@@ -23,6 +24,10 @@ import {
   type ScenePreset,
 } from "@/store/slices/appSlice";
 import {
+  clearDisplayAssignments,
+  setDisplayAssignments,
+} from "@/store/slices/gridSlice";
+import {
   useSelectionHistory,
   type SelectionMap,
 } from "@/hooks/useSelectionHistory";
@@ -34,9 +39,22 @@ interface DashboardState {
   activeSection: string;
 }
 
-export const Dashboard: React.FC = () => {
-  const { minimize, maximize, close } = useWindowControls();
+interface SelectionHistorySnapshot {
+  selection: SelectionMap;
+  displayAssignments: Record<number, string[]>;
+  focusedWindowId: string | null;
+}
 
+const SIDEBAR_WIDTH_STORAGE_KEY = "wingrid.sidebarWidth";
+const SIDEBAR_MIN_WIDTH = 300;
+const SIDEBAR_MAX_WIDTH = 600;
+const SIDEBAR_DEFAULT_WIDTH = 380;
+
+interface DashboardProps {
+  onHomeClick?: () => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   // Redux hooks
   const dispatch = useAppDispatch();
   const publishedQuality = useAppSelector(
@@ -70,11 +88,27 @@ export const Dashboard: React.FC = () => {
   });
 
   // Resizable sidebar state
-  const [sidebarWidth, setSidebarWidth] = useState(380);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const raw = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    const parsed = Number(raw);
+
+    if (!Number.isFinite(parsed)) {
+      return SIDEBAR_DEFAULT_WIDTH;
+    }
+
+    return Math.min(Math.max(parsed, SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
+  });
   const [isResizing, setIsResizing] = useState(false);
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      SIDEBAR_WIDTH_STORAGE_KEY,
+      String(sidebarWidth),
+    );
+  }, [sidebarWidth]);
+
   // Settings panel toggle
-  const [showSettings, setShowSettings] = useState(false);
+  const [activePanel, setActivePanel] = useState<PanelView>("layout");
 
   // Projection / Blackout / Freeze from Redux
   const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
@@ -82,6 +116,10 @@ export const Dashboard: React.FC = () => {
   const isFrozen = useAppSelector((s) => s.app.isFrozen);
   const overlayText = useAppSelector((s) => s.app.overlayText);
   const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
+  const overlayTargetDisplayId = useAppSelector(
+    (s) => s.app.overlayTargetDisplayId,
+  );
+  const displayAssignments = useAppSelector((s) => s.grid.displayAssignments);
 
   // Broadcast overlay state to published window whenever it changes
   useEffect(() => {
@@ -90,11 +128,27 @@ export const Dashboard: React.FC = () => {
       isFrozen,
       overlayText,
       overlayVisible,
+      targetDisplayId: overlayTargetDisplayId,
     });
-  }, [overlayText, overlayVisible, isBlackout, isFrozen]);
+  }, [
+    overlayText,
+    overlayVisible,
+    overlayTargetDisplayId,
+    isBlackout,
+    isFrozen,
+  ]);
 
   // Undo / Redo selection history
-  const selectionHistory = useSelectionHistory();
+  const cloneDisplayAssignments = useCallback(
+    (assignments: Record<number, string[]>) =>
+      Object.fromEntries(
+        Object.entries(assignments).map(([displayId, ids]) => [
+          Number(displayId),
+          [...ids],
+        ]),
+      ) as Record<number, string[]>,
+    [],
+  );
 
   /** Build a SelectionMap from the current windows array. */
   const buildSelectionMap = useCallback((wins: WindowInfo[]): SelectionMap => {
@@ -105,39 +159,120 @@ export const Dashboard: React.FC = () => {
     return map;
   }, []);
 
-  /** Apply a SelectionMap to the current windows. */
-  const applySelectionMap = useCallback((map: SelectionMap) => {
-    setState((prev) => ({
-      ...prev,
-      windows: prev.windows.map((w) => ({
-        ...w,
-        isSelected: !!map[w.id],
-      })),
-      focusedWindowId: null,
-    }));
-  }, []);
+  const buildHistorySnapshot = useCallback(
+    (
+      wins: WindowInfo[],
+      assignments: Record<number, string[]>,
+      focusedWindowId: string | null,
+    ): SelectionHistorySnapshot => ({
+      selection: buildSelectionMap(wins),
+      displayAssignments: cloneDisplayAssignments(assignments),
+      focusedWindowId,
+    }),
+    [buildSelectionMap, cloneDisplayAssignments],
+  );
+
+  const selectionHistory = useSelectionHistory<SelectionHistorySnapshot>(
+    buildHistorySnapshot([], {}, null),
+  );
+  const isApplyingHistoryRef = React.useRef(false);
+  const assignmentsSignatureRef = React.useRef("");
+
+  const serializeAssignments = useCallback(
+    (value: Record<number, string[]>) => {
+      return JSON.stringify(
+        Object.keys(value)
+          .map((id) => Number(id))
+          .sort((a, b) => a - b)
+          .map((id) => [id, [...(value[id] ?? [])]]),
+      );
+    },
+    [],
+  );
+
+  /** Apply a history snapshot to the current windows and display routing. */
+  const applyHistorySnapshot = useCallback(
+    (snapshot: SelectionHistorySnapshot) => {
+      isApplyingHistoryRef.current = true;
+      setState((prev) => ({
+        ...prev,
+        windows: prev.windows.map((w) => ({
+          ...w,
+          isSelected: !!snapshot.selection[w.id],
+        })),
+        focusedWindowId: snapshot.focusedWindowId,
+      }));
+      dispatch(
+        setDisplayAssignments(
+          cloneDisplayAssignments(snapshot.displayAssignments),
+        ),
+      );
+      queueMicrotask(() => {
+        isApplyingHistoryRef.current = false;
+      });
+    },
+    [dispatch, cloneDisplayAssignments],
+  );
 
   /** Push current selection to history (call after every mutation). */
   const pushHistory = useCallback(
-    (wins: WindowInfo[]) => {
-      selectionHistory.push(buildSelectionMap(wins));
+    (
+      wins: WindowInfo[],
+      assignments: Record<number, string[]> = displayAssignments,
+      focusedWindowId: string | null = state.focusedWindowId,
+    ) => {
+      selectionHistory.push(
+        buildHistorySnapshot(wins, assignments, focusedWindowId),
+      );
     },
-    [selectionHistory.push, buildSelectionMap],
+    [
+      selectionHistory.push,
+      buildHistorySnapshot,
+      displayAssignments,
+      state.focusedWindowId,
+    ],
   );
 
   const handleUndo = useCallback(() => {
-    const map = selectionHistory.undo();
-    if (map) {
-      applySelectionMap(map);
+    const snapshot = selectionHistory.undo();
+    if (snapshot) {
+      applyHistorySnapshot(snapshot);
     }
-  }, [selectionHistory.undo, applySelectionMap]);
+  }, [selectionHistory.undo, applyHistorySnapshot]);
 
   const handleRedo = useCallback(() => {
-    const map = selectionHistory.redo();
-    if (map) {
-      applySelectionMap(map);
+    const snapshot = selectionHistory.redo();
+    if (snapshot) {
+      applyHistorySnapshot(snapshot);
     }
-  }, [selectionHistory.redo, applySelectionMap]);
+  }, [selectionHistory.redo, applyHistorySnapshot]);
+
+  useEffect(() => {
+    const nextSignature = serializeAssignments(displayAssignments);
+
+    if (!assignmentsSignatureRef.current) {
+      assignmentsSignatureRef.current = nextSignature;
+      return;
+    }
+
+    if (nextSignature === assignmentsSignatureRef.current) {
+      return;
+    }
+
+    assignmentsSignatureRef.current = nextSignature;
+
+    if (isApplyingHistoryRef.current) {
+      return;
+    }
+
+    pushHistory(state.windows, displayAssignments, state.focusedWindowId);
+  }, [
+    displayAssignments,
+    serializeAssignments,
+    pushHistory,
+    state.windows,
+    state.focusedWindowId,
+  ]);
 
   // Update state when enumerated windows change
   // Use a ref to track the last enumerated windows to avoid unnecessary syncs
@@ -294,11 +429,16 @@ export const Dashboard: React.FC = () => {
       windows: newWindows,
       focusedWindowId: null,
     }));
-    pushHistory(newWindows);
-  }, [state.windows, pushHistory]);
+    dispatch(clearDisplayAssignments());
+    pushHistory(newWindows, {}, null);
+  }, [dispatch, state.windows, pushHistory]);
 
   const handleLayoutChange = useCallback((layout: string) => {
     setState((prev) => ({ ...prev, currentLayout: layout }));
+  }, []);
+
+  const togglePanel = useCallback((panel: PanelView) => {
+    setActivePanel((prev) => (prev === panel ? "layout" : panel));
   }, []);
 
   // Window handlers
@@ -336,6 +476,9 @@ export const Dashboard: React.FC = () => {
     },
     [state.windows, pushHistory],
   );
+
+  const mainSectionBackground =
+    "radial-gradient(ellipse at 30% 55%, color-mix(in srgb, rgb(var(--theme-primary-400)) 10%, transparent) 0%, transparent 55%), radial-gradient(ellipse at 70% 45%, color-mix(in srgb, rgb(var(--theme-primary-400)) 9%, transparent) 0%, transparent 55%)";
 
   // Grid handlers
   const handleWindowFocus = useCallback((windowId: string) => {
@@ -434,6 +577,7 @@ export const Dashboard: React.FC = () => {
   const handleLoadPreset = useCallback(
     (preset: ScenePreset) => {
       let captured: WindowInfo[] = [];
+      dispatch(clearDisplayAssignments());
       setState((prev) => {
         // Match preset windows to current windows by app name + window name
         captured = prev.windows.map((w) => {
@@ -446,7 +590,7 @@ export const Dashboard: React.FC = () => {
       });
       pushHistory(captured);
     },
-    [pushHistory],
+    [dispatch, pushHistory],
   );
 
   // ── Global hotkey listener ─────────────────────────────────────────────
@@ -524,8 +668,8 @@ export const Dashboard: React.FC = () => {
       if (!isResizing) return;
 
       const newWidth = e.clientX;
-      // Constrain between 250px and 600px
-      if (newWidth >= 250 && newWidth <= 600) {
+      // Constrain sidebar width
+      if (newWidth >= SIDEBAR_MIN_WIDTH && newWidth <= SIDEBAR_MAX_WIDTH) {
         setSidebarWidth(newWidth);
       }
     },
@@ -556,81 +700,39 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col no-scrollbar bg-theme-primary-950 border-dashed border-b-8 border-t-0 border-x-8 border-theme-primary-500">
-      {/* Title Bar - Windows 11 style */}
-      <div className="h-8 bg-theme-primary-700 flex items-center justify-between select-none shrink-0 border-b border-theme-primary-800">
-        {/* Left side - App icon and title */}
-        <div className="flex items-center gap-2 px-3">
-          <img src="./wingrid.png" alt="App Icon" className="w-4 h-4" />
-          <div className="text-theme-primary-100 text-base font-normal font-[impact]">
-            wingrid Driver Console
-          </div>
-        </div>
-
-        {/* Right side - Window Controls (Windows 11 style) */}
-        <div className="flex items-center h-full bg-theme-primary-900">
-          {/* Minimize Button */}
-          <button
-            onClick={minimize}
-            className="w-[46px] bg-theme-primary-500 h-full hover:bg-theme-primary-800 transition-colors flex items-center justify-center group"
-            title="Minimize"
-          >
-            <svg
-              width="10"
-              height="1"
-              viewBox="0 0 10 1"
-              className="text-theme-primary-100"
-            >
-              <rect width="10" height="1" fill="currentColor" />
-            </svg>
-          </button>
-
-          {/* Maximize/Restore Button */}
-          <button
-            onClick={maximize}
-            className="w-[46px] h-full bg-theme-primary-500 hover:bg-theme-primary-800 transition-colors flex items-center justify-center group"
-            title="Maximize"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              className="text-theme-primary-100"
-            >
-              <path
-                d="M0,0 L10,0 L10,10 L0,10 Z M1,1 L1,9 L9,9 L9,1 Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-
-          {/* Close Button */}
-          <button
-            onClick={close}
-            className="w-[46px] h-full bg-theme-primary-950 hover:bg-[#C42B1C] transition-colors flex items-center justify-center group"
-            title="Close"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              className="text-theme-primary-100 group-hover:text-white"
-            >
-              <path
-                d="M0,0 L10,10 M10,0 L0,10"
-                stroke="currentColor"
-                strokeWidth="1"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <TitleBar
+        selectedWindowsCount={selectedWindows.length}
+        isProjectionOn={isProjectionOn}
+        isBlackout={isBlackout}
+        isFrozen={isFrozen}
+        overlayVisible={overlayVisible}
+        activePanel={activePanel}
+        canUndo={selectionHistory.canUndo}
+        canRedo={selectionHistory.canRedo}
+        onHomeClick={onHomeClick}
+        onPublishLayout={handlePublishLayout}
+        onCloseProjection={handleCloseProjection}
+        onToggleBlackout={handleToggleBlackout}
+        onToggleFrozen={handleToggleFrozen}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onTogglePanel={togglePanel}
+        onClearAll={handleClearAll}
+      />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div
+        className="flex-1 flex overflow-hidden px-2 py-1 gap-3"
+        style={{
+          background: mainSectionBackground,
+          backgroundColor: "rgb(var(--theme-primary-800))",
+        }}
+      >
         {/* Left Panel - Window List */}
-        <div
+        <DepthSurface
           style={{ width: `${sidebarWidth}px` }}
-          className="bg-theme-primary-900 flex flex-col overflow-hidden shrink-0 relative "
+          className="relative flex flex-col overflow-hidden shrink-0 rounded-2xl h-full min-h-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+          surfaceClassName="depth-surface-shell"
         >
           <WindowList
             windows={state.windows}
@@ -645,48 +747,40 @@ export const Dashboard: React.FC = () => {
             totalRefreshTime={totalRefreshTime}
             onManualRefresh={handleRefreshWindows}
           />
-        </div>
 
-        {/* Resizable Divider */}
-        <div
-          onMouseDown={handleMouseDown}
-          className={`w-1.5 bg-theme-primary-600/50 hover:bg-theme-primary-500 cursor-ew-resize shrink-0 relative group transition-colors ${
-            isResizing ? "bg-theme-primary-400" : ""
-          }`}
-        >
-          {/* Visual indicator dots */}
-          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
-            <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
-            <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
-            <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
-            <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
+          {/* Attached resize handle (shows only on edge hover) */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="absolute right-0 top-0 h-full w-3 cursor-ew-resize z-20 group"
+            title="Resize panel"
+          >
+            <div
+              className={`absolute right-0.5 top-1/2 -translate-y-1/2 h-16 w-1 rounded-full transition-all duration-200 ${
+                isResizing
+                  ? "bg-theme-primary-400 opacity-100"
+                  : "bg-theme-primary-500/70 opacity-0 group-hover:opacity-100"
+              }`}
+            />
+            <div className="absolute right-[1px] top-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
+              <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
+              <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
+            </div>
           </div>
-        </div>
+        </DepthSurface>
 
         {/* Right Panel - Dynamic Content */}
-        <div className="flex-1 bg-theme-primary-950 flex flex-col overflow-hidden">
+        <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-2xl">
           <RightPanel
             windows={state.windows}
             currentLayout={state.currentLayout}
             focusedWindowId={state.focusedWindowId}
-            onRefreshWindows={handleRefreshWindows}
-            onClearAll={handleClearAll}
             onLayoutChange={handleLayoutChange}
             onWindowSelect={handleWindowSelect}
             onWindowFocus={handleWindowFocus}
             onWindowRemove={handleWindowRemove}
             onWindowAdd={handleWindowAdd}
-            onPublishLayout={handlePublishLayout}
-            showSettings={showSettings}
-            onToggleSettings={() => setShowSettings(!showSettings)}
-            onCloseProjection={handleCloseProjection}
-            onToggleBlackout={handleToggleBlackout}
-            onToggleFrozen={handleToggleFrozen}
-            canUndo={selectionHistory.canUndo}
-            canRedo={selectionHistory.canRedo}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
+            activePanel={activePanel}
             onLoadPreset={handleLoadPreset}
           />
         </div>

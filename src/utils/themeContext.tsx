@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ThemeType, THEMES, DEFAULT_THEME } from "./themeConfig";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setColorTheme } from "@/store/slices/appSlice";
 
 interface ThemeContextType {
   currentTheme: ThemeType;
@@ -22,28 +24,18 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>(() => {
-    // Try to load theme from localStorage
-    try {
-      const savedTheme = localStorage.getItem("wingrid-theme") as ThemeType;
-      return savedTheme && THEMES[savedTheme] ? savedTheme : DEFAULT_THEME;
-    } catch {
-      return DEFAULT_THEME;
-    }
-  });
+  const dispatch = useAppDispatch();
+  const currentTheme = useAppSelector(
+    (state) => state.app.colorTheme,
+  ) as ThemeType;
 
   const setTheme = (theme: ThemeType) => {
-    setCurrentTheme(theme);
-    try {
-      localStorage.setItem("wingrid-theme", theme);
-    } catch (error) {
-      console.warn("Failed to save theme to localStorage:", error);
-    }
+    dispatch(setColorTheme(theme));
   };
 
   // Apply CSS custom properties when theme changes
   useEffect(() => {
-    const theme = THEMES[currentTheme];
+    const theme = THEMES[currentTheme] ?? THEMES[DEFAULT_THEME];
     const root = document.documentElement;
 
     // Set primary color variables
@@ -69,8 +61,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Set theme name for conditional styling
     root.style.setProperty("--current-theme", currentTheme);
 
+    // Keep data attribute in sync for --theme-* variable selectors.
+    root.setAttribute("data-color-theme", currentTheme);
+
     // Add theme class to body for CSS-based theme switching
-    document.body.className = document.body.className.replace(/theme-\w+/g, "");
+    document.body.className = document.body.className.replace(
+      /theme-[\w-]+/g,
+      "",
+    );
     document.body.classList.add(`theme-${currentTheme}`);
   }, [currentTheme]);
 

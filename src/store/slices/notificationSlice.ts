@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
+import { setProjectionOn } from "./appSlice";
 
 export type NotificationType =
   | "success"
@@ -41,31 +42,32 @@ const initialState: NotificationState = {
   pendingPublication: null,
 };
 
+interface PublishLayoutPayload {
+  selectedWindows: any[];
+  currentLayout: string;
+  focusedWindowId: string | null;
+  publishedQuality?: { contrast: number; brightness: number };
+  captureQuality?: number;
+  displayId?: number;
+}
+
 // Async thunk for checking and handling published windows
 export const handlePublishLayout = createAsyncThunk(
   "notification/handlePublishLayout",
-  async (
-    layoutData: {
-      selectedWindows: any[];
-      currentLayout: string;
-      focusedWindowId: string | null;
-      publishedQuality?: { contrast: number; brightness: number };
-      captureQuality?: number;
-    },
-    { dispatch }
-  ) => {
+  async (layoutData: PublishLayoutPayload, { dispatch }) => {
     const {
       selectedWindows,
       currentLayout,
       focusedWindowId,
       publishedQuality,
       captureQuality,
+      displayId,
     } = layoutData;
 
     console.log(
       "🚀 handlePublishLayout called with",
       selectedWindows.length,
-      "windows"
+      "windows",
     );
 
     if (selectedWindows.length === 0) {
@@ -76,7 +78,7 @@ export const handlePublishLayout = createAsyncThunk(
           message:
             "Please select at least one window to publish to the layout.",
           autoClose: 4000,
-        })
+        }),
       );
       return { success: false, reason: "no_windows" };
     }
@@ -98,7 +100,7 @@ export const handlePublishLayout = createAsyncThunk(
             selectedWindows,
             currentLayout,
             focusedWindowId,
-          })
+          }),
         );
 
         // Show confirmation modal to close existing publication
@@ -127,7 +129,7 @@ export const handlePublishLayout = createAsyncThunk(
                 variant: "danger",
               },
             ],
-          })
+          }),
         );
         return { success: false, reason: "existing_publications" };
       }
@@ -141,7 +143,7 @@ export const handlePublishLayout = createAsyncThunk(
           focusedWindowId,
           publishedQuality,
           captureQuality,
-        })
+        }),
       ).unwrap();
     } catch (error) {
       console.error("❌ Failed to check published windows:", error);
@@ -151,39 +153,101 @@ export const handlePublishLayout = createAsyncThunk(
           title: "Publication Check Failed",
           message: "Could not verify existing publications. Please try again.",
           autoClose: 4000,
-        })
+        }),
       );
       return { success: false, reason: "check_failed" };
     }
-  }
+  },
 );
 
-// Async thunk for the actual publish operation
-export const performPublish = createAsyncThunk(
-  "notification/performPublish",
-  async (
-    layoutData: {
-      selectedWindows: any[];
-      currentLayout: string;
-      focusedWindowId: string | null;
-      publishedQuality?: { contrast: number; brightness: number };
-      captureQuality?: number;
-    },
-    { dispatch }
-  ) => {
+// Async thunk for publishing a routed screen without blocking on existing publications
+export const publishDisplayLayout = createAsyncThunk(
+  "notification/publishDisplayLayout",
+  async (layoutData: PublishLayoutPayload, { dispatch }) => {
     const {
       selectedWindows,
       currentLayout,
       focusedWindowId,
       publishedQuality,
       captureQuality,
+      displayId,
+    } = layoutData;
+
+    if (selectedWindows.length === 0) {
+      dispatch(
+        showNotification({
+          type: "warning",
+          title: "No Windows Routed",
+          message:
+            "Assign at least one window to this display before projecting it.",
+          autoClose: 4000,
+        }),
+      );
+      return { success: false, reason: "no_windows" };
+    }
+
+    try {
+      dispatch(
+        showNotification({
+          type: "info",
+          title: "Projecting Display",
+          message: `Creating a fullscreen projection for display ${displayId ?? "auto"}...`,
+          autoClose: 2500,
+        }),
+      );
+
+      const result = await dispatch(
+        performPublish({
+          selectedWindows,
+          currentLayout,
+          focusedWindowId,
+          publishedQuality,
+          captureQuality,
+          displayId,
+        }),
+      ).unwrap();
+
+      if (result.success) {
+        dispatch(setProjectionOn(true));
+      }
+
+      return result;
+    } catch (error) {
+      console.error("💥 Failed to project display:", error);
+      dispatch(
+        showNotification({
+          type: "error",
+          title: "Display Projection Failed",
+          message:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred while projecting the display.",
+          autoClose: 5000,
+        }),
+      );
+      return { success: false };
+    }
+  },
+);
+
+// Async thunk for the actual publish operation
+export const performPublish = createAsyncThunk(
+  "notification/performPublish",
+  async (layoutData: PublishLayoutPayload, { dispatch }) => {
+    const {
+      selectedWindows,
+      currentLayout,
+      focusedWindowId,
+      publishedQuality,
+      captureQuality,
+      displayId,
     } = layoutData;
 
     try {
       console.log(
         "🎬 Starting publish process for",
         selectedWindows.length,
-        "windows"
+        "windows",
       );
 
       dispatch(
@@ -192,7 +256,7 @@ export const performPublish = createAsyncThunk(
           title: "Publishing Layout",
           message: "Creating fullscreen published layout...",
           autoClose: 3000,
-        })
+        }),
       );
       console.log("📢 Showed 'Publishing Layout' notification");
 
@@ -203,6 +267,7 @@ export const performPublish = createAsyncThunk(
         focusedWindowId,
         publishedQuality,
         captureQuality,
+        displayId,
       });
 
       console.log("📤 publishLayout result:", result);
@@ -217,7 +282,7 @@ export const performPublish = createAsyncThunk(
               selectedWindows.length === 1 ? "" : "s"
             } in fullscreen mode.`,
             autoClose: 4000,
-          })
+          }),
         );
         return { success: true };
       } else {
@@ -235,11 +300,11 @@ export const performPublish = createAsyncThunk(
               ? error.message
               : "An unexpected error occurred while publishing the layout.",
           autoClose: 5000,
-        })
+        }),
       );
       return { success: false };
     }
-  }
+  },
 );
 
 // Async thunk for closing existing publications and publishing new one
@@ -251,7 +316,7 @@ export const closeAndPublish = createAsyncThunk(
       currentLayout: string;
       focusedWindowId: string | null;
     },
-    { dispatch }
+    { dispatch },
   ) => {
     try {
       console.log("🔄 Closing existing published windows...");
@@ -270,7 +335,7 @@ export const closeAndPublish = createAsyncThunk(
           title: "Publishing New Layout",
           message: "Creating new published layout...",
           autoClose: 2000,
-        })
+        }),
       );
 
       // Proceed with publishing
@@ -279,7 +344,7 @@ export const closeAndPublish = createAsyncThunk(
 
       if (result.success) {
         console.log(
-          "🎉 Successfully published new layout after closing previous ones"
+          "🎉 Successfully published new layout after closing previous ones",
         );
       }
 
@@ -292,11 +357,11 @@ export const closeAndPublish = createAsyncThunk(
           message:
             "Could not close existing published windows. Please close them manually and try again.",
           autoClose: 5000,
-        })
+        }),
       );
       return { success: false };
     }
-  }
+  },
 );
 
 // Thunk to handle confirmation actions
@@ -308,7 +373,7 @@ export const handleNotificationConfirmation = createAsyncThunk(
       userAction: NotificationAction;
       confirmationAction?: string;
     },
-    { dispatch, getState }
+    { dispatch, getState },
   ) => {
     const { userAction, confirmationAction } = payload;
 
@@ -338,7 +403,7 @@ export const handleNotificationConfirmation = createAsyncThunk(
             title: "Publication Error",
             message: "No pending publication data found. Please try again.",
             autoClose: 4000,
-          })
+          }),
         );
       }
     } else if (userAction === "cancel") {
@@ -347,7 +412,7 @@ export const handleNotificationConfirmation = createAsyncThunk(
     }
 
     return { success: true };
-  }
+  },
 );
 
 const notificationSlice = createSlice({
@@ -356,7 +421,7 @@ const notificationSlice = createSlice({
   reducers: {
     showNotification: (
       state,
-      action: PayloadAction<Omit<NotificationConfig, "id">>
+      action: PayloadAction<Omit<NotificationConfig, "id">>,
     ) => {
       const id = `notification-${Date.now()}-${Math.random()
         .toString(36)
@@ -366,7 +431,7 @@ const notificationSlice = createSlice({
     },
     removeNotification: (state, action: PayloadAction<string>) => {
       state.notifications = state.notifications.filter(
-        (n) => n.id !== action.payload
+        (n) => n.id !== action.payload,
       );
     },
     clearAllNotifications: (state) => {
@@ -378,7 +443,7 @@ const notificationSlice = createSlice({
         selectedWindows: any[];
         currentLayout: string;
         focusedWindowId: string | null;
-      }>
+      }>,
     ) => {
       state.pendingPublication = action.payload;
     },
@@ -390,7 +455,7 @@ const notificationSlice = createSlice({
       action: PayloadAction<{
         notificationId: string;
         userAction: NotificationAction;
-      }>
+      }>,
     ) => {
       // This will be handled by middleware/thunk
     },
@@ -399,10 +464,10 @@ const notificationSlice = createSlice({
       action: PayloadAction<{
         id: string;
         onAction: (action: NotificationAction) => void;
-      }>
+      }>,
     ) => {
       const notification = state.notifications.find(
-        (n) => n.id === action.payload.id
+        (n) => n.id === action.payload.id,
       );
       if (notification) {
         notification.onAction = action.payload.onAction;

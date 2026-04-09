@@ -1,4 +1,4 @@
-import { ColorTheme } from "@/store/slices/appSlice";
+import { ColorTheme, normalizeColorTheme } from "@/store/slices/appSlice";
 
 export class ThemeManager {
   private static readonly STORAGE_KEY = "wingrid-color-theme";
@@ -39,11 +39,11 @@ export class ThemeManager {
    */
   static getSavedTheme(): ColorTheme {
     try {
-      const saved = localStorage.getItem(this.STORAGE_KEY) as ColorTheme;
-      return saved || "cosmic-blue"; // Default fallback
+      const saved = localStorage.getItem(this.STORAGE_KEY);
+      return normalizeColorTheme(saved);
     } catch (error) {
       console.warn("Failed to load theme from localStorage:", error);
-      return "cosmic-blue"; // Default fallback
+      return "grayscale"; // Default fallback
     }
   }
 

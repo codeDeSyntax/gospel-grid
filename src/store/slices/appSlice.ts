@@ -12,6 +12,7 @@ interface PersistedSettings {
   autoLoadLastPreset: boolean;
   overlayText: string;
   overlayVisible: boolean;
+  overlayTargetDisplayId: number | null;
 }
 
 function loadPersistedSettings(): Partial<PersistedSettings> {
@@ -35,27 +36,48 @@ function persistSettings(settings: PersistedSettings) {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type ColorTheme =
-  | "cosmic-blue"
-  | "matrix-green"
-  | "fire-red"
-  | "steel-gray"
-  | "earth-brown"
-  | "violet-purple"
-  | "sunset-orange"
-  | "midnight-black"
-  | "pro-slate";
+  | "grayscale"
+  | "royal-purple"
+  | "sky-blue"
+  | "forest-green"
+  | "vibrant-green"
+  | "fire-red";
 
 export const THEME_NAMES: Record<ColorTheme, string> = {
-  "cosmic-blue": "Cosmic Blue",
-  "matrix-green": "Matrix Green",
+  grayscale: "Grayscale",
+  "royal-purple": "Royal Purple",
+  "sky-blue": "Sky Blue",
+  "forest-green": "Forest Green",
+  "vibrant-green": "Vibrant Green",
   "fire-red": "Fire Red",
-  "steel-gray": "Steel Gray",
-  "earth-brown": "Earth Brown",
-  "violet-purple": "Violet Purple",
-  "sunset-orange": "Sunset Orange",
-  "midnight-black": "Midnight Black",
-  "pro-slate": "Pro Slate",
 };
+
+const COLOR_THEME_VALUES = new Set<ColorTheme>(
+  Object.keys(THEME_NAMES) as ColorTheme[],
+);
+
+const LEGACY_THEME_ALIASES: Record<string, ColorTheme> = {
+  "warm-earth": "grayscale",
+  "lavender-purple": "royal-purple",
+  "ocean-blue": "sky-blue",
+  "matrix-green": "vibrant-green",
+  "cosmic-blue": "sky-blue",
+  "earth-brown": "grayscale",
+  "steel-gray": "grayscale",
+  "violet-purple": "royal-purple",
+  "sunset-orange": "fire-red",
+  "midnight-black": "grayscale",
+  "pro-slate": "sky-blue",
+};
+
+export function normalizeColorTheme(value: unknown): ColorTheme {
+  const normalized =
+    typeof value === "string" ? (LEGACY_THEME_ALIASES[value] ?? value) : value;
+
+  return COLOR_THEME_VALUES.has(normalized as ColorTheme)
+    ? (normalized as ColorTheme)
+    : "grayscale";
+}
 
 // ─── Preset types ───────────────────────────────────────────────────────────
 
@@ -101,6 +123,8 @@ interface AppState {
   overlayText: string;
   /** Whether the overlay text is currently visible */
   overlayVisible: boolean;
+  /** Selected display target for overlay message; null means all displays */
+  overlayTargetDisplayId: number | null;
   /** ID of last loaded preset (for startup profile) */
   lastLoadedPresetId: string | null;
   /** Auto-load last preset when app starts */
@@ -112,7 +136,7 @@ const persisted = loadPersistedSettings();
 const initialState: AppState = {
   currentScreen: "welcome",
   theme: "dark",
-  colorTheme: persisted.colorTheme ?? "cosmic-blue",
+  colorTheme: normalizeColorTheme(persisted.colorTheme),
   isLoading: false,
   error: null,
   publishedQuality: persisted.publishedQuality ?? {
@@ -127,6 +151,7 @@ const initialState: AppState = {
   scenePresets: [],
   overlayText: persisted.overlayText ?? "",
   overlayVisible: persisted.overlayVisible ?? false,
+  overlayTargetDisplayId: persisted.overlayTargetDisplayId ?? null,
   lastLoadedPresetId: persisted.lastLoadedPresetId ?? null,
   autoLoadLastPreset: persisted.autoLoadLastPreset ?? false,
 };
@@ -142,6 +167,7 @@ function autoPersist(state: AppState) {
     autoLoadLastPreset: state.autoLoadLastPreset,
     overlayText: state.overlayText,
     overlayVisible: state.overlayVisible,
+    overlayTargetDisplayId: state.overlayTargetDisplayId,
   });
 }
 
@@ -262,6 +288,13 @@ const appSlice = createSlice({
       state.overlayVisible = !state.overlayVisible;
       autoPersist(state);
     },
+    setOverlayTargetDisplayId: (
+      state,
+      action: PayloadAction<number | null>,
+    ) => {
+      state.overlayTargetDisplayId = action.payload;
+      autoPersist(state);
+    },
     setLastLoadedPresetId: (state, action: PayloadAction<string | null>) => {
       state.lastLoadedPresetId = action.payload;
       autoPersist(state);
@@ -297,6 +330,7 @@ export const {
   setOverlayText,
   setOverlayVisible,
   toggleOverlayVisible,
+  setOverlayTargetDisplayId,
   setLastLoadedPresetId,
   setAutoLoadLastPreset,
 } = appSlice.actions;

@@ -64,7 +64,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getPublishedLayout: (layoutId: string) =>
     ipcRenderer.invoke("get-published-layout", layoutId),
   checkPublishedWindows: () => ipcRenderer.invoke("check-published-windows"),
-  closePublishedWindows: () => ipcRenderer.invoke("close-published-windows"),
+  closePublishedWindows: (displayId?: number) =>
+    ipcRenderer.invoke("close-published-windows", displayId),
 
   // Preset management
   savePreset: (preset: any) => ipcRenderer.invoke("save-preset", preset),
@@ -85,6 +86,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Desktop capturer sources for video streaming
   getDesktopSources: (options: any) =>
     ipcRenderer.invoke("get-desktop-sources", options),
+
+  // Connected display inventory (for multi-monitor routing setup)
+  getConnectedDisplays: () => ipcRenderer.invoke("get-connected-displays"),
 
   // Subscribe to published thumbnails broadcast from main
   onPublishedThumbnails: (callback: (payload: any) => void) => {
@@ -117,6 +121,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     isFrozen?: boolean;
     overlayText?: string;
     overlayVisible?: boolean;
+    targetDisplayId?: number | null;
   }) => ipcRenderer.invoke("update-projection-state", state),
 
   onProjectionStateChanged: (

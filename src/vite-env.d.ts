@@ -12,6 +12,34 @@ interface Window {
       options?: any,
     ) => Promise<any>;
     getAllWindowThumbnails: (options?: any) => Promise<any>;
+    getConnectedDisplays: () => Promise<{
+      success: boolean;
+      displays: Array<{
+        id: number;
+        label: string;
+        isPrimary: boolean;
+        internal: boolean;
+        bounds: { x: number; y: number; width: number; height: number };
+        scaleFactor: number;
+        rotation: number;
+      }>;
+      error?: string;
+    }>;
+    checkPublishedWindows: () => Promise<{
+      hasActivePublications: boolean;
+      count: number;
+      publications: Array<{
+        layoutId: string;
+        displayId: number | null;
+        windowId: number | null;
+        isPublished: boolean;
+      }>;
+    }>;
+    closePublishedWindows: (displayId?: number) => Promise<{
+      success: boolean;
+      closedCount?: number;
+      error?: string;
+    }>;
     focusWindow: (handle: number) => Promise<any>;
     minimizeWindow: (handle: number) => Promise<any>;
     maximizeWindow: (handle: number) => Promise<any>;

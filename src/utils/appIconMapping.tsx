@@ -1,5 +1,5 @@
 import React from "react";
-import { WindowBounds } from '../types/electron';
+import { WindowBounds } from "../types/electron";
 
 // Simple Icons (Si) - Brand icons
 import {
@@ -22,12 +22,8 @@ import {
   SiCanva,
   SiGimp,
   SiBlender,
-  SiAutodesk,
   SiSpotify,
   SiApplemusic,
-  SiAmazonmusic,
-  SiYoutubemusic,
-  SiSoundcloud,
   SiAudacity,
   SiVlcmediaplayer,
   SiYoutube,
@@ -35,8 +31,6 @@ import {
   SiTwitch,
   SiObsstudio,
   SiPlex,
-  SiKodi,
-  SiMpv,
   SiWhatsapp,
   SiTelegram,
   SiSignal,
@@ -44,137 +38,70 @@ import {
   SiSlack,
   SiZoom,
   SiViber,
-  SiLinkedin,
-  SiFacebook,
-  SiInstagram,
-  SiSnapchat,
-  SiTiktok,
-  SiReddit,
   SiSteam,
   SiEpicgames,
   SiOrigin,
-  SiNintendoswitch,
-  SiPlaystation,
   SiRoblox,
-  SiLeagueoflegends,
   SiDropbox,
   SiGoogledrive,
   SiIcloud,
-  SiBox,
-  SiMega,
-  SiNextcloud,
   SiNotion,
   SiObsidian,
   SiEvernote,
   SiTrello,
-  SiAsana,
-  SiJira,
-  SiConfluence,
-  SiMacos,
-  SiLinux,
-  SiUbuntu,
-  SiAndroid,
-  SiIos,
   SiGit,
   SiGithub,
   SiGitlab,
-  SiBitbucket,
   SiDocker,
-  SiKubernetes,
   SiPostman,
-  SiInsomnia,
-  SiDbeaver,
   SiMysql,
   SiPostgresql,
   SiMongodb,
   SiRedis,
-  SiElasticsearch,
-  SiTableau,
   SiVirtualbox,
   SiVmware,
-  SiQemu,
 } from "react-icons/si";
 
 // Font Awesome 6 Icons
 import {
   FaFileAlt,
-  FaFilePdf,
   FaFileWord,
   FaFileExcel,
   FaFilePowerpoint,
-  FaFileImage,
-  FaFileVideo,
-  FaFileAudio,
-  FaFileArchive,
   FaFileCode,
   FaFolder,
-  FaFolderOpen,
-  FaDesktop,
-  FaTerminal,
   FaCalculator,
-  FaCog,
-  FaTools,
   FaGamepad,
-  FaMusic,
   FaVideo,
-  FaCamera,
-  FaPaintBrush,
-  FaEdit,
-  FaBook,
   FaBible,
-  FaDatabase,
   FaServer,
   FaCloud,
-  FaLock,
-  FaKey,
-  FaWifi,
-  FaNetworkWired,
-  FaHdd,
-  FaMemory,
-  FaMicrochip,
-  FaPlug,
-  FaBolt,
-  FaThermometerHalf,
-  FaFan,
-  FaKeyboard,
-  FaMouse,
-  FaHeadphones,
-  FaMicrophone,
-  FaPrint,
-  FaDownload,
-  FaUpload,
-  FaSync,
-  FaWindows,
-  FaApple,
-  FaLinux,
-  FaAndroid,
   FaMicrosoft,
-  FaEdge,
 } from "react-icons/fa";
 
 // Bootstrap Icons
-import {
-
-  BsBrowserEdge,
-
-  BsTerminal,
-  BsGear,
- 
- 
-} from "react-icons/bs";
+import { BsBrowserEdge, BsTerminal, BsGear } from "react-icons/bs";
 
 // Devicons
+import { DiVisualstudio, DiChrome } from "react-icons/di";
 import {
-  DiVisualstudio,
-  DiChrome,
-} from "react-icons/di";
-import { AppWindow, AppWindowIcon } from "lucide-react";
+  AppWindow,
+  AppWindowIcon,
+  AppWindowMac,
+  AppWindowMacIcon,
+} from "lucide-react";
 import { MdInstallDesktop } from "react-icons/md";
 
 export interface AppIconData {
   icon: React.ReactNode;
   gradient: string;
   color: string;
+}
+
+interface WindowIconContext {
+  title?: string;
+  executablePath?: string;
+  className?: string;
 }
 
 // Comprehensive app icon mapping
@@ -740,36 +667,68 @@ export const APP_ICON_MAP: Record<string, AppIconData> = {
   },
 };
 
+const DEFAULT_ICON_FALLBACK: AppIconData = {
+  icon: <AppWindowMacIcon />,
+  gradient: "from-gray-500 to-gray-300",
+  color: "text-theme-primary-200",
+};
+
+const normalizeToken = (value: string) => value.toLowerCase().trim();
+
+const getExecutableName = (executablePath?: string): string => {
+  if (!executablePath) return "";
+  const parts = executablePath.split(/[/\\]/).filter(Boolean);
+  const fileName = parts[parts.length - 1] ?? "";
+  return fileName.replace(/\.exe$/i, "");
+};
+
+const resolveIconByCandidates = (candidates: string[]): AppIconData | null => {
+  for (const rawCandidate of candidates) {
+    const candidate = normalizeToken(rawCandidate);
+    if (!candidate) continue;
+
+    if (APP_ICON_MAP[candidate]) {
+      return APP_ICON_MAP[candidate];
+    }
+
+    const matchedKey = Object.keys(APP_ICON_MAP).find(
+      (key) => candidate.includes(key) || key.includes(candidate),
+    );
+    if (matchedKey) {
+      return APP_ICON_MAP[matchedKey];
+    }
+  }
+
+  return null;
+};
+
 // Function to get app icon data
 export const getAppIconData = (appName: string): AppIconData => {
-  const normalizedName = appName.toLowerCase().trim();
+  const resolved = resolveIconByCandidates([appName]);
+  return resolved ?? DEFAULT_ICON_FALLBACK;
+};
 
-  // Direct match
-  if (APP_ICON_MAP[normalizedName]) {
-    return APP_ICON_MAP[normalizedName];
-  }
+export const getWindowFallbackIconData = (windowInfo: {
+  app?: string;
+  name?: string;
+  executablePath?: string;
+  className?: string;
+}): AppIconData => {
+  const candidates = [
+    windowInfo.app ?? "",
+    windowInfo.name ?? "",
+    getExecutableName(windowInfo.executablePath),
+    windowInfo.className ?? "",
+  ];
 
-  // Partial match - find the first key that includes the app name
-  const matchedKey = Object.keys(APP_ICON_MAP).find(
-    (key) => normalizedName.includes(key) || key.includes(normalizedName)
-  );
-
-  if (matchedKey) {
-    return APP_ICON_MAP[matchedKey];
-  }
-
-  // Default fallback
-  return {
-    icon: <MdInstallDesktop />,
-    gradient: "from-gray-500 to-gray-300",
-    color: "text-theme-primary-200",
-  };
+  const resolved = resolveIconByCandidates(candidates);
+  return resolved ?? DEFAULT_ICON_FALLBACK;
 };
 
 // Function to get app icon with specified size
 export const getAppIcon = (
   appName: string,
-  size: number = 16
+  size: number = 16,
 ): React.ReactNode => {
   const iconData = getAppIconData(appName);
   return React.cloneElement(iconData.icon as React.ReactElement, {
@@ -782,4 +741,20 @@ export const getAppIcon = (
 export const getAppGradient = (appName: string): string => {
   const iconData = getAppIconData(appName);
   return iconData.gradient;
+};
+
+export const getWindowFallbackIcon = (
+  windowInfo: {
+    app?: string;
+    name?: string;
+    executablePath?: string;
+    className?: string;
+  },
+  size: number = 16,
+): React.ReactNode => {
+  const iconData = getWindowFallbackIconData(windowInfo);
+  return React.cloneElement(iconData.icon as React.ReactElement, {
+    size,
+    className: iconData.color,
+  });
 };

@@ -12,7 +12,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
   const { minimize, maximize, close } = useWindowControls();
 
   return (
-    <div className="h-screen bg-gradient-to-b from-stone-900 via-theme-primary-900/20 to-stone-800 text-white relative overflow-hidden">
+    <div className="h-screen text-white relative overflow-hidden">
       {/* Mesh background */}
       <MeshBackground intensity="medium" />
 
@@ -80,7 +80,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <div className="space-y-2">
                 <p className="text-lg lg:text-xl text-white leading-relaxed">
                   A tool for{" "}
-                  <span className="bg-gradient-to-r from-theme-primary-500 to-theme-primary-700 bg-clip-text text-transparent font-semibold">
+                  <span className="bg-gradient-to-r from-theme-primary-500 to-theme-primary-700 bg-clip-text text-theme-primary-200 font-semibold">
                     aggregating multiple windows
                   </span>{" "}
                   in one place
@@ -94,21 +94,21 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
               {/* Feature badges with theme styling */}
               <div className="flex flex-wrap justify-center gap-2">
-                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-200">
+                  <span className="text-xs text-theme-primary-100">
                     Real-time Capture
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
                   <div className="w-1.5 h-1.5 bg-theme-primary-400 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-200">
+                  <span className="text-xs text-theme-primary-100">
                     Smart Grid Layout
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
+                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
                   <div className="w-1.5 h-1.5 bg-theme-primary-500 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-200">
+                  <span className="text-xs text-theme-primary-100">
                     Ease of use
                   </span>
                 </div>
@@ -138,10 +138,6 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                   {/* Animated gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
                 </button>
-
-                <p className="text-xs text-theme-primary-300">
-                  No credit card required
-                </p>
               </div>
             </div>
           </div>

@@ -1,35 +1,25 @@
 import { type WindowInfo } from "../WindowList";
 import { type ScenePreset } from "@/store/slices/appSlice";
 
+export type PanelView = "layout" | "settings" | "presets" | "overlay";
+
 export interface RightPanelProps {
   windows: WindowInfo[];
   currentLayout: string;
   focusedWindowId: string | null;
-  onRefreshWindows: () => void;
-  onClearAll: () => void;
   onLayoutChange: (layout: string) => void;
   onWindowSelect: (windowId: string) => void;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => void;
-  onPublishLayout: () => void;
-  showSettings?: boolean;
-  onToggleSettings?: () => void;
-  onCloseProjection?: () => void;
-  /** Blackout / Freeze toggles (actions that also update IPC) */
-  onToggleBlackout?: () => void;
-  onToggleFrozen?: () => void;
-  /** Undo / Redo */
-  canUndo?: boolean;
-  canRedo?: boolean;
-  onUndo?: () => void;
-  onRedo?: () => void;
+  activePanel: PanelView;
   /** Scene Presets */
   onLoadPreset?: (preset: ScenePreset) => void;
 }
 
 export interface WindowLayoutCardProps {
-  selectedWindows: WindowInfo[];
+  windows: WindowInfo[];
+  currentLayout: string;
   focusedWindowId: string | null;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;

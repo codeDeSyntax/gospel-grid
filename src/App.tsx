@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ThemeManager } from "./utils/theme";
 import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
@@ -19,15 +20,45 @@ import { systemLogger } from "./hooks/useSystemLogger";
 
 type AppScreen = "welcome" | "dashboard" | "settings" | "published";
 
+const SCREEN_ORDER: Record<AppScreen, number> = {
+  welcome: 0,
+  dashboard: 1,
+  settings: 2,
+  published: 3,
+};
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction >= 0 ? "100%" : "-100%",
+    opacity: 1,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction >= 0 ? "-100%" : "100%",
+    opacity: 1,
+  }),
+};
+
 function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
+  const [navigationDirection, setNavigationDirection] = useState(1);
   const [publishedLayoutData, setPublishedLayoutData] = useState<{
     windows: WindowInfo[];
     layout: string;
     focusedWindowId: string | null;
     layoutId?: string;
   } | null>(null);
+
+  const navigateTo = (nextScreen: AppScreen) => {
+    const nextOrder = SCREEN_ORDER[nextScreen];
+    const currentOrder = SCREEN_ORDER[currentScreen];
+    setNavigationDirection(nextOrder >= currentOrder ? 1 : -1);
+    setCurrentScreen(nextScreen);
+  };
 
   // Initialize theme on app start and check for published layout
   useEffect(() => {
@@ -52,7 +83,7 @@ function App() {
               focusedWindowId: layoutData.focusedWindowId,
               layoutId,
             });
-            setCurrentScreen("published");
+            navigateTo("published");
             systemLogger.log(
               "app",
               "info",
@@ -134,7 +165,7 @@ function App() {
       "Navigation",
       "🎯 User navigated to dashboard",
     );
-    setCurrentScreen("dashboard");
+    navigateTo("dashboard");
   };
 
   const handleBackToWelcome = () => {
@@ -144,7 +175,7 @@ function App() {
       "Navigation",
       "🏠 User navigated back to welcome",
     );
-    setCurrentScreen("welcome");
+    navigateTo("welcome");
   };
 
   const handleMinimizePublished = () => {
@@ -177,7 +208,7 @@ function App() {
       case "welcome":
         return <Welcome onGetStarted={handleGetStarted} />;
       case "dashboard":
-        return <Dashboard />;
+        return <Dashboard onHomeClick={handleBackToWelcome} />;
       case "published":
         return publishedLayoutData ? (
           <PublishedLayout
@@ -212,7 +243,29 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="app no-scrollbar">{renderScreen()}</div>
+      <div className="app relative h-screen w-screen overflow-hidden no-scrollbar bg-theme-primary-950">
+        <AnimatePresence
+          initial={false}
+          mode="sync"
+          custom={navigationDirection}
+        >
+          <motion.div
+            key={currentScreen}
+            custom={navigationDirection}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              duration: 0.44,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="absolute inset-0"
+          >
+            {renderScreen()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </ThemeProvider>
   );
 }

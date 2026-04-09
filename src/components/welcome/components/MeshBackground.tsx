@@ -10,25 +10,31 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
   intensity = "strong",
 }) => {
   const intensityClasses = {
-    light: "opacity-15",
-    medium: "opacity-20",
-    strong: "opacity-25",
+    light: "opacity-24",
+    medium: "opacity-33",
+    strong: "opacity-42",
   };
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`}>
-      {/* Base dark foundation */}
-      <div className="absolute inset-0 bg-stone-950" />
+      {/* Base foundation with subtle tonal movement */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(160deg, rgb(var(--theme-primary-950) / 0.98) 0%, rgb(var(--theme-primary-900) / 0.9) 45%, rgb(var(--theme-primary-950) / 0.98) 100%)",
+        }}
+      />
 
       {/* Subtle gradient accents using theme colors */}
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 50% 35% at 15% 85%, 
-               rgb(var(--theme-primary-400) / 0.6) 0%, 
-               rgb(var(--theme-primary-500) / 0.4) 30%, 
-               rgb(var(--theme-primary-600) / 0.3) 60%, 
-               rgb(var(--theme-primary-700) / 0.2) 80%, 
+          background: `radial-gradient(ellipse 58% 42% at 15% 85%, 
+            rgb(var(--theme-primary-300) / 0.68) 0%, 
+            rgb(var(--theme-primary-400) / 0.46) 30%, 
+            rgb(var(--theme-primary-500) / 0.28) 60%, 
+            rgb(var(--theme-primary-700) / 0.12) 80%, 
                transparent 100%)`,
         }}
       />
@@ -37,10 +43,19 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 30% 20% at 85% 20%, 
-               rgb(var(--theme-primary-400) / 0.4) 0%, 
-               rgb(var(--theme-primary-500) / 0.2) 50%, 
+          background: `radial-gradient(ellipse 35% 26% at 85% 20%, 
+               rgb(var(--theme-primary-300) / 0.55) 0%, 
+               rgb(var(--theme-primary-500) / 0.24) 50%, 
                transparent 100%)`,
+        }}
+      />
+
+      {/* Soft mottled veil to make pattern depth visible without stripes */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 12% 20%, rgb(var(--theme-primary-200) / 0.08) 0%, transparent 36%), radial-gradient(circle at 78% 68%, rgb(var(--theme-primary-300) / 0.08) 0%, transparent 34%), radial-gradient(circle at 40% 42%, rgb(var(--theme-primary-400) / 0.06) 0%, transparent 45%)",
         }}
       />
 
@@ -129,64 +144,56 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 strokeWidth="0.6"
               />
 
-              {/* Vertical connection lines */}
-              <line
-                x1="30"
-                y1="30"
-                x2="30"
-                y2="90"
-                className="stroke-theme-primary-700/35"
-                strokeWidth="0.6"
-              />
-              <line
-                x1="60"
-                y1="30"
-                x2="60"
-                y2="90"
-                className="stroke-theme-primary-400/40"
-                strokeWidth="0.6"
-              />
-              <line
-                x1="90"
-                y1="30"
-                x2="90"
-                y2="90"
-                className="stroke-theme-primary-500/35"
-                strokeWidth="0.6"
-              />
-
               {/* Diagonal connection lines */}
               <line
                 x1="30"
                 y1="30"
                 x2="60"
                 y2="60"
-                className="stroke-theme-primary-600/30"
-                strokeWidth="0.5"
+                className="stroke-theme-primary-300/45"
+                strokeWidth="0.55"
               />
               <line
                 x1="60"
                 y1="60"
                 x2="90"
                 y2="90"
-                className="stroke-theme-primary-400/30"
-                strokeWidth="0.5"
+                className="stroke-theme-primary-400/42"
+                strokeWidth="0.55"
               />
               <line
                 x1="90"
                 y1="30"
                 x2="60"
                 y2="60"
-                className="stroke-theme-primary-500/30"
-                strokeWidth="0.5"
+                className="stroke-theme-primary-500/38"
+                strokeWidth="0.55"
               />
               <line
                 x1="60"
                 y1="60"
                 x2="30"
                 y2="90"
-                className="stroke-theme-primary-700/30"
-                strokeWidth="0.5"
+                className="stroke-theme-primary-600/35"
+                strokeWidth="0.55"
+              />
+
+              {/* Non-vertical cross-links for texture */}
+              <line
+                x1="30"
+                y1="30"
+                x2="90"
+                y2="60"
+                className="stroke-theme-primary-400/28"
+                strokeWidth="0.45"
+              />
+              <line
+                x1="30"
+                y1="60"
+                x2="90"
+                y2="90"
+                className="stroke-theme-primary-500/24"
+                strokeWidth="0.45"
               />
             </pattern>
 
@@ -249,14 +256,6 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 strokeWidth="0.4"
               />
               <line
-                x1="40"
-                y1="0"
-                x2="40"
-                y2="80"
-                className="stroke-theme-primary-600/25"
-                strokeWidth="0.4"
-              />
-              <line
                 x1="20"
                 y1="20"
                 x2="40"
@@ -281,7 +280,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
       </div>
 
       {/* Additional dense mesh layer */}
-      <div className={`absolute inset-0 opacity-10 pointer-events-none`}>
+      <div className={`absolute inset-0 opacity-16 pointer-events-none`}>
         <svg width="100%" height="100%" className="absolute inset-0">
           <rect width="100%" height="100%" fill="url(#welcomeDenseMesh)" />
         </svg>

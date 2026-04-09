@@ -27,6 +27,8 @@ interface GridState {
     columns: number;
     rows: number;
   };
+  displayAssignments: Record<number, string[]>;
+  windowThumbnails: Record<string, string>;
   presets: GridPreset[];
   activePresetId: string | null;
   isEditMode: boolean;
@@ -37,6 +39,8 @@ interface GridState {
 const initialState: GridState = {
   tiles: [],
   gridSize: { columns: 4, rows: 3 },
+  displayAssignments: {},
+  windowThumbnails: {},
   presets: [
     {
       id: "preset-1",
@@ -73,7 +77,7 @@ const gridSlice = createSlice({
   reducers: {
     addTile: (
       state,
-      action: PayloadAction<Omit<GridTile, "id" | "isSelected">>
+      action: PayloadAction<Omit<GridTile, "id" | "isSelected">>,
     ) => {
       const newTile: GridTile = {
         ...action.payload,
@@ -87,7 +91,7 @@ const gridSlice = createSlice({
     },
     updateTile: (
       state,
-      action: PayloadAction<{ id: string; updates: Partial<GridTile> }>
+      action: PayloadAction<{ id: string; updates: Partial<GridTile> }>,
     ) => {
       const tile = state.tiles.find((t) => t.id === action.payload.id);
       if (tile) {
@@ -106,7 +110,7 @@ const gridSlice = createSlice({
     },
     setGridSize: (
       state,
-      action: PayloadAction<{ columns: number; rows: number }>
+      action: PayloadAction<{ columns: number; rows: number }>,
     ) => {
       state.gridSize = action.payload;
     },
@@ -125,7 +129,7 @@ const gridSlice = createSlice({
     },
     savePreset: (
       state,
-      action: PayloadAction<{ name: string; description: string }>
+      action: PayloadAction<{ name: string; description: string }>,
     ) => {
       const newPreset: GridPreset = {
         id: `preset-${Date.now()}`,
@@ -156,9 +160,55 @@ const gridSlice = createSlice({
     setShowGrid: (state, action: PayloadAction<boolean>) => {
       state.showGrid = action.payload;
     },
+    setDisplayAssignments: (
+      state,
+      action: PayloadAction<Record<number, string[]>>,
+    ) => {
+      state.displayAssignments = action.payload;
+    },
+    assignWindowToDisplay: (
+      state,
+      action: PayloadAction<{ displayId: number; windowId: string }>,
+    ) => {
+      const current = state.displayAssignments[action.payload.displayId] ?? [];
+      if (!current.includes(action.payload.windowId)) {
+        state.displayAssignments[action.payload.displayId] = [
+          ...current,
+          action.payload.windowId,
+        ];
+      }
+    },
+    removeWindowFromDisplay: (
+      state,
+      action: PayloadAction<{ displayId: number; windowId: string }>,
+    ) => {
+      const current = state.displayAssignments[action.payload.displayId] ?? [];
+      const next = current.filter(
+        (windowId) => windowId !== action.payload.windowId,
+      );
+
+      if (next.length === 0) {
+        delete state.displayAssignments[action.payload.displayId];
+        return;
+      }
+
+      state.displayAssignments[action.payload.displayId] = next;
+    },
+    clearDisplayAssignments: (state) => {
+      state.displayAssignments = {};
+    },
+    setWindowThumbnails: (
+      state,
+      action: PayloadAction<Record<string, string>>,
+    ) => {
+      state.windowThumbnails = {
+        ...state.windowThumbnails,
+        ...action.payload,
+      };
+    },
     assignWindowToTile: (
       state,
-      action: PayloadAction<{ tileId: string; windowId: string }>
+      action: PayloadAction<{ tileId: string; windowId: string }>,
     ) => {
       const tile = state.tiles.find((t) => t.id === action.payload.tileId);
       if (tile) {
@@ -187,6 +237,11 @@ export const {
   setEditMode,
   setSnapToGrid,
   setShowGrid,
+  setDisplayAssignments,
+  assignWindowToDisplay,
+  removeWindowFromDisplay,
+  clearDisplayAssignments,
+  setWindowThumbnails,
   assignWindowToTile,
   removeWindowFromTile,
 } = gridSlice.actions;

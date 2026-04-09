@@ -1,5 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import { getNativeWindowIcon } from "./windowIcons";
 
 const execAsync = promisify(exec);
 
@@ -77,9 +78,8 @@ export async function minimizeWindow(handle: number): Promise<boolean> {
  */
 export async function getWindowIcon(handle: number): Promise<string | null> {
   try {
-    // This is a simplified implementation
-    // In a real app, you'd extract the actual icon from the executable
-    return null;
+    const icon = await getNativeWindowIcon(handle);
+    return icon ? icon.toDataURL() : null;
   } catch (error) {
     console.error("Error getting window icon:", error);
     return null;
@@ -91,7 +91,7 @@ export async function getWindowIcon(handle: number): Promise<string | null> {
  */
 export async function moveWindow(
   handle: number,
-  bounds: { x: number; y: number; width: number; height: number }
+  bounds: { x: number; y: number; width: number; height: number },
 ): Promise<boolean> {
   try {
     const script = `

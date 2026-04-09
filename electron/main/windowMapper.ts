@@ -1,4 +1,5 @@
 import { desktopCapturer } from "electron";
+import { getNativeWindowIcon } from "./windowIcons";
 
 /**
  * PERFORMANCE OPTIMIZATION:
@@ -16,7 +17,7 @@ import { desktopCapturer } from "electron";
  * @param captureThumbnails - Whether to capture thumbnails (default: false for performance)
  */
 export async function getWindowSourceMapping(
-  captureThumbnails: boolean = false
+  captureThumbnails: boolean = false,
 ) {
   try {
     // Get all window sources from desktopCapturer
@@ -51,35 +52,40 @@ export async function getWindowSourceMapping(
                 source.appIcon.getSize().height
               }`
             : "N/A"
-        }`
+        }`,
       );
       console.log(
         `   Thumbnail size: ${source.thumbnail?.getSize().width}x${
           source.thumbnail?.getSize().height
-        }`
+        }`,
       );
       console.log(`   All properties:`, Object.keys(source));
       console.log(`   ---`);
     });
     console.log("=== END DESKTOP CAPTURER DETAILS ===");
 
-    return sources.map((source, index) => {
-      // Extract window handle from ID format: window:XX:YY
-      const handleMatch = source.id.match(/window:(\d+):/);
-      const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
+    return Promise.all(
+      sources.map(async (source, index) => {
+        // Extract window handle from ID format: window:XX:YY
+        const handleMatch = source.id.match(/window:(\d+):/);
+        const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
+        const nativeIcon =
+          source.appIcon ||
+          (windowHandle ? await getNativeWindowIcon(windowHandle) : null);
 
-      return {
-        sourceId: source.id, // Native desktopCapturer ID (e.g., "window:853982:0")
-        title: source.name,
-        index: index,
-        windowHandle: windowHandle, // Add the actual window handle!
-        hasIcon: !!source.appIcon, // Whether app icon is available
-        // Use the native source ID as the primary identifier instead of index
-        mappingId: source.id, // Use Electron's native ID for true uniqueness
-        thumbnail: captureThumbnails ? source.thumbnail : null, // Only include thumbnail if requested
-        appIcon: source.appIcon, // Include the app icon
-      };
-    });
+        return {
+          sourceId: source.id, // Native desktopCapturer ID (e.g., "window:853982:0")
+          title: source.name,
+          index: index,
+          windowHandle: windowHandle, // Add the actual window handle!
+          hasIcon: !!nativeIcon, // Whether app icon is available
+          // Use the native source ID as the primary identifier instead of index
+          mappingId: source.id, // Use Electron's native ID for true uniqueness
+          thumbnail: captureThumbnails ? source.thumbnail : null, // Only include thumbnail if requested
+          appIcon: nativeIcon, // Include the app icon
+        };
+      }),
+    );
   } catch (error) {
     console.error("Failed to get window source mapping:", error);
     return [];
@@ -92,7 +98,7 @@ export async function getWindowSourceMapping(
  * @param captureThumbnails - Whether to capture thumbnails (default: false for performance)
  */
 export async function getWindowsWithThumbnails(
-  captureThumbnails: boolean = false
+  captureThumbnails: boolean = false,
 ) {
   try {
     const sources = await getWindowSourceMapping(captureThumbnails);

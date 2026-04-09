@@ -122,7 +122,7 @@ function buildTrayMenu() {
   const hasProjection = publishedWindows.some((w) => !w.isDestroyed());
   return Menu.buildFromTemplate([
     {
-      label: "Show StreamSpire",
+      label: "Show Windrid",
       click: () => {
         if (win && !win.isDestroyed()) {
           win.show();
@@ -168,7 +168,7 @@ function buildTrayMenu() {
     },
     { type: "separator" },
     {
-      label: "Quit StreamSpire",
+      label: "Quit Wingrid",
       click: () => {
         stopPowerSaveBlocker();
         app.quit();
@@ -195,7 +195,7 @@ function createTray() {
       return;
     }
     tray = new Tray(icon.resize({ width: 16, height: 16 }));
-    tray.setToolTip("StreamSpire");
+    tray.setToolTip("Wingrid");
     tray.setContextMenu(buildTrayMenu());
     tray.on("click", () => {
       if (win && !win.isDestroyed()) {
@@ -209,9 +209,19 @@ function createTray() {
   }
 }
 
-/** Helper: broadcast current projectionState to all published + main windows */
-function broadcastProjectionState() {
-  publishedWindows.forEach((window) => {
+/** Helper: broadcast current projectionState to all published windows or one display */
+function broadcastProjectionState(targetDisplayId?: number | null) {
+  const targetWindows =
+    typeof targetDisplayId === "number"
+      ? publishedWindows.filter((window) => {
+          const publication = [...publishedLayoutData.values()].find(
+            (data) => data.windowId === window.id,
+          );
+          return publication?.displayId === targetDisplayId;
+        })
+      : publishedWindows;
+
+  targetWindows.forEach((window) => {
     if (!window.isDestroyed()) {
       window.webContents.send("projection-state-changed", projectionState);
     }
@@ -413,6 +423,29 @@ ipcMain.handle("get-desktop-sources", async (event, options) => {
   }
 });
 
+// Connected display inventory for multi-monitor routing UI
+ipcMain.handle("get-connected-displays", async () => {
+  try {
+    const displays = screen.getAllDisplays().map((display, index) => ({
+      id: display.id,
+      label: display.label || `Display ${index + 1}`,
+      isPrimary: display.id === screen.getPrimaryDisplay().id,
+      internal: display.internal,
+      bounds: display.bounds,
+      scaleFactor: display.scaleFactor,
+      rotation: display.rotation,
+    }));
+
+    return { success: true, displays };
+  } catch (error) {
+    return {
+      success: false,
+      displays: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
 // Window enumeration IPC handlers
 ipcMain.handle("enumerate-windows", async (event, options) => {
   try {
@@ -600,35 +633,74 @@ ipcMain.handle("check-published-windows", async () => {
   // Clean up destroyed windows
   publishedWindows = publishedWindows.filter((w) => !w.isDestroyed());
 
+  const publications = [...publishedLayoutData.entries()].map(
+    ([layoutId, data]) => ({
+      layoutId,
+      displayId: data.displayId ?? null,
+      windowId: data.windowId ?? null,
+      isPublished: true,
+    }),
+  );
+
   return {
     hasActivePublications: publishedWindows.length > 0,
     count: publishedWindows.length,
+    publications,
   };
 });
 
-// Close all published windows
-ipcMain.handle("close-published-windows", async () => {
-  try {
-    const windowsToClose = [...publishedWindows];
-    publishedWindows = [];
+// Close all published windows or a single display-specific publication
+ipcMain.handle(
+  "close-published-windows",
+  async (_event, displayId?: number) => {
+    try {
+      const windowsToClose =
+        typeof displayId === "number"
+          ? publishedWindows.filter((window) => {
+              const match = [...publishedLayoutData.entries()].find(
+                ([, data]) =>
+                  data.displayId === displayId && data.windowId === window.id,
+              );
+              return Boolean(match);
+            })
+          : [...publishedWindows];
 
-    windowsToClose.forEach((window) => {
-      if (!window.isDestroyed()) {
-        window.close();
-      }
-    });
+      const layoutIdsToDelete =
+        typeof displayId === "number"
+          ? [...publishedLayoutData.entries()]
+              .filter(([, data]) => data.displayId === displayId)
+              .map(([layoutId]) => layoutId)
+          : [...publishedLayoutData.keys()];
 
-    stopPowerSaveBlocker();
-    updateTrayMenu();
+      publishedWindows =
+        typeof displayId === "number"
+          ? publishedWindows.filter(
+              (window) => !windowsToClose.includes(window),
+            )
+          : [];
 
-    return { success: true, closedCount: windowsToClose.length };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-});
+      layoutIdsToDelete.forEach((layoutId) => {
+        publishedLayoutData.delete(layoutId);
+      });
+
+      windowsToClose.forEach((window) => {
+        if (!window.isDestroyed()) {
+          window.close();
+        }
+      });
+
+      stopPowerSaveBlocker();
+      updateTrayMenu();
+
+      return { success: true, closedCount: windowsToClose.length };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+);
 
 // Update quality settings and broadcast to all published windows
 ipcMain.handle("update-quality-settings", async (event, settings) => {
@@ -651,7 +723,10 @@ ipcMain.handle("update-projection-state", async (event, state) => {
   if (state.overlayVisible !== undefined)
     projectionState.overlayVisible = state.overlayVisible;
 
-  broadcastProjectionState();
+  const targetDisplayId =
+    typeof state.targetDisplayId === "number" ? state.targetDisplayId : null;
+
+  broadcastProjectionState(targetDisplayId);
   updateTrayMenu();
 
   return { success: true, state: projectionState };
@@ -704,22 +779,53 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       focusedWindowId,
       publishedQuality,
       captureQuality,
+      displayId,
     } = layoutData;
 
-    // Detect external display for projection window
+    // Detect target display for projection window.
+    const explicitDisplay =
+      typeof displayId === "number"
+        ? screen.getAllDisplays().find((display) => display.id === displayId)
+        : null;
     const externalDisplay = detectExternalDisplay();
 
-    if (!externalDisplay) {
+    if (!explicitDisplay && !externalDisplay) {
       console.warn(
         "⚠️ No external display detected - publishing to primary display",
       );
     }
 
-    const publishDisplay = externalDisplay || screen.getPrimaryDisplay();
+    const publishDisplay =
+      explicitDisplay || externalDisplay || screen.getPrimaryDisplay();
+
+    // If a display-specific projection already exists, replace it in place.
+    if (typeof displayId === "number") {
+      const existingForDisplay = publishedWindows.filter((publishedWindow) => {
+        if (publishedWindow.isDestroyed()) return false;
+        const bounds = publishedWindow.getBounds();
+        return (
+          bounds.x === publishDisplay.bounds.x &&
+          bounds.y === publishDisplay.bounds.y &&
+          bounds.width === publishDisplay.bounds.width &&
+          bounds.height === publishDisplay.bounds.height
+        );
+      });
+
+      if (existingForDisplay.length > 0) {
+        existingForDisplay.forEach((publishedWindow) => {
+          if (!publishedWindow.isDestroyed()) {
+            publishedWindow.close();
+          }
+        });
+        publishedWindows = publishedWindows.filter(
+          (publishedWindow) => !existingForDisplay.includes(publishedWindow),
+        );
+      }
+    }
 
     // Create a new fullscreen window for the published layout
     const publishWindow = new BrowserWindow({
-      title: "StreamSpire - Published Layout",
+      title: "Wingrid - Published Layout",
       icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
       x: publishDisplay.bounds.x,
       y: publishDisplay.bounds.y,
@@ -747,6 +853,8 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       windows: selectedWindows,
       layout,
       focusedWindowId,
+      displayId: displayId ?? null,
+      windowId: publishWindow.id,
       isPublished: true,
       publishedQuality: publishedQuality || { contrast: 1.0, brightness: 1.0 },
       captureQuality: captureQuality || 80,

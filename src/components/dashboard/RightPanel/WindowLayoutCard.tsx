@@ -4,7 +4,8 @@ import type { WindowLayoutCardProps } from "./types";
 
 export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
   ({
-    selectedWindows,
+    windows,
+    currentLayout,
     focusedWindowId,
     onWindowFocus,
     onWindowRemove,
@@ -14,12 +15,12 @@ export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
     // Always render AutoFitWindowLayout so drop zone is always available
     return (
       <AutoFitWindowLayout
-        selectedWindows={selectedWindows}
+        windows={windows}
+        currentLayout={currentLayout}
         focusedWindowId={focusedWindowId}
         onWindowFocus={onWindowFocus}
         onWindowRemove={onWindowRemove}
         onWindowAdd={onWindowAdd}
-        maxDisplayWindows={4}
         isProjectionOn={isProjectionOn}
       />
     );

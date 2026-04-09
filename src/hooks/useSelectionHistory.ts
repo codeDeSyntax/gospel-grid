@@ -14,9 +14,17 @@ const MAX_HISTORY = 50;
 
 export type SelectionMap = Record<string, boolean>;
 
-export function useSelectionHistory() {
+function cloneSnapshot<T>(value: T): T {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+export function useSelectionHistory<T>(initialState: T) {
   // Ref holds the real data — always current, never stale in closures.
-  const entriesRef = useRef<SelectionMap[]>([{}]);
+  const entriesRef = useRef<T[]>([cloneSnapshot(initialState)]);
   const indexRef = useRef<number>(0);
 
   // Version counter purely to trigger re-renders.
@@ -24,10 +32,10 @@ export function useSelectionHistory() {
   const bump = () => setVersion((v) => v + 1);
 
   /** Record a new selection snapshot (call after applying the change). */
-  const push = useCallback((selection: SelectionMap) => {
+  const push = useCallback((snapshot: T) => {
     // Trim any future entries beyond current index
     entriesRef.current = entriesRef.current.slice(0, indexRef.current + 1);
-    entriesRef.current.push({ ...selection });
+    entriesRef.current.push(cloneSnapshot(snapshot));
 
     // Cap history size
     if (entriesRef.current.length > MAX_HISTORY) {
@@ -39,19 +47,19 @@ export function useSelectionHistory() {
   }, []);
 
   /** Move back one step. Returns the restored SelectionMap, or null if at start. */
-  const undo = useCallback((): SelectionMap | null => {
+  const undo = useCallback((): T | null => {
     if (indexRef.current <= 0) return null;
     indexRef.current -= 1;
-    const result = { ...entriesRef.current[indexRef.current] };
+    const result = cloneSnapshot(entriesRef.current[indexRef.current]);
     bump();
     return result;
   }, []);
 
   /** Move forward one step. Returns the restored SelectionMap, or null if at end. */
-  const redo = useCallback((): SelectionMap | null => {
+  const redo = useCallback((): T | null => {
     if (indexRef.current >= entriesRef.current.length - 1) return null;
     indexRef.current += 1;
-    const result = { ...entriesRef.current[indexRef.current] };
+    const result = cloneSnapshot(entriesRef.current[indexRef.current]);
     bump();
     return result;
   }, []);
@@ -63,11 +71,16 @@ export function useSelectionHistory() {
   const canRedo = indexRef.current < entriesRef.current.length - 1;
 
   /** Reset history (e.g. on fresh window enumeration). */
-  const reset = useCallback((initial?: SelectionMap) => {
-    entriesRef.current = [initial ?? {}];
-    indexRef.current = 0;
-    bump();
-  }, []);
+  const reset = useCallback(
+    (initial?: T) => {
+      entriesRef.current = [
+        cloneSnapshot(initial ?? cloneSnapshot(initialState)),
+      ];
+      indexRef.current = 0;
+      bump();
+    },
+    [initialState],
+  );
 
   return { push, undo, redo, canUndo, canRedo, reset };
 }

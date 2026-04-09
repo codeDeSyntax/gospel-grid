@@ -6,14 +6,16 @@ import {
   MdFilterList,
   MdError,
   MdVisibility,
-  MdAdd,
   MdCheck,
   MdRefresh,
   MdPushPin,
+  MdDragIndicator,
 } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { getAppIcon, getAppGradient } from "@/utils/appIconMapping";
+import { getWindowFallbackIcon, getAppGradient } from "@/utils/appIconMapping";
 import { CircularCountdown } from "@/components/ui/CircularCountdown";
+import { DepthButton } from "@/shared/DepthButton";
+import { RefreshCcwDot } from "lucide-react";
 
 export interface WindowInfo {
   id: string;
@@ -64,7 +66,7 @@ interface WindowListProps {
 
 export const WindowList: React.FC<WindowListProps> = ({
   windows,
-  onWindowSelect,
+  onWindowSelect: _onWindowSelect,
   onWindowPin,
   onWindowFocus,
   onWindowDragStart,
@@ -130,29 +132,38 @@ export const WindowList: React.FC<WindowListProps> = ({
           {/* Timer + Refresh — gamified */}
           <div className="flex items-center gap-2">
             {countdownTime > 0 && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-theme-primary-800/30 border border-theme-primary-600/20">
-                <CircularCountdown
-                  remainingTime={countdownTime}
-                  totalTime={totalRefreshTime}
-                  size={26}
-                  isLoading={isLoading}
-                />
-                <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-300/80 leading-none">
-                  {Math.ceil(countdownTime)}s
-                </span>
+              <div className="relative overflow-hidden rounded-xl border border-theme-primary-400/35 bg-gradient-to-br from-theme-primary-700/45 via-theme-primary-800/40 to-theme-primary-950/60 px-2.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px_rgba(0,0,0,0.28)]">
+                <span className="pointer-events-none absolute inset-x-2 top-[2px] h-1.5 rounded-full blur-[1px] bg-white/20" />
+                <span className="pointer-events-none absolute inset-[1px] rounded-[10px] border border-white/10" />
+                <div className="relative z-10 flex items-center gap-2">
+                  <div className="rounded-full border border-theme-primary-300/30 bg-theme-primary-100 p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+                    <CircularCountdown
+                      remainingTime={countdownTime}
+                      totalTime={totalRefreshTime}
+                      size={26}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-100 leading-none tracking-wide drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
+                    {Math.ceil(countdownTime)}s
+                  </span>
+                  {onManualRefresh && (
+                    <DepthButton
+                      onClick={onManualRefresh}
+                      sizeClassName="w-8 h-8 py-1 px-1 rounded-xl"
+                      title="Refresh now"
+                      inactiveClassName="text-theme-primary-100 border-theme-primary-300/45"
+                      inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-600/40 via-theme-primary-700/75 to-theme-primary-900/80"
+                      className="active:scale-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(0,0,0,0.5),0_10px_20px_rgba(0,0,0,0.3)] p-1 rounded-full"
+                    >
+                      <RefreshCcwDot
+                        size={20}
+                        className="transition-transform duration-500 group-hover:rotate-180 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]"
+                      />
+                    </DepthButton>
+                  )}
+                </div>
               </div>
-            )}
-            {onManualRefresh && (
-              <button
-                onClick={onManualRefresh}
-                title="Refresh now"
-                className="group relative w-8 h-8 flex items-center justify-center rounded-lg bg-theme-primary-800/30 border border-theme-primary-600/20 text-theme-primary-300/70 hover:text-white hover:bg-theme-primary-600/30 hover:border-theme-primary-400/50 hover:shadow-[0_0_10px_rgba(var(--theme-primary-rgb,99,102,241),0.25)] active:scale-95 transition-all duration-200"
-              >
-                <MdRefresh
-                  size={17}
-                  className="transition-transform duration-500 group-hover:rotate-180"
-                />
-              </button>
             )}
           </div>
         </div>
@@ -175,18 +186,22 @@ export const WindowList: React.FC<WindowListProps> = ({
           </div>
 
           {/* Visibility filter pill */}
-          <button
+          <DepthButton
             onClick={() => setShowOnlyVisible(!showOnlyVisible)}
+            active={showOnlyVisible}
+            sizeClassName="h-6 px-2.5 rounded-lg"
             title={showOnlyVisible ? "Showing visible only" : "Showing all"}
-            className={`flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${
-              showOnlyVisible
-                ? "bg-theme-primary-500/20 border border-theme-primary-400/30 text-theme-primary-200"
-                : "bg-transparent border border-theme-primary-600/15 text-theme-primary-400/40 hover:text-theme-primary-300/70 hover:border-theme-primary-500/25"
-            }`}
+            activeClassName="text-theme-primary-50 border-theme-primary-300/70"
+            activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/85 via-theme-primary-500/95 to-theme-primary-600/90"
+            inactiveClassName="text-theme-primary-300/65 border-theme-primary-500/25"
+            inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/35 via-theme-primary-800/20 to-theme-primary-900/35"
+            className="flex-shrink-0"
           >
-            <MdFilterList size={13} />
-            <span>Visible</span>
-          </button>
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium">
+              <MdFilterList size={13} />
+              <span>Visible</span>
+            </span>
+          </DepthButton>
         </div>
 
         {error && (
@@ -244,16 +259,57 @@ export const WindowList: React.FC<WindowListProps> = ({
                     delay: index * 0.03,
                     ease: "easeOut",
                   }}
+                  draggable="true"
+                  onDragStartCapture={(e: React.DragEvent<HTMLDivElement>) => {
+                    // Create drag preview from the full card
+                    const card = e.currentTarget as HTMLElement;
+                    const dragPreview = card.cloneNode(true) as HTMLElement;
+                    dragPreview.style.position = "absolute";
+                    dragPreview.style.top = "-9999px";
+                    dragPreview.style.width = card.offsetWidth + "px";
+                    dragPreview.style.opacity = "0.7";
+                    dragPreview.style.transform = "rotate(-3deg)";
+                    dragPreview.style.pointerEvents = "none";
+                    document.body.appendChild(dragPreview);
+
+                    e.dataTransfer.setDragImage(
+                      dragPreview,
+                      card.offsetWidth / 2,
+                      card.offsetHeight / 2,
+                    );
+
+                    requestAnimationFrame(() => {
+                      if (document.body.contains(dragPreview)) {
+                        document.body.removeChild(dragPreview);
+                      }
+                    });
+
+                    const dragData = {
+                      windowId: window.id,
+                      windowInfo: JSON.stringify(window),
+                    };
+                    e.dataTransfer.setData(
+                      "text/plain",
+                      JSON.stringify(dragData),
+                    );
+                    e.dataTransfer.effectAllowed = "copy";
+                    setDraggedWindow(window);
+                    onWindowDragStart?.(window);
+                  }}
+                  onDragEndCapture={() => {
+                    setDraggedWindow(null);
+                    onWindowDragEnd?.();
+                  }}
                   onClick={(e) => {
-                    // Prevent click when dragging or clicking on drag handle
-                    if (
-                      draggedWindow ||
-                      (e.target as HTMLElement).closest('[draggable="true"]')
-                    ) {
+                    // Prevent click right after drag interactions
+                    if (draggedWindow) {
                       e.preventDefault();
                       return;
                     }
-                    onWindowSelect(window.id);
+
+                    if (window.handle != null) {
+                      onWindowFocus?.(window.handle);
+                    }
                   }}
                   className={`
                     relative overflow-hidden transition-all duration-200 border-solid
@@ -269,55 +325,6 @@ export const WindowList: React.FC<WindowListProps> = ({
                 >
                   {/* Drag Handle - Left side with dotted grip icon */}
                   <div
-                    draggable="true"
-                    onDragStart={(e: React.DragEvent) => {
-                      e.stopPropagation();
-
-                      // Create drag preview from parent element (the card)
-                      const card = e.currentTarget.parentElement;
-                      if (card) {
-                        const dragPreview = card.cloneNode(true) as HTMLElement;
-                        dragPreview.style.position = "absolute";
-                        dragPreview.style.top = "-9999px";
-                        dragPreview.style.width = card.offsetWidth + "px";
-                        dragPreview.style.opacity = "0.7";
-                        dragPreview.style.transform = "rotate(-3deg)";
-                        dragPreview.style.pointerEvents = "none";
-                        document.body.appendChild(dragPreview);
-
-                        e.dataTransfer.setDragImage(
-                          dragPreview,
-                          card.offsetWidth / 2,
-                          card.offsetHeight / 2,
-                        );
-
-                        // Clean up after drag starts
-                        requestAnimationFrame(() => {
-                          if (document.body.contains(dragPreview)) {
-                            document.body.removeChild(dragPreview);
-                          }
-                        });
-                      }
-
-                      const dragData = {
-                        windowId: window.id,
-                        windowInfo: JSON.stringify(window),
-                      };
-                      e.dataTransfer.setData(
-                        "text/plain",
-                        JSON.stringify(dragData),
-                      );
-                      e.dataTransfer.effectAllowed = "copy";
-                      setDraggedWindow(window);
-                      onWindowDragStart?.(window);
-
-                      console.log("🎯 Drag started:", window.name);
-                    }}
-                    onDragEnd={() => {
-                      setDraggedWindow(null);
-                      onWindowDragEnd?.();
-                      console.log("🎯 Drag ended");
-                    }}
                     onMouseDown={(e) => {
                       e.stopPropagation();
                     }}
@@ -363,10 +370,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                         e.stopPropagation();
                         onWindowPin(window.id);
                       }}
-                      className={`absolute top-1.5 right-7 z-20 p-0.5 rounded transition-all duration-200 ${
+                      className={`transition-all duration-200 ${
                         window.isPinned
-                          ? "opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
-                          : "opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                          ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
+                          : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
                       }`}
                       title={window.isPinned ? "Unpin window" : "Pin to top"}
                     >
@@ -378,20 +385,23 @@ export const WindowList: React.FC<WindowListProps> = ({
                   )}
 
                   {/* App Icon */}
-                  <div className="relative flex-shrink-0 w-8 h-8 flex items-center justify-center z-10">
-                    <div
-                      className={`absolute inset-0 rounded-lg bg-gradient-to-br opacity-15 group-hover:opacity-30 transition-opacity duration-300 ${
-                        window.isSelected
-                          ? "from-theme-primary-400 to-theme-primary-600"
-                          : "from-white/10 to-transparent"
-                      }`}
-                    />
-                    <div className="relative w-8 h-8 flex items-center justify-center">
+                  <DepthButton
+                    sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
+                    className="!cursor-default"
+                    active={window.isSelected}
+                    inactiveClassName="text-theme-primary-200/85 border-theme-primary-500/25"
+                    activeClassName="text-theme-primary-50 border-theme-primary-300/70"
+                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
+                    activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
+                    aria-hidden
+                    tabIndex={-1}
+                  >
+                    <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
                       {window.icon ? (
                         <img
                           src={window.icon}
                           alt={`${window.app} icon`}
-                          className="w-7 h-7 object-contain"
+                          className="w-6 h-6 object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
                             const fallback = e.currentTarget
@@ -404,10 +414,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                         style={{ display: window.icon ? "none" : "flex" }}
                         className="w-full h-full items-center justify-center"
                       >
-                        {getAppIcon(window.app, 20)}
+                        {getWindowFallbackIcon(window, 20)}
                       </div>
                     </div>
-                  </div>
+                  </DepthButton>
 
                   {/* Text Content */}
                   <div className="flex-1 min-w-0 z-10">
@@ -447,11 +457,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                     }`}
                   >
                     <div
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onWindowSelect(window.id);
                       }}
-                      className={`w-3.5 h-3.5 rounded flex items-center justify-center transition-all duration-200 ${
+                      className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
                         window.isSelected
                           ? "text-theme-primary-300"
                           : "text-white/40 hover:text-white/70"
@@ -459,13 +471,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                       title={
                         window.isSelected
                           ? "Remove from selection"
-                          : "Add to selection"
+                          : "Drag to add window to layout"
                       }
                     >
                       {window.isSelected ? (
-                        <MdCheck size={13} />
+                        <MdCheck size={16} />
                       ) : (
-                        <MdAdd size={13} />
+                        <MdDragIndicator size={17} />
                       )}
                     </div>
                   </div>

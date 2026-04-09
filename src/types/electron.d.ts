@@ -15,6 +15,16 @@ export interface WindowBounds {
   height: number;
 }
 
+export interface ConnectedDisplay {
+  id: number;
+  label: string;
+  isPrimary: boolean;
+  internal: boolean;
+  bounds: WindowBounds;
+  scaleFactor: number;
+  rotation: number;
+}
+
 export interface EnumerateWindowsOptions {
   includeMinimized?: boolean;
   includeSystemWindows?: boolean;
@@ -87,15 +97,31 @@ export interface ElectronAPI {
     handle: number,
     bounds: WindowBounds,
   ) => Promise<WindowOperationResult>;
-  publishLayout: (
-    layoutData: any,
-  ) => Promise<{ success: boolean; windowId?: number; error?: string }>;
+  getConnectedDisplays: () => Promise<{
+    success: boolean;
+    displays: ConnectedDisplay[];
+    error?: string;
+  }>;
+  publishLayout: (layoutData: {
+    windows: any[];
+    layout: string;
+    focusedWindowId: string | null;
+    publishedQuality?: { contrast: number; brightness: number };
+    captureQuality?: number;
+    displayId?: number;
+  }) => Promise<{ success: boolean; windowId?: number; error?: string }>;
   getPublishedLayout: (layoutId: string) => Promise<any | null>;
   checkPublishedWindows: () => Promise<{
     hasActivePublications: boolean;
     count: number;
+    publications: Array<{
+      layoutId: string;
+      displayId: number | null;
+      windowId: number | null;
+      isPublished: boolean;
+    }>;
   }>;
-  closePublishedWindows: () => Promise<{
+  closePublishedWindows: (displayId?: number) => Promise<{
     success: boolean;
     closedCount?: number;
     error?: string;

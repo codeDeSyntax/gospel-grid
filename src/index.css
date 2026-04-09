@@ -19,7 +19,8 @@
   box-sizing: border-box;
 }
 
-body,textarea {
+body,
+textarea {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -141,13 +142,9 @@ body,textarea {
   transition-duration: 200ms;
 }
 
-
 button {
   background-color: "transparent";
 }
-
-
-
 
 button {
   border: none;
@@ -249,62 +246,74 @@ code {
 }
 
 /* Theme-specific slider colors */
-[data-color-theme="cosmic-blue"] .slider-theme::-webkit-slider-thumb {
-  background: #3b82f6;
-  border-color: #93c5fd;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+[data-color-theme="grayscale"] .slider-theme::-webkit-slider-thumb {
+  background: #6a6865;
+  border-color: #b0b0b0;
+  box-shadow: 0 0 10px rgba(106, 104, 101, 0.35);
 }
 
-[data-color-theme="cosmic-blue"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #2563eb;
-  border-color: #bfdbfe;
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+[data-color-theme="grayscale"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #5a5856;
+  border-color: #e5e5e5;
+  box-shadow: 0 0 15px rgba(106, 104, 101, 0.5);
 }
 
-[data-color-theme="matrix-green"] .slider-theme::-webkit-slider-thumb {
-  background: #10b981;
-  border-color: #6ee7b7;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+[data-color-theme="royal-purple"] .slider-theme::-webkit-slider-thumb {
+  background: #5a4466;
+  border-color: #c4b5d0;
+  box-shadow: 0 0 10px rgba(90, 68, 102, 0.35);
 }
 
-[data-color-theme="matrix-green"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #059669;
-  border-color: #a7f3d0;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+[data-color-theme="royal-purple"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #3d2d4a;
+  border-color: #e0d5e8;
+  box-shadow: 0 0 15px rgba(90, 68, 102, 0.5);
+}
+
+[data-color-theme="sky-blue"] .slider-theme::-webkit-slider-thumb {
+  background: #72a8d4;
+  border-color: #a8c8e0;
+  box-shadow: 0 0 10px rgba(114, 168, 212, 0.35);
+}
+
+[data-color-theme="sky-blue"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #4a6b85;
+  border-color: #d4e8f5;
+  box-shadow: 0 0 15px rgba(114, 168, 212, 0.5);
+}
+
+[data-color-theme="forest-green"] .slider-theme::-webkit-slider-thumb {
+  background: #4a6b44;
+  border-color: #b5d4b5;
+  box-shadow: 0 0 10px rgba(74, 107, 68, 0.35);
+}
+
+[data-color-theme="forest-green"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #334a2d;
+  border-color: #d9e5d5;
+  box-shadow: 0 0 15px rgba(74, 107, 68, 0.5);
+}
+
+[data-color-theme="vibrant-green"] .slider-theme::-webkit-slider-thumb {
+  background: #12c92b;
+  border-color: #b2ddbc;
+  box-shadow: 0 0 10px rgba(18, 201, 43, 0.35);
+}
+
+[data-color-theme="vibrant-green"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #017828;
+  border-color: #d0f0d6;
+  box-shadow: 0 0 15px rgba(18, 201, 43, 0.5);
 }
 
 [data-color-theme="fire-red"] .slider-theme::-webkit-slider-thumb {
   background: #ef4444;
-  border-color: #fca5a5;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  border-color: #fecaca;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
 }
 
 [data-color-theme="fire-red"] .slider-theme::-webkit-slider-thumb:hover {
   background: #dc2626;
   border-color: #fee2e2;
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-}
-
-[data-color-theme="steel-gray"] .slider-theme::-webkit-slider-thumb {
-  background: #6b7280;
-  border-color: #d1d5db;
-  box-shadow: 0 0 10px rgba(107, 114, 128, 0.107);
-}
-
-[data-color-theme="steel-gray"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #4b5563;
-  border-color: #e5e7eb;
-  box-shadow: 0 0 15px rgba(107, 114, 128, 0.5);
-}
-
-[data-color-theme="earth-brown"] .slider-theme::-webkit-slider-thumb {
-  background: #d97706;
-  border-color: #fcd34d;
-  box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
-}
-
-[data-color-theme="earth-brown"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #b45309;
-  border-color: #fde68a;
-  box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
 }
