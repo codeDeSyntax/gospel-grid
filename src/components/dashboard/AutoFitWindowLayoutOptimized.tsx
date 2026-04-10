@@ -430,20 +430,28 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
                 {assignedIds.length === 0 ? (
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
-                    <div className="w-full max-w-[210px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-theme-primary-500/30 bg-theme-primary-800/55">
-                        <Monitor className="h-5 w-5 text-theme-primary-200/85" />
+                    <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                      <div className="flex items-center gap-3 text-left">
+                        <img
+                          src="./extend.svg"
+                          alt="Drag from left panel"
+                          className="h-14 w-14 shrink-0 object-contain opacity-95"
+                          draggable={false}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-semibold tracking-wide uppercase text-theme-primary-100/90">
+                            Waiting For Window Drop
+                          </p>
+                          <p className="mt-1 text-[10px] text-theme-primary-300/70 leading-relaxed">
+                            Drag a window card from the left panel and drop it
+                            here.
+                          </p>
+                          <div className="mt-2 h-px w-full bg-gradient-to-r from-transparent via-theme-primary-500/35 to-transparent" />
+                          <p className="mt-2 text-[9px] text-theme-primary-300/55">
+                            You can drop multiple windows per display.
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-[11px] font-semibold tracking-wide uppercase text-theme-primary-100/90">
-                        Waiting For Window Drop
-                      </p>
-                      <p className="mt-1 text-[10px] text-theme-primary-300/70 leading-relaxed">
-                        Drag a window card from the left panel and drop it here.
-                      </p>
-                      <div className="mt-3 h-px w-full bg-gradient-to-r from-transparent via-theme-primary-500/35 to-transparent" />
-                      <p className="mt-2 text-[9px] text-theme-primary-300/55">
-                        You can drop multiple windows per display.
-                      </p>
                     </div>
                   </div>
                 ) : (

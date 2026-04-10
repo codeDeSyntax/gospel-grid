@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { MonitorPlay, X, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import type { RootState } from "@/store";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import {
@@ -28,12 +29,12 @@ const saveHistory = (msgs: string[]) => {
 
 export const OverlayTextPanel: React.FC = () => {
   const dispatch = useAppDispatch();
-  const overlayText = useAppSelector((s) => s.app.overlayText);
-  const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
+  const overlayText = useAppSelector((s: RootState) => s.app.overlayText);
+  const overlayVisible = useAppSelector((s: RootState) => s.app.overlayVisible);
   const overlayTargetDisplayId = useAppSelector(
-    (s) => s.app.overlayTargetDisplayId,
+    (s: RootState) => s.app.overlayTargetDisplayId,
   );
-  const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
+  const isProjectionOn = useAppSelector((s: RootState) => s.app.isProjectionOn);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Local draft — typing here does NOT update the projection until Enter is pressed

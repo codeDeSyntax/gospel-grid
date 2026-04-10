@@ -3,11 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MdMonitor,
   MdSearch,
-  MdFilterList,
   MdError,
-  MdVisibility,
   MdCheck,
-  MdRefresh,
   MdPushPin,
   MdDragIndicator,
 } from "react-icons/md";
@@ -15,6 +12,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { getWindowFallbackIcon, getAppGradient } from "@/utils/appIconMapping";
 import { CircularCountdown } from "@/components/ui/CircularCountdown";
 import { DepthButton } from "@/shared/DepthButton";
+import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot } from "lucide-react";
 
 export interface WindowInfo {
@@ -78,8 +76,8 @@ export const WindowList: React.FC<WindowListProps> = ({
   onManualRefresh,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showOnlyVisible, setShowOnlyVisible] = useState(true);
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
+  const showLoadingSkeleton = isLoading && windows.length === 0;
 
   const filteredWindows = useMemo(() => {
     const filtered = windows.filter((window) => {
@@ -94,11 +92,6 @@ export const WindowList: React.FC<WindowListProps> = ({
         }
       }
 
-      // Visibility filter
-      if (showOnlyVisible && window.isMinimized) {
-        return false;
-      }
-
       return true;
     });
 
@@ -108,7 +101,7 @@ export const WindowList: React.FC<WindowListProps> = ({
       if (!a.isPinned && b.isPinned) return 1;
       return 0;
     });
-  }, [windows, searchTerm, showOnlyVisible]);
+  }, [windows, searchTerm]);
 
   return (
     <div className="h-full flex flex-col p-2">
@@ -168,42 +161,6 @@ export const WindowList: React.FC<WindowListProps> = ({
           </div>
         </div>
 
-        {/* Search + filter row */}
-        <div className="flex items-center gap-1.5">
-          {/* Search input */}
-          <div className="relative flex-1">
-            <MdSearch
-              size={13}
-              className="absolute left-2 top-1/2 -translate-y-1/2 text-theme-primary-400/40 pointer-events-none"
-            />
-            <input
-              type="text"
-              placeholder="Search…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-7 pr-2.5 py-1.5 text-[11px] bg-theme-primary-500/20 border border-theme-primary-600/15 rounded-lg text-white placeholder-theme-primary-400/35 focus:border-theme-primary-400/40 focus:bg-theme-primary-800/30 focus:outline-none transition-all duration-200"
-            />
-          </div>
-
-          {/* Visibility filter pill */}
-          <DepthButton
-            onClick={() => setShowOnlyVisible(!showOnlyVisible)}
-            active={showOnlyVisible}
-            sizeClassName="h-6 px-2.5 rounded-lg"
-            title={showOnlyVisible ? "Showing visible only" : "Showing all"}
-            activeClassName="text-theme-primary-50 border-theme-primary-300/70"
-            activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/85 via-theme-primary-500/95 to-theme-primary-600/90"
-            inactiveClassName="text-theme-primary-300/65 border-theme-primary-500/25"
-            inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/35 via-theme-primary-800/20 to-theme-primary-900/35"
-            className="flex-shrink-0"
-          >
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium">
-              <MdFilterList size={13} />
-              <span>Visible</span>
-            </span>
-          </DepthButton>
-        </div>
-
         {error && (
           <div className="p-2 rounded-lg bg-red-500/10 border border-red-400/25 flex items-center gap-1.5 text-red-300/80">
             <MdError size={12} />
@@ -214,14 +171,32 @@ export const WindowList: React.FC<WindowListProps> = ({
 
       {/* Scrollable Window List */}
       <div className="flex-1 overflow-y-scroll no-scrollbar px-1">
-        {filteredWindows.length === 0 && !isLoading ? (
+        {showLoadingSkeleton ? (
+          <div className="space-y-1 pb-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={`window-skeleton-${index}`}
+                className="relative overflow-hidden rounded-xl border border-theme-primary-600/12 bg-theme-primary-900/12 px-2 py-1.5"
+              >
+                <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-theme-primary-300/10 to-transparent" />
+                <div className="relative z-10 flex items-center gap-2.5 pl-3 pr-5">
+                  <div className="h-8 w-8 rounded-lg border border-theme-primary-500/20 bg-theme-primary-500/18 animate-pulse" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-2.5 w-28 rounded bg-theme-primary-300/25 animate-pulse" />
+                    <div className="h-2 w-40 max-w-[90%] rounded bg-theme-primary-500/20 animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredWindows.length === 0 && !isLoading ? (
           <div className="text-center py-6 text-stone-400">
             <MdMonitor size={40} className="mx-auto mb-2 opacity-50" />
-            {searchTerm || !showOnlyVisible ? (
+            {searchTerm ? (
               <>
                 <p className="text-sm">No windows match your filters</p>
                 <p className="text-xs text-stone-500 mt-1">
-                  Try adjusting your search or filter settings
+                  Try adjusting your search query
                 </p>
               </>
             ) : (
