@@ -175,7 +175,7 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
 
       {/* Live Window Grid */}
       <LiveWindowGrid
-        windows={windows.filter((w) => w.isSelected)}
+        windows={windows}
         className="w-full h-full"
         layoutId={layoutId}
         isFrozen={isFrozen}

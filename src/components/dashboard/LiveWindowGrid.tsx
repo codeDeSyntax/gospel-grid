@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect, useState } from "react";
 import { WindowInfo } from "./WindowList";
 import { useAppSelector } from "@/store/hooks";
 import { useMediaStreams } from "@/hooks/useMediaStreams";
@@ -7,6 +7,15 @@ import { SingleWindowLayoutLive } from "./layouts/live/SingleWindowLayoutLive";
 import { DualWindowLayoutLive } from "./layouts/live/DualWindowLayoutLive";
 import { TripleWindowLayoutLive } from "./layouts/live/TripleWindowLayoutLive";
 import { QuadWindowLayoutLive } from "./layouts/live/QuadWindowLayoutLive";
+import { TimerProjectionScreen } from "./TimerProjectionScreen";
+import {
+  TIMER_FEATURE_WINDOW_PREFIX,
+  getCountdownRemainingMs,
+  loadFeatureTimerCollection,
+  markCollectionCompletedIfElapsed,
+  saveFeatureTimerCollection,
+  type FeatureTimerProjectionTheme,
+} from "./RightPanel/featureTimerState";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE
@@ -44,6 +53,18 @@ export function LiveWindowGrid({
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [timerDisplayMap, setTimerDisplayMap] = useState<
+    Record<
+      string,
+      {
+        days: string;
+        hours: string;
+        minutes: string;
+        seconds: string;
+        theme: FeatureTimerProjectionTheme;
+      }
+    >
+  >({});
 
   // ── Window selection (max 4) ───────────────────────────────────────────
   const displayWindows = useMemo(() => windows.slice(0, 4), [windows]);
@@ -62,8 +83,82 @@ export function LiveWindowGrid({
 
   const { type, windows: gridWindows } = gridConfig;
 
+  const splitDuration = (totalMs: number) => {
+    const totalSeconds = Math.max(0, Math.floor(totalMs / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return {
+      days: String(days).padStart(2, "0"),
+      hours: String(hours).padStart(2, "0"),
+      minutes: String(minutes).padStart(2, "0"),
+      seconds: String(seconds).padStart(2, "0"),
+    };
+  };
+
+  const splitClock = (now: Date) => {
+    return {
+      days: "00",
+      hours: String(now.getHours()).padStart(2, "0"),
+      minutes: String(now.getMinutes()).padStart(2, "0"),
+      seconds: String(now.getSeconds()).padStart(2, "0"),
+    };
+  };
+
+  useEffect(() => {
+    const syncTimerLabels = () => {
+      const loaded = loadFeatureTimerCollection();
+      const normalized = markCollectionCompletedIfElapsed(loaded, Date.now());
+      if (normalized !== loaded) {
+        saveFeatureTimerCollection(normalized);
+      }
+
+      const nextDisplayMap: Record<
+        string,
+        {
+          days: string;
+          hours: string;
+          minutes: string;
+          seconds: string;
+          theme: FeatureTimerProjectionTheme;
+        }
+      > = {};
+      normalized.timers.forEach((timer) => {
+        const timerWindowId = `${TIMER_FEATURE_WINDOW_PREFIX}${timer.id}`;
+        const theme = timer.state.projectionTheme ?? "dark";
+        if (timer.state.mode === "countdown") {
+          const remaining = getCountdownRemainingMs(timer.state, Date.now());
+          nextDisplayMap[timerWindowId] = {
+            ...splitDuration(remaining),
+            theme,
+          };
+        } else {
+          const now = new Date();
+          nextDisplayMap[timerWindowId] = {
+            ...splitClock(now),
+            theme,
+          };
+        }
+      });
+
+      setTimerDisplayMap(nextDisplayMap);
+    };
+
+    syncTimerLabels();
+    const interval = window.setInterval(syncTimerLabels, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   // ── MediaStream hook — one live GPU stream per window ──────────────────
-  const sourceIds = useMemo(() => gridWindows.map((w) => w.id), [gridWindows]);
+  const sourceIds = useMemo(
+    () =>
+      gridWindows
+        .filter((w) => !w.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX))
+        .map((w) => w.id),
+    [gridWindows],
+  );
 
   // Adjust resolution per layout density
   const streamOptions = useMemo(() => {
@@ -104,6 +199,36 @@ export function LiveWindowGrid({
 
   // ── Render a single window cell (VideoWindow instead of <img>) ─────────
   const renderWindow = (win: WindowInfo, customStyle?: React.CSSProperties) => {
+    const isTimerFeature = win.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX);
+
+    if (isTimerFeature) {
+      const timerView = timerDisplayMap[win.id] ?? {
+        days: "00",
+        hours: "00",
+        minutes: "00",
+        seconds: "00",
+        theme: "dark" as FeatureTimerProjectionTheme,
+      };
+      return (
+        <div
+          key={win.id}
+          className="relative overflow-hidden bg-black"
+          style={{
+            ...customStyle,
+          }}
+        >
+          <TimerProjectionScreen
+            days={timerView.days}
+            hours={timerView.hours}
+            minutes={timerView.minutes}
+            seconds={timerView.seconds}
+            theme={timerView.theme}
+            layoutMode={type}
+          />
+        </div>
+      );
+    }
+
     const stream = streams[win.id] || null;
     const status = statuses[win.id] || "pending";
     const isSingle = type === "single";

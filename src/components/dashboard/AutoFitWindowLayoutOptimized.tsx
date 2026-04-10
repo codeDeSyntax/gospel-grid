@@ -19,6 +19,12 @@ import {
 } from "@/store/slices/gridSlice";
 import { publishDisplayLayout } from "@/store/slices/notificationSlice";
 import { setProjectionOn } from "@/store/slices/appSlice";
+import { TimerProjectionScreen } from "./TimerProjectionScreen";
+import {
+  getCountdownRemainingMs,
+  getTimerFeatureWindowId,
+  loadFeatureTimerCollection,
+} from "./RightPanel/featureTimerState";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -56,6 +62,16 @@ interface AutoFitWindowLayoutProps {
   isProjectionOn?: boolean;
 }
 
+const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
+
+type TimerProjectionPreview = {
+  days: string;
+  hours: string;
+  minutes: string;
+  seconds: string;
+  theme: "dark" | "light";
+};
+
 export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   windows,
   focusedWindowId,
@@ -75,6 +91,48 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   );
   const windowThumbnails =
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
+
+  const timerPreviewMap = useMemo(() => {
+    const collection = loadFeatureTimerCollection();
+    const nowMs = Date.now();
+    const map: Record<string, TimerProjectionPreview> = {};
+
+    collection.timers.forEach((timer) => {
+      const windowId = getTimerFeatureWindowId(timer.id);
+      const theme = timer.state.projectionTheme ?? "dark";
+
+      if (timer.state.mode === "countdown") {
+        const totalSeconds = Math.max(
+          0,
+          Math.floor(getCountdownRemainingMs(timer.state, nowMs) / 1000),
+        );
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        map[windowId] = {
+          days: String(days).padStart(2, "0"),
+          hours: String(hours).padStart(2, "0"),
+          minutes: String(minutes).padStart(2, "0"),
+          seconds: String(seconds).padStart(2, "0"),
+          theme,
+        };
+        return;
+      }
+
+      const now = new Date(nowMs);
+      map[windowId] = {
+        days: "00",
+        hours: String(now.getHours()).padStart(2, "0"),
+        minutes: String(now.getMinutes()).padStart(2, "0"),
+        seconds: String(now.getSeconds()).padStart(2, "0"),
+        theme,
+      };
+    });
+
+    return map;
+  }, [windows, displayAssignments]);
 
   const loadDisplays = useCallback(async (showSpinner = true) => {
     if (showSpinner) setLoadingDisplays(true);
@@ -150,6 +208,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     const targetIds = assignedWindowIds.filter(
       (windowId) =>
         !requestedThumbnailIdsRef.current.has(windowId) &&
+        !windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
         windowMap.has(windowId),
     );
 
@@ -386,7 +445,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full aspect-[16/9] self-start rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black shadow-[0_16px_38px_rgba(0,0,0,0.28)]`}
+                className={`relative w-full aspect-[16/9] self-start rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black `}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 
@@ -461,8 +520,20 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                     {assignedIds.map((windowId) => {
                       const win = windowMap.get(windowId);
                       if (!win) return null;
+                      const isTimerFeature = windowId.startsWith(
+                        TIMER_FEATURE_WINDOW_PREFIX,
+                      );
                       const thumbnail =
                         windowThumbnails[windowId] || win.thumbnail || null;
+
+                      const timerPreview = timerPreviewMap[windowId] ?? {
+                        days: "00",
+                        hours: "00",
+                        minutes: "00",
+                        seconds: "00",
+                        theme: "dark" as const,
+                      };
+
                       return (
                         <button
                           key={`${display.id}-${windowId}`}
@@ -473,7 +544,18 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
                           title={`${win.app} • ${win.name}`}
                         >
-                          {thumbnail ? (
+                          {isTimerFeature ? (
+                            <div className="absolute inset-0 z-0">
+                              <TimerProjectionScreen
+                                days={timerPreview.days}
+                                hours={timerPreview.hours}
+                                minutes={timerPreview.minutes}
+                                seconds={timerPreview.seconds}
+                                theme={timerPreview.theme}
+                                compact
+                              />
+                            </div>
+                          ) : thumbnail ? (
                             <img
                               src={thumbnail}
                               alt={`${win.app} thumbnail`}
@@ -493,43 +575,49 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent pointer-events-none z-[1]" />
+                          {!isTimerFeature && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent pointer-events-none z-[1]" />
+                          )}
 
-                          <div className="absolute top-1.5 left-1.5 z-20 max-w-[82%] rounded bg-black/70 px-1.5 py-0.5 backdrop-blur-sm">
-                            <span className="block text-[8px] leading-none text-theme-primary-100 truncate max-w-full">
-                              {win.name}
-                            </span>
-                          </div>
+                          {!isTimerFeature && (
+                            <div className="absolute top-1.5 left-1.5 z-20 max-w-[82%] rounded bg-black/70 px-1.5 py-0.5 backdrop-blur-sm">
+                              <span className="block text-[8px] leading-none text-theme-primary-100 truncate max-w-full">
+                                {win.name}
+                              </span>
+                            </div>
+                          )}
 
-                          <div className="absolute bottom-1.5 right-1.5 z-20 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
-                            {win.icon ? (
-                              <>
-                                <img
-                                  src={win.icon}
-                                  alt={`${win.app} icon`}
-                                  className="w-4 h-4 object-contain opacity-95"
-                                  draggable={false}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                    const fallback = e.currentTarget
-                                      .nextElementSibling as HTMLElement;
-                                    if (fallback)
-                                      fallback.style.display = "flex";
-                                  }}
-                                />
-                                <span
-                                  className="text-theme-primary-100"
-                                  style={{ display: "none" }}
-                                >
+                          {!isTimerFeature && (
+                            <div className="absolute bottom-1.5 right-1.5 z-20 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
+                              {win.icon ? (
+                                <>
+                                  <img
+                                    src={win.icon}
+                                    alt={`${win.app} icon`}
+                                    className="w-4 h-4 object-contain opacity-95"
+                                    draggable={false}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      const fallback = e.currentTarget
+                                        .nextElementSibling as HTMLElement;
+                                      if (fallback)
+                                        fallback.style.display = "flex";
+                                    }}
+                                  />
+                                  <span
+                                    className="text-theme-primary-100"
+                                    style={{ display: "none" }}
+                                  >
+                                    {getWindowFallbackIcon(win, 14)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-theme-primary-100">
                                   {getWindowFallbackIcon(win, 14)}
                                 </span>
-                              </>
-                            ) : (
-                              <span className="text-theme-primary-100">
-                                {getWindowFallbackIcon(win, 14)}
-                              </span>
-                            )}
-                          </div>
+                              )}
+                            </div>
+                          )}
 
                           <span
                             onClick={(e) => {

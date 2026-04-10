@@ -31,6 +31,14 @@ import {
   useSelectionHistory,
   type SelectionMap,
 } from "@/hooks/useSelectionHistory";
+import {
+  FEATURE_TIMER_EVENT,
+  type FeatureTimerItem,
+  getCountdownRemainingMs,
+  loadFeatureTimerCollection,
+  markCollectionCompletedIfElapsed,
+  saveFeatureTimerCollection,
+} from "./RightPanel/featureTimerState";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -49,6 +57,44 @@ const SIDEBAR_WIDTH_STORAGE_KEY = "wingrid.sidebarWidth";
 const SIDEBAR_MIN_WIDTH = 300;
 const SIDEBAR_MAX_WIDTH = 600;
 const SIDEBAR_DEFAULT_WIDTH = 380;
+const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
+
+const isFeatureWindowId = (id: string) => id.startsWith("feature:");
+const getTimerFeatureWindowId = (timerId: string) =>
+  `${TIMER_FEATURE_WINDOW_PREFIX}${timerId}`;
+
+const formatTimerShort = (remainingMs: number): string => {
+  const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+};
+
+const buildTimerFeatureWindow = (timer: FeatureTimerItem): WindowInfo => {
+  const nowMs = Date.now();
+  const remainingMs = getCountdownRemainingMs(timer.state, nowMs);
+  const modeLabel = timer.state.mode === "countdown" ? "Countdown" : "Clock";
+
+  return {
+    id: getTimerFeatureWindowId(timer.id),
+    app: "Feature Window",
+    name:
+      timer.state.mode === "countdown"
+        ? `${timer.name} • ${modeLabel} • ${formatTimerShort(remainingMs)}`
+        : `${timer.name} • Current Time`,
+    isSelected: false,
+    isPinned: true,
+    icon: "/timer-feature.svg",
+    isVisible: true,
+    isMinimized: false,
+  };
+};
 
 interface DashboardProps {
   onHomeClick?: () => void;
@@ -99,6 +145,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     return Math.min(Math.max(parsed, SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
   });
   const [isResizing, setIsResizing] = useState(false);
+  const [timerFeatureWindows, setTimerFeatureWindows] = useState<WindowInfo[]>(
+    [],
+  );
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -106,6 +155,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       String(sidebarWidth),
     );
   }, [sidebarWidth]);
+
+  useEffect(() => {
+    const syncTimerFeatureWindow = () => {
+      const loaded = loadFeatureTimerCollection();
+      const normalized = markCollectionCompletedIfElapsed(loaded, Date.now());
+      if (normalized !== loaded) {
+        saveFeatureTimerCollection(normalized);
+      }
+
+      const nextFeatureWindows = normalized.timers
+        .filter((timer) => timer.state.showInWindowList)
+        .map((timer) => buildTimerFeatureWindow(timer));
+
+      setTimerFeatureWindows(nextFeatureWindows);
+    };
+
+    const handleTimerUpdate = () => {
+      syncTimerFeatureWindow();
+    };
+
+    syncTimerFeatureWindow();
+    const interval = window.setInterval(syncTimerFeatureWindow, 1000);
+    window.addEventListener(
+      FEATURE_TIMER_EVENT,
+      handleTimerUpdate as EventListener,
+    );
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener(
+        FEATURE_TIMER_EVENT,
+        handleTimerUpdate as EventListener,
+      );
+    };
+  }, []);
 
   // Settings panel toggle
   const [activePanel, setActivePanel] = useState<PanelView>("layout");
@@ -334,7 +418,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           setState((prev) => {
             // Create a map of existing windows for quick lookup
             const existingWindowsMap = new Map(
-              prev.windows.map((w) => [w.id, w]),
+              prev.windows
+                .filter((w) => !isFeatureWindowId(w.id))
+                .map((w) => [w.id, w]),
             );
 
             // Merge enumerated windows with existing state, preserving isSelected
@@ -444,6 +530,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   // Window handlers
   const handleWindowSelect = useCallback(
     (windowId: string) => {
+      if (isFeatureWindowId(windowId)) return;
+
       const newWindows = state.windows.map((w) =>
         w.id === windowId ? { ...w, isSelected: !w.isSelected } : w,
       );
@@ -465,6 +553,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   const handleWindowAdd = useCallback(
     (windowInfo: WindowInfo) => {
+      if (isFeatureWindowId(windowInfo.id)) {
+        return;
+      }
+
       const windowExists = state.windows.some((w) => w.id === windowInfo.id);
       const newWindows = windowExists
         ? state.windows.map((w) =>
@@ -490,6 +582,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   // Pin / Unpin a window to keep it at the top of the list
   const handleWindowPin = useCallback((windowId: string) => {
+    if (isFeatureWindowId(windowId)) return;
+
     setState((prev) => ({
       ...prev,
       windows: prev.windows.map((w) =>
@@ -500,6 +594,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   const handleWindowRemove = useCallback(
     (windowId: string) => {
+      if (isFeatureWindowId(windowId)) return;
+
       const newWindows = state.windows.map((w) =>
         w.id === windowId ? { ...w, isSelected: false } : w,
       );
@@ -515,9 +611,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     [state.windows, state.focusedWindowId, pushHistory],
   );
 
+  const windowsWithFeatures = useMemo(() => {
+    const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
+    return [...timerFeatureWindows, ...baseWindows];
+  }, [state.windows, timerFeatureWindows]);
+
+  useEffect(() => {
+    const validFeatureIds = new Set(timerFeatureWindows.map((w) => w.id));
+    let changed = false;
+    const nextAssignments: Record<number, string[]> = {};
+
+    for (const [displayIdStr, ids] of Object.entries(displayAssignments)) {
+      const filtered = ids.filter((id) => {
+        if (id.startsWith(TIMER_FEATURE_WINDOW_PREFIX)) {
+          return validFeatureIds.has(id);
+        }
+        if (id === "feature:timer-window") {
+          return false;
+        }
+        return true;
+      });
+
+      if (filtered.length !== ids.length) changed = true;
+      if (filtered.length > 0) {
+        nextAssignments[Number(displayIdStr)] = filtered;
+      }
+    }
+
+    if (changed) {
+      dispatch(setDisplayAssignments(nextAssignments));
+    }
+  }, [timerFeatureWindows, displayAssignments, dispatch]);
+
   // Memoize selected windows to prevent recalculation
   const selectedWindows = useMemo(
-    () => state.windows.filter((w) => w.isSelected),
+    () => state.windows.filter((w) => w.isSelected && !isFeatureWindowId(w.id)),
     [state.windows],
   );
 
@@ -705,7 +833,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         isProjectionOn={isProjectionOn}
         isBlackout={isBlackout}
         isFrozen={isFrozen}
-        overlayVisible={overlayVisible}
         activePanel={activePanel}
         canUndo={selectionHistory.canUndo}
         canRedo={selectionHistory.canRedo}
@@ -722,7 +849,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
       {/* Main Content Area */}
       <div
-        className="flex-1 flex overflow-hidden px-2 py-1 gap-3"
+        className="relative flex-1 flex overflow-hidden px-2 py-1 gap-3"
         style={{
           background: mainSectionBackground,
           backgroundColor: "rgb(var(--theme-primary-800))",
@@ -735,7 +862,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           surfaceClassName="depth-surface-shell"
         >
           <WindowList
-            windows={state.windows}
+            windows={windowsWithFeatures}
             onWindowSelect={handleWindowSelect}
             onWindowPin={handleWindowPin}
             onWindowFocus={focusWindowNative}
@@ -772,7 +899,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         {/* Right Panel - Dynamic Content */}
         <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-2xl">
           <RightPanel
-            windows={state.windows}
+            windows={windowsWithFeatures}
             currentLayout={state.currentLayout}
             focusedWindowId={state.focusedWindowId}
             onLayoutChange={handleLayoutChange}

@@ -14,6 +14,7 @@ import { CircularCountdown } from "@/components/ui/CircularCountdown";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot } from "lucide-react";
+import { TIMER_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureTimerState";
 
 export interface WindowInfo {
   id: string;
@@ -298,15 +299,25 @@ export const WindowList: React.FC<WindowListProps> = ({
                     }
                   `}
                 >
-                  {/* Drag Handle - Left side with dotted grip icon */}
-                  <div
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className={`
+                  {(() => {
+                    const isTimerWindow = window.id.startsWith(
+                      TIMER_FEATURE_WINDOW_PREFIX,
+                    );
+                    const hhmmss = window.name.match(/\b\d{1,2}:\d{2}:\d{2}\b/);
+                    const mmss = window.name.match(/\b\d{1,2}:\d{2}\b/);
+                    const timerText = hhmmss?.[0] ?? mmss?.[0] ?? window.name;
+
+                    return (
+                      <>
+                        {/* Drag Handle - Left side with dotted grip icon */}
+                        <div
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className={`
                       absolute left-0 top-0 w-4 h-full z-10
                       flex items-center justify-center
                       cursor-grab active:cursor-grabbing
@@ -316,146 +327,159 @@ export const WindowList: React.FC<WindowListProps> = ({
                       rounded-l-xl
                       ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
                     `}
-                    title="Drag to add window to layout"
-                  >
-                    {/* Grip dots */}
-                    <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
-                      <div className="flex gap-[3px]">
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                      </div>
-                      <div className="flex gap-[3px]">
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                      </div>
-                      <div className="flex gap-[3px]">
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                        <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
+                          title="Drag to add window to layout"
+                        >
+                          {/* Grip dots */}
+                          <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
+                            <div className="flex gap-[3px]">
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                            </div>
+                            <div className="flex gap-[3px]">
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                            </div>
+                            <div className="flex gap-[3px]">
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                            </div>
+                          </div>
+                        </div>
 
-                  {/* Magical shimmer effect */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none" />
+                        {/* Magical shimmer effect */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none" />
 
-                  {/* Pin Button — absolute, doesn't affect layout */}
-                  {onWindowPin && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onWindowPin(window.id);
-                      }}
-                      className={`transition-all duration-200 ${
-                        window.isPinned
-                          ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
-                          : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
-                      }`}
-                      title={window.isPinned ? "Unpin window" : "Pin to top"}
-                    >
-                      <MdPushPin
-                        size={14}
-                        className={window.isPinned ? "rotate-0" : "rotate-45"}
-                      />
-                    </button>
-                  )}
-
-                  {/* App Icon */}
-                  <DepthButton
-                    sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
-                    className="!cursor-default"
-                    active={window.isSelected}
-                    inactiveClassName="text-theme-primary-200/85 border-theme-primary-500/25"
-                    activeClassName="text-theme-primary-50 border-theme-primary-300/70"
-                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
-                    activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
-                    aria-hidden
-                    tabIndex={-1}
-                  >
-                    <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
-                      {window.icon ? (
-                        <img
-                          src={window.icon}
-                          alt={`${window.app} icon`}
-                          className="w-6 h-6 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            const fallback = e.currentTarget
-                              .nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = "flex";
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        style={{ display: window.icon ? "none" : "flex" }}
-                        className="w-full h-full items-center justify-center"
-                      >
-                        {getWindowFallbackIcon(window, 20)}
-                      </div>
-                    </div>
-                  </DepthButton>
-
-                  {/* Text Content */}
-                  <div className="flex-1 min-w-0 z-10">
-                    {/* App Name */}
-                    <div
-                      className={`text-xs font-semibold bg-gradient-to-r ${getAppGradient(window.app)} bg-clip-text text-transparent truncate leading-tight`}
-                    >
-                      {window.app}
-                    </div>
-                    {/* Window Title */}
-                    <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
-                      {window.name}
-                    </div>
-                    {/* State pills */}
-                    {(window.isMinimized || window.isMaximized) && (
-                      <div className="flex items-center gap-1 mt-0.5">
-                        {window.isMinimized && (
-                          <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
-                            MIN
-                          </span>
+                        {/* Pin Button — absolute, doesn't affect layout */}
+                        {onWindowPin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onWindowPin(window.id);
+                            }}
+                            className={`transition-all duration-200 ${
+                              window.isPinned
+                                ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
+                                : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                            }`}
+                            title={
+                              window.isPinned ? "Unpin window" : "Pin to top"
+                            }
+                          >
+                            <MdPushPin
+                              size={14}
+                              className={
+                                window.isPinned ? "rotate-0" : "rotate-45"
+                              }
+                            />
+                          </button>
                         )}
-                        {window.isMaximized && (
-                          <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
-                            MAX
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Select / Check Handle — right side */}
-                  <div
-                    className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
-                      window.isSelected
-                        ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
-                        : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    <div
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
-                        window.isSelected
-                          ? "text-theme-primary-300"
-                          : "text-white/40 hover:text-white/70"
-                      }`}
-                      title={
-                        window.isSelected
-                          ? "Remove from selection"
-                          : "Drag to add window to layout"
-                      }
-                    >
-                      {window.isSelected ? (
-                        <MdCheck size={16} />
-                      ) : (
-                        <MdDragIndicator size={17} />
-                      )}
-                    </div>
-                  </div>
+                        {/* App Icon */}
+                        <DepthButton
+                          sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
+                          className="!cursor-default"
+                          active={window.isSelected}
+                          inactiveClassName="text-theme-primary-200/85 border-theme-primary-500/25"
+                          activeClassName="text-theme-primary-50 border-theme-primary-300/70"
+                          inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
+                          activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
+                          aria-hidden
+                          tabIndex={-1}
+                        >
+                          <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
+                            {window.icon ? (
+                              <img
+                                src={window.icon}
+                                alt={`${window.app} icon`}
+                                className="w-6 h-6 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = e.currentTarget
+                                    .nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = "flex";
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              style={{ display: window.icon ? "none" : "flex" }}
+                              className="w-full h-full items-center justify-center"
+                            >
+                              {getWindowFallbackIcon(window, 20)}
+                            </div>
+                          </div>
+                        </DepthButton>
+
+                        {/* Text Content */}
+                        <div className="flex-1 min-w-0 z-10">
+                          {/* App Name */}
+                          <div
+                            className={`text-xs font-semibold bg-gradient-to-r ${getAppGradient(window.app)} bg-clip-text text-transparent truncate leading-tight`}
+                          >
+                            {window.app}
+                          </div>
+                          {/* Window Title */}
+                          {isTimerWindow ? (
+                            <div className="text-[27px] font-[impact] tracking-[0.08em] text-white/85 group-hover:text-white truncate leading-none transition-colors duration-200 mt-0.5">
+                              {timerText}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
+                              {window.name}
+                            </div>
+                          )}
+                          {/* State pills */}
+                          {(window.isMinimized || window.isMaximized) && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {window.isMinimized && (
+                                <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
+                                  MIN
+                                </span>
+                              )}
+                              {window.isMaximized && (
+                                <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
+                                  MAX
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Select / Check Handle — right side */}
+                        <div
+                          className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
+                            window.isSelected
+                              ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
+                              : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
+                          }`}
+                        >
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                              window.isSelected
+                                ? "text-theme-primary-300"
+                                : "text-white/40 hover:text-white/70"
+                            }`}
+                            title={
+                              window.isSelected
+                                ? "Remove from selection"
+                                : "Drag to add window to layout"
+                            }
+                          >
+                            {window.isSelected ? (
+                              <MdCheck size={16} />
+                            ) : (
+                              <MdDragIndicator size={17} />
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </motion.div>
               ))}
             </AnimatePresence>

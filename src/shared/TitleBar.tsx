@@ -9,7 +9,6 @@ import {
   Undo2,
   Redo2,
   Bookmark,
-  Type,
   Trash2,
   Settings,
 } from "lucide-react";
@@ -23,7 +22,6 @@ interface TitleBarProps {
   isProjectionOn: boolean;
   isBlackout: boolean;
   isFrozen: boolean;
-  overlayVisible: boolean;
   activePanel: TitlePanel;
   canUndo: boolean;
   canRedo: boolean;
@@ -70,7 +68,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   isProjectionOn,
   isBlackout,
   isFrozen,
-  overlayVisible,
   activePanel,
   canUndo,
   canRedo,
@@ -171,17 +168,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
     },
     { kind: "divider", key: "divider-3" },
-    {
-      kind: "button",
-      key: "overlay",
-      icon: <Type className="w-3.5 h-3.5" strokeWidth={3} />,
-      onClick: () => onTogglePanel("overlay"),
-      active: activePanel === "overlay" || overlayVisible,
-      title: "Text Overlay",
-      activeClassName: "text-green-100 border-green-300/60",
-      inactiveClassName:
-        "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
-    },
     {
       kind: "button",
       key: "presets",

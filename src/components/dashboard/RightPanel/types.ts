@@ -33,3 +33,5 @@ export interface SettingsPanelProps {
 }
 
 export type MainViewType = "windows" | "settings";
+
+export type FeatureView = "autofit" | "overlay" | "timer" | "illustration";

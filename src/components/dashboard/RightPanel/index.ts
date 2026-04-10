@@ -3,4 +3,8 @@ export { SettingsPanel } from "./SettingsPanel";
 export { PresetsPanel } from "./PresetsPanel";
 export { OverlayTextPanel } from "./OverlayTextPanel";
 export { DisplayRoutingPanel } from "./DisplayRoutingPanel";
+export { FeatureRail } from "./FeatureRail";
+export { FeatureViewHost } from "./FeatureViewHost";
+export { FeatureTimerView } from "./FeatureTimerView";
+export { FeatureIllustrationView } from "./FeatureIllustrationView";
 export * from "./types";

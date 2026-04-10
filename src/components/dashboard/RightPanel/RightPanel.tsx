@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
-  WindowLayoutCard,
   SettingsPanel,
   PresetsPanel,
-  OverlayTextPanel,
+  FeatureRail,
+  FeatureViewHost,
   type RightPanelProps,
+  type FeatureView,
 } from "./index";
 import { useAppSelector } from "@/store/hooks";
 import { DepthSurface } from "@/shared/DepthSurface";
@@ -23,6 +24,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 }) => {
   // Read projection state from Redux — no prop drilling
   const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
+  const [activeFeatureView, setActiveFeatureView] =
+    useState<FeatureView>("autofit");
+
+  useEffect(() => {
+    if (activePanel === "overlay") {
+      setActiveFeatureView("overlay");
+    }
+  }, [activePanel]);
 
   const selectedWindows = windows.filter((w) => w.isSelected);
 
@@ -40,18 +49,26 @@ export const RightPanel: React.FC<RightPanelProps> = ({
             selectedWindows={selectedWindows}
             onLoadPreset={(preset) => onLoadPreset?.(preset)}
           />
-        ) : activePanel === "overlay" ? (
-          <OverlayTextPanel />
         ) : (
-          <WindowLayoutCard
-            windows={windows}
-            currentLayout={currentLayout}
-            focusedWindowId={focusedWindowId}
-            onWindowFocus={onWindowFocus}
-            onWindowRemove={onWindowRemove}
-            onWindowAdd={onWindowAdd}
-            isProjectionOn={isProjectionOn}
-          />
+          <div className="flex h-full w-full items-stretch px-2 py-3">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-2xl  bg-theme-primary-800/50">
+              <FeatureViewHost
+                activeView={activeFeatureView}
+                windows={windows}
+                currentLayout={currentLayout}
+                focusedWindowId={focusedWindowId}
+                onWindowFocus={onWindowFocus}
+                onWindowRemove={onWindowRemove}
+                onWindowAdd={onWindowAdd}
+                isProjectionOn={isProjectionOn}
+              />
+            </div>
+
+            <FeatureRail
+              activeView={activeFeatureView}
+              onSelectView={setActiveFeatureView}
+            />
+          </div>
         )}
       </div>
     </DepthSurface>
