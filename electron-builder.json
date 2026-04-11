@@ -33,6 +33,7 @@
   "publish": {
     "provider": "github",
     "owner": "codeDeSyntax",
-    "repo": "gospel-grid"
+    "repo": "gospel-grid",
+    "releaseType": "release"
   }
 }
