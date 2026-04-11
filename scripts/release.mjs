@@ -94,7 +94,7 @@ if (existingTag) {
 
 run("git", ["add", "package.json"]);
 run("git", ["commit", "-m", `chore(release): ${tagName}`]);
-run("git", ["tag", tagName]);
+run("git", ["tag", "-a", tagName, "-m", `Release ${tagName}`]);
 
 const currentBranch = readStdout("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
 if (!currentBranch || currentBranch === "HEAD") {
@@ -103,6 +103,7 @@ if (!currentBranch || currentBranch === "HEAD") {
 }
 
 console.log("\n>> Pushing commit + tag...");
-run("git", ["push", "origin", currentBranch, "--follow-tags"]);
+run("git", ["push", "origin", currentBranch]);
+run("git", ["push", "origin", "--tags"]);
 
 console.log("\n✓ Release pushed! Check GitHub Actions for build status.");
