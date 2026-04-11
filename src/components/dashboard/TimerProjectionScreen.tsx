@@ -8,7 +8,7 @@ interface TimerProjectionScreenProps {
   seconds: string;
   theme: FeatureTimerProjectionTheme;
   compact?: boolean;
-  layoutMode?: "single" | "dual" | "triple" | "quad";
+  layoutMode?: "single" | "dual" | "triple" | "quad" | "empty";
 }
 
 interface TimerBlockProps {

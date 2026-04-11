@@ -89,6 +89,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Connected display inventory (for multi-monitor routing setup)
   getConnectedDisplays: () => ipcRenderer.invoke("get-connected-displays"),
+  selectDirectory: () => ipcRenderer.invoke("select-directory"),
+  getImages: (dirPath: string) => ipcRenderer.invoke("get-images", dirPath),
 
   // Subscribe to published thumbnails broadcast from main
   onPublishedThumbnails: (callback: (payload: any) => void) => {

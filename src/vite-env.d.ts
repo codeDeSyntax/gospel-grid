@@ -25,6 +25,14 @@ interface Window {
       }>;
       error?: string;
     }>;
+    selectDirectory: () => Promise<string | null>;
+    getImages: (dirPath: string) => Promise<
+      Array<{
+        name: string;
+        path: string;
+        url: string;
+      }>
+    >;
     checkPublishedWindows: () => Promise<{
       hasActivePublications: boolean;
       count: number;

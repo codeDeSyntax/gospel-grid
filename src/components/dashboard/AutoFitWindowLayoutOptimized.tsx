@@ -63,6 +63,7 @@ interface AutoFitWindowLayoutProps {
 }
 
 const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
+const IMAGE_FEATURE_WINDOW_PREFIX = "feature:image-window:";
 
 type TimerProjectionPreview = {
   days: string;
@@ -209,6 +210,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       (windowId) =>
         !requestedThumbnailIdsRef.current.has(windowId) &&
         !windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
+        !windowId.startsWith(IMAGE_FEATURE_WINDOW_PREFIX) &&
         windowMap.has(windowId),
     );
 
@@ -397,8 +399,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   return (
-    <div className="w-[98%] m-auto h-[95%] rounded-lg   overflow-hidden flex flex-col">
-      <div className="px-3 py-2  flex items-center justify-between">
+    <div className="w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col">
+      <div className="shrink-0 px-3 py-2 flex items-center justify-between">
         <div>
           <p className="text-[13px] font-semibold text-theme-primary-100">
             Unified Display Workspace
@@ -434,7 +436,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         </div>
       ) : (
         <div
-          className={`flex-1 p-3 grid gap-3 ${getGridClasses(displays.length)}`}
+          className={`flex-1 min-h-0 p-3 grid gap-3 ${getGridClasses(displays.length)} auto-rows-fr content-stretch items-stretch overflow-hidden`}
         >
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
@@ -445,7 +447,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full aspect-[16/9] self-start rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black `}
+                className={`relative w-full h-full min-h-0 rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black `}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 

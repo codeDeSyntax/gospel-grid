@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { WindowList, type WindowInfo } from "./WindowList";
 import { CosmicBackground } from "./CosmicBackground";
-import { RightPanel } from "./RightPanel/RightPanel";
+import { RightPanel } from "./RightPanel/core/RightPanel";
 import type { PanelView } from "./RightPanel/types";
 import { TitleBar } from "@/shared/TitleBar";
 import { DepthSurface } from "@/shared/DepthSurface";
@@ -39,6 +39,12 @@ import {
   markCollectionCompletedIfElapsed,
   saveFeatureTimerCollection,
 } from "./RightPanel/featureTimerState";
+import {
+  FEATURE_IMAGE_EVENT,
+  type FeatureImageItem,
+  getImageFeatureWindowId,
+  loadFeatureImageCollection,
+} from "./RightPanel/featureImageState";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -58,6 +64,7 @@ const SIDEBAR_MIN_WIDTH = 300;
 const SIDEBAR_MAX_WIDTH = 600;
 const SIDEBAR_DEFAULT_WIDTH = 380;
 const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
+const IMAGE_FEATURE_WINDOW_PREFIX = "feature:image-window:";
 
 const isFeatureWindowId = (id: string) => id.startsWith("feature:");
 const getTimerFeatureWindowId = (timerId: string) =>
@@ -91,6 +98,20 @@ const buildTimerFeatureWindow = (timer: FeatureTimerItem): WindowInfo => {
     isSelected: false,
     isPinned: true,
     icon: "/timer-feature.svg",
+    isVisible: true,
+    isMinimized: false,
+  };
+};
+
+const buildImageFeatureWindow = (image: FeatureImageItem): WindowInfo => {
+  return {
+    id: getImageFeatureWindowId(image.id),
+    app: "Image Feature",
+    name: image.name,
+    isSelected: false,
+    isPinned: true,
+    icon: "/fileexp.png",
+    thumbnail: image.url,
     isVisible: true,
     isMinimized: false,
   };
@@ -148,6 +169,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const [timerFeatureWindows, setTimerFeatureWindows] = useState<WindowInfo[]>(
     [],
   );
+  const [imageFeatureWindows, setImageFeatureWindows] = useState<WindowInfo[]>(
+    [],
+  );
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -187,6 +211,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       window.removeEventListener(
         FEATURE_TIMER_EVENT,
         handleTimerUpdate as EventListener,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncImageFeatureWindows = () => {
+      const loaded = loadFeatureImageCollection();
+      const nextImageWindows = loaded.images.map((image) =>
+        buildImageFeatureWindow(image),
+      );
+
+      setImageFeatureWindows(nextImageWindows);
+    };
+
+    const handleImageUpdate = () => {
+      syncImageFeatureWindows();
+    };
+
+    syncImageFeatureWindows();
+    window.addEventListener(
+      FEATURE_IMAGE_EVENT,
+      handleImageUpdate as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        FEATURE_IMAGE_EVENT,
+        handleImageUpdate as EventListener,
       );
     };
   }, []);
@@ -611,19 +663,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     [state.windows, state.focusedWindowId, pushHistory],
   );
 
-  const windowsWithFeatures = useMemo(() => {
+  const windowsForWindowList = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
     return [...timerFeatureWindows, ...baseWindows];
   }, [state.windows, timerFeatureWindows]);
 
+  const windowsForRightPanel = useMemo(() => {
+    const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
+    return [...timerFeatureWindows, ...imageFeatureWindows, ...baseWindows];
+  }, [state.windows, timerFeatureWindows, imageFeatureWindows]);
+
   useEffect(() => {
-    const validFeatureIds = new Set(timerFeatureWindows.map((w) => w.id));
+    const validFeatureIds = new Set([
+      ...timerFeatureWindows.map((w) => w.id),
+      ...imageFeatureWindows.map((w) => w.id),
+    ]);
     let changed = false;
     const nextAssignments: Record<number, string[]> = {};
 
     for (const [displayIdStr, ids] of Object.entries(displayAssignments)) {
       const filtered = ids.filter((id) => {
         if (id.startsWith(TIMER_FEATURE_WINDOW_PREFIX)) {
+          return validFeatureIds.has(id);
+        }
+        if (id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX)) {
           return validFeatureIds.has(id);
         }
         if (id === "feature:timer-window") {
@@ -641,7 +704,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     if (changed) {
       dispatch(setDisplayAssignments(nextAssignments));
     }
-  }, [timerFeatureWindows, displayAssignments, dispatch]);
+  }, [timerFeatureWindows, imageFeatureWindows, displayAssignments, dispatch]);
 
   // Memoize selected windows to prevent recalculation
   const selectedWindows = useMemo(
@@ -862,7 +925,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           surfaceClassName="depth-surface-shell"
         >
           <WindowList
-            windows={windowsWithFeatures}
+            windows={windowsForWindowList}
             onWindowSelect={handleWindowSelect}
             onWindowPin={handleWindowPin}
             onWindowFocus={focusWindowNative}
@@ -899,7 +962,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         {/* Right Panel - Dynamic Content */}
         <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-2xl">
           <RightPanel
-            windows={windowsWithFeatures}
+            windows={windowsForRightPanel}
             currentLayout={state.currentLayout}
             focusedWindowId={state.focusedWindowId}
             onLayoutChange={handleLayoutChange}

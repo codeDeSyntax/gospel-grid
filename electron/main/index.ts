@@ -2,6 +2,7 @@ import {
   app,
   BrowserWindow,
   shell,
+  dialog,
   ipcMain,
   screen,
   desktopCapturer,
@@ -10,9 +11,11 @@ import {
   Tray,
   Menu,
   nativeImage,
+  net,
+  protocol,
 } from "electron";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
@@ -309,6 +312,18 @@ async function createWindow() {
 
 app.whenReady().then(createWindow);
 
+app.whenReady().then(() => {
+  protocol.handle("local-image", (request) => {
+    try {
+      const encodedPath = request.url.replace("local-image://", "");
+      const decodedPath = decodeURIComponent(encodedPath);
+      return net.fetch(pathToFileURL(decodedPath).toString());
+    } catch {
+      return new Response("Not found", { status: 404 });
+    }
+  });
+});
+
 app.on("window-all-closed", () => {
   win = null;
   if (process.platform !== "darwin") app.quit();
@@ -419,6 +434,57 @@ ipcMain.handle("get-desktop-sources", async (event, options) => {
     return sources;
   } catch (error) {
     console.error("Failed to get desktop sources:", error);
+    return [];
+  }
+});
+
+ipcMain.handle("select-directory", async () => {
+  try {
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory"],
+    });
+
+    if (result.canceled || !result.filePaths.length) {
+      return null;
+    }
+
+    return result.filePaths[0];
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle("get-images", async (_event, dirPath: string) => {
+  try {
+    if (!dirPath) return [];
+
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    const allowedExtensions = new Set([
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".webp",
+      ".gif",
+      ".bmp",
+      ".svg",
+    ]);
+
+    const files = entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .filter((name) => allowedExtensions.has(path.extname(name).toLowerCase()))
+      .slice(0, 300);
+
+    return files.map((name) => {
+      const fullPath = path.join(dirPath, name);
+      const url = `local-image://${encodeURIComponent(fullPath)}`;
+      return {
+        name,
+        path: fullPath,
+        url,
+      };
+    });
+  } catch {
     return [];
   }
 });

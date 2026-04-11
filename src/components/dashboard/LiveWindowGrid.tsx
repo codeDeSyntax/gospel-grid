@@ -16,6 +16,7 @@ import {
   saveFeatureTimerCollection,
   type FeatureTimerProjectionTheme,
 } from "./RightPanel/featureTimerState";
+import { IMAGE_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureImageState";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE
@@ -155,7 +156,11 @@ export function LiveWindowGrid({
   const sourceIds = useMemo(
     () =>
       gridWindows
-        .filter((w) => !w.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX))
+        .filter(
+          (w) =>
+            !w.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
+            !w.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX),
+        )
         .map((w) => w.id),
     [gridWindows],
   );
@@ -200,6 +205,7 @@ export function LiveWindowGrid({
   // ── Render a single window cell (VideoWindow instead of <img>) ─────────
   const renderWindow = (win: WindowInfo, customStyle?: React.CSSProperties) => {
     const isTimerFeature = win.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX);
+    const isImageFeature = win.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX);
 
     if (isTimerFeature) {
       const timerView = timerDisplayMap[win.id] ?? {
@@ -225,6 +231,32 @@ export function LiveWindowGrid({
             theme={timerView.theme}
             layoutMode={type}
           />
+        </div>
+      );
+    }
+
+    if (isImageFeature) {
+      const src = win.thumbnail || win.icon || "";
+      return (
+        <div
+          key={win.id}
+          className="relative overflow-hidden bg-black"
+          style={{
+            ...customStyle,
+          }}
+        >
+          {src ? (
+            <img
+              src={src}
+              alt={win.name}
+              className="absolute inset-0 h-full w-full object-contain bg-black"
+              draggable={false}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-theme-primary-200/75 text-sm">
+              Image unavailable
+            </div>
+          )}
         </div>
       );
     }

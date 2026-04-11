@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
-import { useTheme } from "@/Provider/Theme";
+import { useTheme } from "@/providers/ThemeProvider";
 
 export const ThemeToggle: React.FC = () => {
   const { isDarkMode, toggleDarkMode } = useTheme();
