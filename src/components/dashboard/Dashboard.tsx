@@ -99,7 +99,7 @@ const buildTimerFeatureWindow = (timer: FeatureTimerItem): WindowInfo => {
         : `${timer.name} • Current Time`,
     isSelected: false,
     isPinned: true,
-    icon: "/timer-feature.svg",
+    icon: "./countdown.png",
     isVisible: true,
     isMinimized: false,
   };
@@ -112,7 +112,7 @@ const buildImageFeatureWindow = (image: FeatureImageItem): WindowInfo => {
     name: image.name,
     isSelected: false,
     isPinned: true,
-    icon: "/fileexp.png",
+    icon: "./images.png",
     thumbnail: image.url,
     isVisible: true,
     isMinimized: false,
@@ -125,7 +125,7 @@ const buildCaptionsFeatureWindow = (): WindowInfo => ({
   name: "Live Captions",
   isSelected: false,
   isPinned: true,
-  icon: "/caption.png",
+  icon: "./caption.png",
   isVisible: true,
   isMinimized: false,
 });
@@ -185,6 +185,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const [imageFeatureWindows, setImageFeatureWindows] = useState<WindowInfo[]>(
     [],
   );
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateStatus, setUpdateStatus] = useState("Idle");
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string>("1.0.0");
   const captionsFeatureWindow = useMemo(() => buildCaptionsFeatureWindow(), []);
 
   useEffect(() => {
@@ -227,6 +234,161 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         handleTimerUpdate as EventListener,
       );
     };
+  }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    let hasRequestedDownload = false;
+
+    const onUpdateCanAvailable = (
+      _event: Electron.IpcRendererEvent,
+      arg: VersionInfo,
+    ) => {
+      if (disposed) return;
+      setIsCheckingUpdate(false);
+
+      if (arg?.version) {
+        setAppVersion(arg.version);
+      }
+
+      if (arg?.update) {
+        if (arg?.newVersion) {
+          setUpdateVersion(arg.newVersion);
+        }
+        setUpdateStatus(
+          arg?.newVersion
+            ? `Update available: v${arg.newVersion}`
+            : "Update available",
+        );
+
+        if (!hasRequestedDownload) {
+          hasRequestedDownload = true;
+          setIsDownloadingUpdate(true);
+          void window.ipcRenderer
+            .invoke("start-download")
+            .catch((error: unknown) => {
+              setIsDownloadingUpdate(false);
+              setUpdateStatus(
+                error instanceof Error
+                  ? `Download failed: ${error.message}`
+                  : "Download failed",
+              );
+            });
+        }
+      } else {
+        setIsDownloadingUpdate(false);
+        setUpdateReady(false);
+        setUpdateProgress(0);
+        setUpdateStatus("Up to date");
+      }
+    };
+
+    const onDownloadProgress = (
+      _event: Electron.IpcRendererEvent,
+      info: { percent?: number },
+    ) => {
+      if (disposed) return;
+      const percent = Math.max(0, Math.min(100, Number(info?.percent ?? 0)));
+      setIsDownloadingUpdate(true);
+      setUpdateProgress(percent);
+      setUpdateStatus(`Downloading ${percent.toFixed(1)}%`);
+    };
+
+    const onUpdateDownloaded = (
+      _event: Electron.IpcRendererEvent,
+      info?: { version?: string },
+    ) => {
+      if (disposed) return;
+      setIsCheckingUpdate(false);
+      setIsDownloadingUpdate(false);
+      setUpdateReady(true);
+      setUpdateProgress(100);
+      if (info?.version) {
+        setUpdateVersion(info.version);
+      }
+      setUpdateStatus("Ready to install");
+    };
+
+    const onUpdateError = (
+      _event: Electron.IpcRendererEvent,
+      payload: { message?: string },
+    ) => {
+      if (disposed) return;
+      hasRequestedDownload = false;
+      setIsCheckingUpdate(false);
+      setIsDownloadingUpdate(false);
+      setUpdateStatus(
+        payload?.message ? `Error: ${payload.message}` : "Update error",
+      );
+    };
+
+    window.ipcRenderer.on("update-can-available", onUpdateCanAvailable);
+    window.ipcRenderer.on("download-progress", onDownloadProgress);
+    window.ipcRenderer.on("update-downloaded", onUpdateDownloaded);
+    window.ipcRenderer.on("update-error", onUpdateError);
+
+    setIsCheckingUpdate(true);
+    setUpdateStatus("Checking...");
+    void window.ipcRenderer
+      .invoke("check-update")
+      .then((result: { error?: { message?: string } } | undefined) => {
+        if (result?.error) {
+          setIsCheckingUpdate(false);
+          setUpdateStatus(
+            result.error.message
+              ? `Check failed: ${result.error.message}`
+              : "Check failed",
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        setIsCheckingUpdate(false);
+        setUpdateStatus(
+          error instanceof Error
+            ? `Check failed: ${error.message}`
+            : "Check failed",
+        );
+      });
+
+    return () => {
+      disposed = true;
+      window.ipcRenderer.off("update-can-available", onUpdateCanAvailable);
+      window.ipcRenderer.off("download-progress", onDownloadProgress);
+      window.ipcRenderer.off("update-downloaded", onUpdateDownloaded);
+      window.ipcRenderer.off("update-error", onUpdateError);
+    };
+  }, []);
+
+  const handleCheckForUpdates = useCallback(() => {
+    setIsCheckingUpdate(true);
+    setUpdateReady(false);
+    setUpdateProgress(0);
+    setUpdateStatus("Checking...");
+
+    void window.ipcRenderer
+      .invoke("check-update")
+      .then((result: { error?: { message?: string } } | undefined) => {
+        if (result?.error) {
+          setIsCheckingUpdate(false);
+          setUpdateStatus(
+            result.error.message
+              ? `Check failed: ${result.error.message}`
+              : "Check failed",
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        setIsCheckingUpdate(false);
+        setUpdateStatus(
+          error instanceof Error
+            ? `Check failed: ${error.message}`
+            : "Check failed",
+        );
+      });
+  }, []);
+
+  const handleRestartToUpdate = useCallback(() => {
+    void window.ipcRenderer.invoke("quit-and-install");
   }, []);
 
   useEffect(() => {
@@ -1058,11 +1220,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         </div>
 
         {/* Right side - Version info */}
-        <div className="flex items-center gap-2">
-          <span>Version 1.0.0 (Beta)</span>
-          <span className="text-theme-primary-400 cursor-pointer hover:underline">
-            Check for Updates
-          </span>
+        <div className="flex items-center gap-3">
+          <span>Version {appVersion}</span>
+          <span className="text-theme-primary-300/85">{updateStatus}</span>
+          {isDownloadingUpdate && (
+            <span className="text-theme-primary-200/90">
+              {updateProgress.toFixed(1)}%
+            </span>
+          )}
+          {updateReady && (
+            <button
+              type="button"
+              onClick={handleRestartToUpdate}
+              className="rounded-md border border-emerald-300/65 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/25"
+              title={
+                updateVersion
+                  ? `Restart to install v${updateVersion}`
+                  : "Restart to install update"
+              }
+            >
+              Restart to Update
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleCheckForUpdates}
+            disabled={isCheckingUpdate || isDownloadingUpdate}
+            className="text-theme-primary-400 hover:text-theme-primary-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isCheckingUpdate ? "Checking..." : "Check for Updates"}
+          </button>
         </div>
       </div>
 
