@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 // Support both: pnpm release "msg" and pnpm release -- "msg"
 const message = process.argv
@@ -50,6 +50,19 @@ const readStdout = (command, args) => {
   return (result.stdout ?? "").trim();
 };
 
+const bumpPatchVersion = (version) => {
+  const parsed = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/.exec(version);
+  if (!parsed) {
+    console.error(`\n✗ Unsupported version format: ${version}`);
+    process.exit(1);
+  }
+
+  const major = Number(parsed[1]);
+  const minor = Number(parsed[2]);
+  const patch = Number(parsed[3]);
+  return `${major}.${minor}.${patch + 1}`;
+};
+
 console.log("\n>> Staging all changes...");
 run("git", ["add", "-A"]);
 
@@ -62,13 +75,11 @@ if (status) {
 }
 
 console.log("\n>> Bumping version (patch)...");
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
-run(npmCmd, ["version", "patch", "--no-git-tag-version"]);
-
-const pkg = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-);
-const nextVersion = pkg.version;
+const packageJsonPath = new URL("../package.json", import.meta.url);
+const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+const nextVersion = bumpPatchVersion(pkg.version);
+pkg.version = nextVersion;
+writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
 if (!nextVersion) {
   console.error("\n✗ Could not read updated version from package.json");
   process.exit(1);
