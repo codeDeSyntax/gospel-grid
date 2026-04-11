@@ -1,5 +1,6 @@
 {
   "name": "wingrid",
+  "productName": "Wingrid",
   "version": "2.2.0",
   "main": "dist-electron/main/index.js",
   "description": "wingrid. A tool for aggregating different windows into one",
@@ -18,7 +19,10 @@
     "preview": "vite preview",
     "pretest": "vite build --mode=test",
     "test": "vitest run",
-    "package": "electron-packager . wingrid --platform=win32 --arch=x64  --icon=J:\\electron\\wingrid\\public\\wingrid.ico --out=release/ --overwrite --asar"
+    "package": "electron-packager . wingrid --platform=win32 --arch=x64  --icon=J:\\electron\\wingrid\\public\\wingrid.ico --out=release/ --overwrite --asar",
+    "dist:win": "electron-builder --win",
+    "release": "node ./scripts/release.mjs",
+    "release:publish": "electron-builder --win --publish=always"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.9.0",

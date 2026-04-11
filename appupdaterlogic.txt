@@ -1,0 +1,521 @@
+================================================================================
+  ELECTRON-PACKAGER → ELECTRON-BUILDER MIGRATION GUIDE
+  Auto-updates, Custom Icons, GitHub CI/CD
+  Based on: EV-Songapp (songCast) — completed March 2026
+================================================================================
+
+This guide documents exactly how the EV-Songapp project was migrated from
+electron-packager + manual Inno Setup to electron-builder with:
+  - Custom branding (app name, icons throughout installer)
+  - Silent auto-updates via electron-updater
+  - GitHub Actions CI/CD (push tag → build → publish automatically)
+
+Follow these steps in order on any similar Electron + Vite + React + TypeScript
+project. Adjust names, paths, and credentials to match the target project.
+
+================================================================================
+SECTION 1: PREREQUISITES
+================================================================================
+
+Required tools on dev machine:
+  - Node.js 20+
+  - pnpm (npm install -g pnpm)
+  - A GitHub repository for the project
+  - A GitHub Personal Access Token with "repo" scope
+    → https://github.com/settings/tokens → Generate new token (classic)
+    → Check "repo" scope → Copy token immediately
+
+Required icon files:
+  - yourapp.ico  — Windows icon (used for installer + app window)
+  - yourapp.png  — PNG version (used for tray, notifications)
+  Place both in the /public/ folder of your project.
+
+  If you only have a PNG, convert to ICO using:
+    https://www.icoconverter.com  (recommend 256x256 input)
+
+================================================================================
+SECTION 2: INSTALL DEPENDENCIES
+================================================================================
+
+Remove electron-packager (no longer needed):
+  pnpm remove electron-packager
+
+Install electron-builder and electron-updater:
+  pnpm add -D electron-builder
+  pnpm add electron-updater
+
+Verify package.json dependencies section now includes:
+  "electron-updater": "^6.x.x"   ← in dependencies (NOT devDependencies)
+  "electron-builder": "^24.x.x"  ← in devDependencies
+
+================================================================================
+SECTION 3: PACKAGE.JSON CHANGES
+================================================================================
+
+Add "productName" — this controls the installed app name in Start Menu,
+Add/Remove Programs, and userData folder path:
+
+  {
+    "name": "your-package-name",
+    "productName": "YourAppName",    ← ADD THIS
+    "version": "1.0.0",
+    ...
+  }
+
+Also update or remove the old "package" script that used electron-packager.
+You no longer need it. electron-builder is run separately.
+
+================================================================================
+SECTION 4: CREATE electron-builder.json5
+================================================================================
+
+Create a file called electron-builder.json5 in the project root:
+
+  {
+    appId: "com.yourcompany.yourapp",
+    productName: "YourAppName",
+    asar: true,
+    directories: {
+      output: "release/${version}",
+    },
+    files: ["dist-electron", "dist"],
+    win: {
+      icon: "public/yourapp.ico",
+      target: [
+        {
+          target: "nsis",
+          arch: ["x64"],
+        },
+      ],
+      artifactName: "${productName}_${version}.${ext}",
+    },
+    nsis: {
+      oneClick: false,
+      perMachine: false,
+      allowToChangeInstallationDirectory: true,
+      deleteAppDataOnUninstall: false,
+      installerIcon: "public/yourapp.ico",
+      uninstallerIcon: "public/yourapp.ico",
+      installerHeaderIcon: "public/yourapp.ico",
+    },
+    publish: {
+      provider: "github",
+      owner: "YOUR_GITHUB_USERNAME",
+      repo: "YOUR_REPO_NAME",
+    },
+  }
+
+Key notes:
+  - appId should be reverse-domain style: com.yourname.appname
+  - productName must match what you put in package.json
+  - The "files" array tells electron-builder what to bundle.
+    For Vite-based Electron projects: ["dist-electron", "dist"] is correct.
+  - The publish block must match your exact GitHub username and repo name.
+    Check with: git remote -v
+
+================================================================================
+SECTION 5: MAIN PROCESS — import and call update()
+================================================================================
+
+Create a file: electron/main/update.ts
+
+--- BEGIN update.ts ---
+import { app, ipcMain } from 'electron'
+import { createRequire } from 'node:module'
+import type {
+  ProgressInfo,
+  UpdateDownloadedEvent,
+  UpdateInfo,
+} from 'electron-updater'
+
+const { autoUpdater } = createRequire(import.meta.url)('electron-updater')
+
+export function update(win: Electron.BrowserWindow) {
+
+  // autoDownload = true means it downloads silently in the background.
+  // Set to false if you want to ask the user before downloading.
+  autoUpdater.autoDownload = true
+  autoUpdater.disableWebInstaller = false
+  autoUpdater.allowDowngrade = false
+
+  autoUpdater.on('checking-for-update', function () {})
+
+  autoUpdater.on('update-available', (arg: UpdateInfo) => {
+    win.webContents.send('update-can-available', {
+      update: true,
+      version: app.getVersion(),
+      newVersion: arg?.version,
+    })
+  })
+
+  autoUpdater.on('update-not-available', (arg: UpdateInfo) => {
+    win.webContents.send('update-can-available', {
+      update: false,
+      version: app.getVersion(),
+      newVersion: arg?.version,
+    })
+  })
+
+  ipcMain.handle('check-update', async () => {
+    try {
+      return await autoUpdater.checkForUpdatesAndNotify()
+    } catch (error) {
+      return { message: 'Network error', error }
+    }
+  })
+
+  ipcMain.handle('start-download', (event: Electron.IpcMainInvokeEvent) => {
+    startDownload(
+      (error, progressInfo) => {
+        if (error) {
+          event.sender.send('update-error', { message: error.message, error })
+        } else {
+          event.sender.send('download-progress', progressInfo)
+        }
+      },
+      () => {
+        event.sender.send('update-downloaded')
+      }
+    )
+  })
+
+  ipcMain.handle('quit-and-install', () => {
+    autoUpdater.quitAndInstall(false, true)
+  })
+}
+
+function startDownload(
+  callback: (error: Error | null, info: ProgressInfo | null) => void,
+  complete: (event: UpdateDownloadedEvent) => void,
+) {
+  autoUpdater.on('download-progress', (info: ProgressInfo) => callback(null, info))
+  autoUpdater.on('error', (error: Error) => callback(error, null))
+  autoUpdater.on('update-downloaded', complete)
+  autoUpdater.downloadUpdate()
+}
+--- END update.ts ---
+
+In electron/main/index.ts, import and call it after the main window is created:
+
+  import { update } from './update'
+
+  // Inside app.whenReady().then(() => { ... })
+  // AFTER createMainWindow() is called:
+  if (mainWin) update(mainWin)
+
+IMPORTANT: Pass the mainWin BrowserWindow instance — update() sends IPC events
+to it when an update is found or downloaded.
+
+================================================================================
+SECTION 6: RENDERER — Silent updater component + TitleBar badge
+================================================================================
+
+--- 6A: Create src/vmusic/update/index.tsx (or any path you prefer) ---
+
+This component is invisible — it just wires up IPC listeners silently.
+The TitleBar shows a badge when the download is complete.
+
+  import type { ProgressInfo } from 'electron-updater'
+  import { useCallback, useEffect } from 'react'
+
+  const Update = () => {
+    const onUpdateCanAvailable = useCallback(
+      (_event: Electron.IpcRendererEvent, arg1: any) => {
+        console.log('[updater] update available:', arg1.newVersion)
+      },
+      [],
+    )
+
+    const onDownloadProgress = useCallback(
+      (_event: Electron.IpcRendererEvent, arg1: ProgressInfo) => {
+        console.log('[updater] progress:', arg1.percent?.toFixed(1) + '%')
+      },
+      [],
+    )
+
+    useEffect(() => {
+      window.ipcRenderer.on('update-can-available', onUpdateCanAvailable)
+      window.ipcRenderer.on('download-progress', onDownloadProgress)
+      window.ipcRenderer.invoke('check-update').catch(() => {})
+
+      return () => {
+        window.ipcRenderer.off('update-can-available', onUpdateCanAvailable)
+        window.ipcRenderer.off('download-progress', onDownloadProgress)
+      }
+    }, [])
+
+    return null
+  }
+
+  export default Update
+
+--- 6B: Mount it in App.tsx ---
+
+  import Update from './vmusic/update'   // adjust path
+
+  // Inside the root return, render <Update /> anywhere — it has no visible UI:
+  return (
+    <div ...>
+      <Update />
+      {/* rest of your app */}
+    </div>
+  )
+
+--- 6C: Add the "Restart to update" badge to your TitleBar ---
+
+Add state:
+  const [updateReady, setUpdateReady] = useState(false)
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+
+Add useEffect:
+  useEffect(() => {
+    const onUpdateDownloaded = (_e: any, info?: { version?: string }) => {
+      setUpdateReady(true)
+      setUpdateVersion(info?.version ?? null)
+    }
+    const onUpdateAvailable = (_e: any, arg: { newVersion?: string }) => {
+      if (arg?.newVersion) setUpdateVersion(arg.newVersion)
+    }
+    window.ipcRenderer.on('update-downloaded', onUpdateDownloaded)
+    window.ipcRenderer.on('update-can-available', onUpdateAvailable)
+    return () => {
+      window.ipcRenderer.off('update-downloaded', onUpdateDownloaded)
+      window.ipcRenderer.off('update-can-available', onUpdateAvailable)
+    }
+  }, [])
+
+Add badge JSX (place it wherever suits your TitleBar layout):
+  {updateReady && (
+    <button
+      onClick={() => window.ipcRenderer.invoke('quit-and-install')}
+      style={{ WebkitAppRegion: 'no-drag' } as any}
+      title={`Restart to install v${updateVersion}`}
+    >
+      ↻ Restart to update
+    </button>
+  )}
+
+Style the badge however fits your app theme (green, small, pill-shaped works well).
+Make sure to set WebkitAppRegion: 'no-drag' on it or it won't be clickable.
+
+NOTE: window.ipcRenderer must be exposed in your preload.
+In vite-plugin-electron projects it is usually already exposed as window.ipcRenderer.
+If not, add to your preload's contextBridge:
+
+  contextBridge.exposeInMainWorld('ipcRenderer', {
+    on: (...args) => ipcRenderer.on(...args),
+    off: (...args) => ipcRenderer.off(...args),
+    invoke: (...args) => ipcRenderer.invoke(...args),
+  })
+
+================================================================================
+SECTION 7: GITHUB ACTIONS — Automated CI/CD
+================================================================================
+
+Create the file: .github/workflows/release.yml
+
+--- BEGIN release.yml ---
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # Add any other build-time env vars your vite.config.ts needs:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: pnpm run build && pnpm exec electron-builder --win --publish=always
+--- END release.yml ---
+
+IMPORTANT — pnpm/action-setup MUST come before setup-node.
+If the order is reversed, setup-node cannot find the pnpm cache and will fail.
+
+If your project uses npm instead of pnpm, simplify to:
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 20
+  - run: npm ci
+  - run: npm run build && npx electron-builder --win --publish=always
+
+================================================================================
+SECTION 8: GITHUB SECRETS
+================================================================================
+
+Go to: github.com/YOUR_USERNAME/YOUR_REPO → Settings → Secrets and variables
+→ Actions → New repository secret
+
+Add these secrets (minimum required):
+  GH_TOKEN     → Your GitHub Personal Access Token (repo scope)
+
+Add any additional secrets your vite.config.ts injects at build time.
+For example if vite.config.ts does:
+  define: {
+    __MY_API_KEY__: JSON.stringify(env.MY_API_KEY || '')
+  }
+Then add:
+  MY_API_KEY   → the actual value
+
+These secrets are injected as environment variables during the CI build step.
+
+================================================================================
+SECTION 9: pnpm LOCKFILE
+================================================================================
+
+The CI lockfile step will fail if pnpm-lock.yaml is not committed.
+
+Run locally:
+  pnpm install
+
+Then commit:
+  git add pnpm-lock.yaml
+  git commit -m "chore: add pnpm lockfile"
+
+If pnpm-lock.yaml is in .gitignore, force-add it:
+  git add -f pnpm-lock.yaml
+
+================================================================================
+SECTION 10: RELEASE WORKFLOW (ONGOING)
+================================================================================
+
+Every time you want to ship an update to users:
+
+  1. Make and commit your code changes:
+       git add .
+       git commit -m "feat: describe your change"
+
+  2. Bump the version (choose one):
+       npm version patch    → 1.0.0 → 1.0.1  (bug fixes)
+       npm version minor    → 1.0.0 → 1.1.0  (new features)
+       npm version major    → 1.0.0 → 2.0.0  (breaking changes)
+
+     This automatically updates package.json AND creates a git tag (e.g. v1.0.1)
+
+  3. Push code + tag:
+       git push --follow-tags
+
+  4. GitHub Actions runs automatically (~5 minutes):
+       - Installs dependencies
+       - Runs pnpm run build
+       - Runs electron-builder --win --publish=always
+       - Uploads installer + latest.yml to GitHub Releases
+
+  5. Installed apps on user machines:
+       - On next startup they call check-update
+       - electron-updater fetches latest.yml from GitHub
+       - If new version > installed version → downloads silently
+       - When done → "Restart to update" badge appears in TitleBar
+       - User clicks → quitAndInstall() → app restarts at new version
+
+VERSION NUMBERS: electron-updater uses semver comparison. The new version must
+be numerically higher than the installed version. You decide the bump size —
+there is no automatic detection of what changed.
+
+================================================================================
+SECTION 11: PATH SAFETY FOR CROSS-MACHINE COMPATIBILITY
+================================================================================
+
+The most common reason packaged apps work on the dev machine but fail on others
+is hardcoded paths. Always use Electron's path APIs:
+
+  ✅ app.getPath('userData')      → C:\Users\<user>\AppData\Roaming\<appName>\
+  ✅ app.getPath('documents')     → C:\Users\<user>\Documents\
+  ✅ process.resourcesPath        → bundled assets inside the .asar
+  ✅ path.join(__dirname, ...)    → relative to the built file location
+
+  ❌ NEVER use absolute paths like: C:\Users\YourName\projects\myapp\songs
+  ❌ NEVER use relative paths from cwd like: './songs' or '../data'
+
+For a default songs/data directory, use:
+  path.join(app.getPath('userData'), 'Songs')
+  // Creates: C:\Users\<user>\AppData\Roaming\YourAppName\Songs\
+
+For tray icons and other assets that need to be accessed at runtime:
+  path.join(process.env.VITE_PUBLIC, 'youricon.png')
+  // In production VITE_PUBLIC = dist/ (which is bundled into the .asar)
+
+================================================================================
+SECTION 12: TESTING THE FULL UPDATE FLOW
+================================================================================
+
+To test auto-updates without publishing to GitHub, temporarily add a simulation
+block in update.ts inside the check-update handler:
+
+  ipcMain.handle('check-update', async () => {
+    if (!app.isPackaged) {
+      // Simulate update available after 600ms
+      setTimeout(() => {
+        win.webContents.send('update-can-available', {
+          update: true,
+          version: app.getVersion(),
+          newVersion: '99.0.0',
+        })
+      }, 600)
+      // Simulate download complete after 4s
+      setTimeout(() => {
+        win.webContents.send('update-downloaded')
+      }, 4000)
+      return { simulated: true }
+    }
+    try {
+      return await autoUpdater.checkForUpdatesAndNotify()
+    } catch (error) {
+      return { message: 'Network error', error }
+    }
+  })
+
+Run in dev mode (npm run dev) — after ~4 seconds the TitleBar badge will appear.
+Remove this block before publishing real releases.
+
+================================================================================
+SECTION 13: CHECKLIST BEFORE FIRST RELEASE
+================================================================================
+
+  [ ] electron-packager removed from package.json
+  [ ] electron-builder and electron-updater installed
+  [ ] productName added to package.json
+  [ ] electron-builder.json5 created with correct appId, productName, icon paths
+  [ ] Icon files (.ico and .png) exist in /public/
+  [ ] electron/main/update.ts created
+  [ ] update(mainWin) called in app.whenReady() after createMainWindow()
+  [ ] <Update /> component mounted in App.tsx
+  [ ] TitleBar (or equivalent) has updateReady badge + quit-and-install call
+  [ ] .github/workflows/release.yml created (pnpm/action-setup BEFORE setup-node)
+  [ ] pnpm-lock.yaml committed (not in .gitignore)
+  [ ] GitHub Secrets added: GH_TOKEN + any build-time env vars
+  [ ] electron-builder.json5 publish.owner and publish.repo match git remote -v
+  [ ] All hardcoded file paths replaced with app.getPath() or process.resourcesPath
+  [ ] Test build locally: npm run build && npx electron-builder --win
+  [ ] Install on a second machine and verify it works
+  [ ] Push first tag: npm version patch && git push --follow-tags
+  [ ] Watch GitHub Actions tab for the build to complete
+  [ ] Install v1.0.0, make a change, release v1.0.1, verify badge appears
+
+================================================================================
+END OF GUIDE
+================================================================================
