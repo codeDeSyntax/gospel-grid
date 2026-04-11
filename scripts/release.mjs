@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 // Support both: pnpm release "msg" and pnpm release -- "msg"
 const message = process.argv
@@ -20,6 +21,11 @@ const run = (command, args, options = {}) => {
     ...options,
   });
 
+  if (result.error) {
+    console.error(`\n✗ Failed to run ${command}:`, result.error.message);
+    process.exit(1);
+  }
+
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
@@ -31,6 +37,11 @@ const readStdout = (command, args) => {
     stdio: ["ignore", "pipe", "inherit"],
     shell: false,
   });
+
+  if (result.error) {
+    console.error(`\n✗ Failed to run ${command}:`, result.error.message);
+    process.exit(1);
+  }
 
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
@@ -51,7 +62,28 @@ if (status) {
 }
 
 console.log("\n>> Bumping version (patch)...");
-run("npm", ["version", "patch", "-m", "chore(release): %s"]);
+const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+run(npmCmd, ["version", "patch", "--no-git-tag-version"]);
+
+const pkg = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
+const nextVersion = pkg.version;
+if (!nextVersion) {
+  console.error("\n✗ Could not read updated version from package.json");
+  process.exit(1);
+}
+
+const tagName = `v${nextVersion}`;
+const existingTag = readStdout("git", ["tag", "-l", tagName]);
+if (existingTag) {
+  console.error(`\n✗ Tag ${tagName} already exists. Aborting release.`);
+  process.exit(1);
+}
+
+run("git", ["add", "package.json"]);
+run("git", ["commit", "-m", `chore(release): ${tagName}`]);
+run("git", ["tag", tagName]);
 
 const currentBranch = readStdout("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
 if (!currentBranch || currentBranch === "HEAD") {
