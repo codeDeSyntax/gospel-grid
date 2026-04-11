@@ -185,6 +185,9 @@ export interface SpeechToTextAPI {
   startStreaming: (options?: {
     sampleRate?: number;
   }) => Promise<{ success: boolean; error?: string }>;
+  sendStreamingAudio: (
+    audioBuffer: ArrayBuffer,
+  ) => Promise<{ success: boolean; error?: string }>;
   stopStreaming: () => Promise<{ success: boolean; error?: string }>;
 
   getSupportedLanguages: () => Promise<{

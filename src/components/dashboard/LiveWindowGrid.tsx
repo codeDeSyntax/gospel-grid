@@ -17,6 +17,12 @@ import {
   type FeatureTimerProjectionTheme,
 } from "./RightPanel/featureTimerState";
 import { IMAGE_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureImageState";
+import {
+  CAPTIONS_FEATURE_WINDOW_ID,
+  FEATURE_CAPTIONS_EVENT,
+  loadFeatureCaptionsState,
+  type FeatureCaptionsState,
+} from "./RightPanel/featureCaptionsState";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE
@@ -66,6 +72,9 @@ export function LiveWindowGrid({
       }
     >
   >({});
+  const [captionsState, setCaptionsState] = useState<FeatureCaptionsState>(() =>
+    loadFeatureCaptionsState(),
+  );
 
   // ── Window selection (max 4) ───────────────────────────────────────────
   const displayWindows = useMemo(() => windows.slice(0, 4), [windows]);
@@ -152,6 +161,23 @@ export function LiveWindowGrid({
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const syncCaptions = () => {
+      setCaptionsState(loadFeatureCaptionsState());
+    };
+
+    syncCaptions();
+    const timer = window.setInterval(syncCaptions, 500);
+    window.addEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
+    window.addEventListener("storage", syncCaptions);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
+      window.removeEventListener("storage", syncCaptions);
+    };
+  }, []);
+
   // ── MediaStream hook — one live GPU stream per window ──────────────────
   const sourceIds = useMemo(
     () =>
@@ -159,7 +185,8 @@ export function LiveWindowGrid({
         .filter(
           (w) =>
             !w.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
-            !w.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX),
+            !w.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX) &&
+            w.id !== CAPTIONS_FEATURE_WINDOW_ID,
         )
         .map((w) => w.id),
     [gridWindows],
@@ -206,6 +233,30 @@ export function LiveWindowGrid({
   const renderWindow = (win: WindowInfo, customStyle?: React.CSSProperties) => {
     const isTimerFeature = win.id.startsWith(TIMER_FEATURE_WINDOW_PREFIX);
     const isImageFeature = win.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX);
+    const isCaptionsFeature = win.id === CAPTIONS_FEATURE_WINDOW_ID;
+
+    if (isCaptionsFeature) {
+      return (
+        <div
+          key={win.id}
+          className="relative overflow-hidden bg-black"
+          style={{
+            ...customStyle,
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center px-8 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_45%)]">
+            <div className="max-w-[90%]">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-theme-primary-300/85 mb-3">
+                Live Captions
+              </p>
+              <p className="text-3xl leading-tight text-theme-primary-50 break-words">
+                {captionsState.text || "Waiting for speech..."}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (isTimerFeature) {
       const timerView = timerDisplayMap[win.id] ?? {

@@ -195,6 +195,12 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
   startStreaming: (options?: { sampleRate?: number }) =>
     ipcRenderer.invoke("assembly-start-streaming", options || {}),
 
+  sendStreamingAudio: (audioBuffer: ArrayBuffer) => {
+    const buffer = Buffer.from(audioBuffer);
+    ipcRenderer.send("assembly-send-audio-chunk", buffer);
+    return Promise.resolve({ success: true });
+  },
+
   stopStreaming: () => ipcRenderer.invoke("assembly-stop-streaming"),
 
   // Get supported languages

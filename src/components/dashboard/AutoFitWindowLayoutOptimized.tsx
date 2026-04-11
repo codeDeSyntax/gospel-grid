@@ -25,6 +25,11 @@ import {
   getTimerFeatureWindowId,
   loadFeatureTimerCollection,
 } from "./RightPanel/featureTimerState";
+import {
+  CAPTIONS_FEATURE_WINDOW_ID,
+  FEATURE_CAPTIONS_EVENT,
+  loadFeatureCaptionsState,
+} from "./RightPanel/featureCaptionsState";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -86,7 +91,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const [displays, setDisplays] = useState<DisplayInfo[]>([]);
   const [loadingDisplays, setLoadingDisplays] = useState(false);
   const [publishedDisplayIds, setPublishedDisplayIds] = useState<number[]>([]);
-  const requestedThumbnailIdsRef = useRef<Set<string>>(new Set());
+  const [captionsText, setCaptionsText] = useState(
+    () => loadFeatureCaptionsState().text,
+  );
+  const thumbnailRequestsInFlightRef = useRef<Set<string>>(new Set());
   const displayAssignments = useAppSelector(
     (state) => state.grid.displayAssignments,
   );
@@ -134,6 +142,23 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
     return map;
   }, [windows, displayAssignments]);
+
+  useEffect(() => {
+    const syncCaptions = () => {
+      setCaptionsText(loadFeatureCaptionsState().text);
+    };
+
+    syncCaptions();
+    const timer = window.setInterval(syncCaptions, 500);
+    window.addEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
+    window.addEventListener("storage", syncCaptions);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
+      window.removeEventListener("storage", syncCaptions);
+    };
+  }, []);
 
   const loadDisplays = useCallback(async (showSpinner = true) => {
     if (showSpinner) setLoadingDisplays(true);
@@ -202,26 +227,28 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   }, [windows]);
 
   useEffect(() => {
-    const assignedWindowIds = Array.from(
-      new Set(Object.values(displayAssignments).flat()),
-    );
-
-    const targetIds = assignedWindowIds.filter(
-      (windowId) =>
-        !requestedThumbnailIdsRef.current.has(windowId) &&
-        !windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
-        !windowId.startsWith(IMAGE_FEATURE_WINDOW_PREFIX) &&
-        windowMap.has(windowId),
-    );
-
-    if (targetIds.length === 0) return;
-
     let cancelled = false;
 
-    const loadThumbnails = async () => {
+    const requestMissingThumbnails = async () => {
+      const assignedWindowIds = Array.from(
+        new Set(Object.values(displayAssignments).flat()),
+      );
+
+      const missingIds = assignedWindowIds.filter((windowId) => {
+        if (windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX)) return false;
+        if (windowId.startsWith(IMAGE_FEATURE_WINDOW_PREFIX)) return false;
+        if (windowId === CAPTIONS_FEATURE_WINDOW_ID) return false;
+        if (!windowMap.has(windowId)) return false;
+        if (windowThumbnails[windowId]) return false;
+        if (thumbnailRequestsInFlightRef.current.has(windowId)) return false;
+        return true;
+      });
+
+      if (missingIds.length === 0) return;
+
       await Promise.all(
-        targetIds.map(async (windowId) => {
-          requestedThumbnailIdsRef.current.add(windowId);
+        missingIds.map(async (windowId) => {
+          thumbnailRequestsInFlightRef.current.add(windowId);
           try {
             const result = await window.electronAPI.getWindowThumbnail(
               windowId,
@@ -243,15 +270,19 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
             }
           } catch (error) {
             console.error("Failed to load display thumbnail:", error);
+          } finally {
+            thumbnailRequestsInFlightRef.current.delete(windowId);
           }
         }),
       );
     };
 
-    loadThumbnails();
+    requestMissingThumbnails();
+    const retryTimer = window.setInterval(requestMissingThumbnails, 2000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(retryTimer);
     };
   }, [displayAssignments, windowMap, windowThumbnails, dispatch]);
 
@@ -385,7 +416,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
   const getWindowTileClasses = (assignedCount: number, isFocused: boolean) => {
     const base =
-      "group relative min-w-0 overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-black border-0 aspect-[16/9] w-full";
+      "group relative min-w-0 max-h-full overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-black border-0 aspect-[16/9] w-full h-auto";
 
     if (assignedCount === 1) {
       return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
@@ -447,7 +478,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full h-full min-h-0 rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black `}
+                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 
@@ -525,6 +556,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                       const isTimerFeature = windowId.startsWith(
                         TIMER_FEATURE_WINDOW_PREFIX,
                       );
+                      const isCaptionsFeature =
+                        windowId === CAPTIONS_FEATURE_WINDOW_ID;
                       const thumbnail =
                         windowThumbnails[windowId] || win.thumbnail || null;
 
@@ -546,7 +579,18 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
                           title={`${win.app} • ${win.name}`}
                         >
-                          {isTimerFeature ? (
+                          {isCaptionsFeature ? (
+                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_45%)]">
+                              <div className="max-w-[90%]">
+                                <p className="text-[9px] uppercase tracking-[0.16em] text-theme-primary-300/80 mb-2">
+                                  Live Captions
+                                </p>
+                                <p className="text-sm leading-snug text-theme-primary-50 break-words">
+                                  {captionsText || "Waiting for speech..."}
+                                </p>
+                              </div>
+                            </div>
+                          ) : isTimerFeature ? (
                             <div className="absolute inset-0 z-0">
                               <TimerProjectionScreen
                                 days={timerPreview.days}
@@ -577,11 +621,11 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
-                          {!isTimerFeature && (
+                          {!isTimerFeature && !isCaptionsFeature && (
                             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent pointer-events-none z-[1]" />
                           )}
 
-                          {!isTimerFeature && (
+                          {!isTimerFeature && !isCaptionsFeature && (
                             <div className="absolute top-1.5 left-1.5 z-20 max-w-[82%] rounded bg-black/70 px-1.5 py-0.5 backdrop-blur-sm">
                               <span className="block text-[8px] leading-none text-theme-primary-100 truncate max-w-full">
                                 {win.name}
@@ -589,7 +633,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
-                          {!isTimerFeature && (
+                          {!isTimerFeature && !isCaptionsFeature && (
                             <div className="absolute bottom-1.5 right-1.5 z-20 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
                               {win.icon ? (
                                 <>

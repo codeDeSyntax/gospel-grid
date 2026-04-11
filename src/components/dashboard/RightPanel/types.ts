@@ -34,4 +34,9 @@ export interface SettingsPanelProps {
 
 export type MainViewType = "windows" | "settings";
 
-export type FeatureView = "autofit" | "overlay" | "timer" | "image";
+export type FeatureView =
+  | "autofit"
+  | "overlay"
+  | "timer"
+  | "image"
+  | "captions";

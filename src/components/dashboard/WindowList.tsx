@@ -16,6 +16,8 @@ import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot } from "lucide-react";
 import { TIMER_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureTimerState";
 
+const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
+
 export interface WindowInfo {
   id: string;
   name: string;
@@ -212,112 +214,135 @@ export const WindowList: React.FC<WindowListProps> = ({
         ) : (
           <div className="space-y-1 pb-2 ">
             <AnimatePresence mode="popLayout">
-              {filteredWindows.map((window, index) => (
-                <motion.div
-                  key={window.id}
-                  initial={{
-                    opacity: 0,
-                    y: 10,
-                    scale: 0.98,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: -5,
-                    scale: 0.98,
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    delay: index * 0.03,
-                    ease: "easeOut",
-                  }}
-                  draggable="true"
-                  onDragStartCapture={(e: React.DragEvent<HTMLDivElement>) => {
-                    // Create drag preview from the full card
-                    const card = e.currentTarget as HTMLElement;
-                    const dragPreview = card.cloneNode(true) as HTMLElement;
-                    dragPreview.style.position = "absolute";
-                    dragPreview.style.top = "-9999px";
-                    dragPreview.style.width = card.offsetWidth + "px";
-                    dragPreview.style.opacity = "0.7";
-                    dragPreview.style.transform = "rotate(-3deg)";
-                    dragPreview.style.pointerEvents = "none";
-                    document.body.appendChild(dragPreview);
+              {filteredWindows.map((window, index) => {
+                const isCaptionsWindow =
+                  window.id === CAPTIONS_FEATURE_WINDOW_ID;
+                const isTimerWindow = window.id.startsWith(
+                  TIMER_FEATURE_WINDOW_PREFIX,
+                );
 
-                    e.dataTransfer.setDragImage(
-                      dragPreview,
-                      card.offsetWidth / 2,
-                      card.offsetHeight / 2,
-                    );
+                return (
+                  <motion.div
+                    key={window.id}
+                    initial={{
+                      opacity: 0,
+                      y: 10,
+                      scale: 0.98,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: -5,
+                      scale: 0.98,
+                    }}
+                    transition={{
+                      duration: 0.2,
+                      delay: index * 0.03,
+                      ease: "easeOut",
+                    }}
+                    draggable="true"
+                    onDragStartCapture={(
+                      e: React.DragEvent<HTMLDivElement>,
+                    ) => {
+                      // Create drag preview from the full card
+                      const card = e.currentTarget as HTMLElement;
+                      const dragPreview = card.cloneNode(true) as HTMLElement;
+                      dragPreview.style.position = "absolute";
+                      dragPreview.style.top = "-9999px";
+                      dragPreview.style.width = card.offsetWidth + "px";
+                      dragPreview.style.opacity = "0.7";
+                      dragPreview.style.transform = "rotate(-3deg)";
+                      dragPreview.style.pointerEvents = "none";
+                      document.body.appendChild(dragPreview);
 
-                    requestAnimationFrame(() => {
-                      if (document.body.contains(dragPreview)) {
-                        document.body.removeChild(dragPreview);
+                      e.dataTransfer.setDragImage(
+                        dragPreview,
+                        card.offsetWidth / 2,
+                        card.offsetHeight / 2,
+                      );
+
+                      requestAnimationFrame(() => {
+                        if (document.body.contains(dragPreview)) {
+                          document.body.removeChild(dragPreview);
+                        }
+                      });
+
+                      const dragData = {
+                        windowId: window.id,
+                        windowInfo: JSON.stringify(window),
+                      };
+                      e.dataTransfer.setData(
+                        "text/plain",
+                        JSON.stringify(dragData),
+                      );
+                      e.dataTransfer.effectAllowed = "copy";
+                      setDraggedWindow(window);
+                      onWindowDragStart?.(window);
+                    }}
+                    onDragEndCapture={() => {
+                      setDraggedWindow(null);
+                      onWindowDragEnd?.();
+                    }}
+                    onClick={(e) => {
+                      // Prevent click right after drag interactions
+                      if (draggedWindow) {
+                        e.preventDefault();
+                        return;
                       }
-                    });
 
-                    const dragData = {
-                      windowId: window.id,
-                      windowInfo: JSON.stringify(window),
-                    };
-                    e.dataTransfer.setData(
-                      "text/plain",
-                      JSON.stringify(dragData),
-                    );
-                    e.dataTransfer.effectAllowed = "copy";
-                    setDraggedWindow(window);
-                    onWindowDragStart?.(window);
-                  }}
-                  onDragEndCapture={() => {
-                    setDraggedWindow(null);
-                    onWindowDragEnd?.();
-                  }}
-                  onClick={(e) => {
-                    // Prevent click right after drag interactions
-                    if (draggedWindow) {
-                      e.preventDefault();
-                      return;
-                    }
-
-                    if (window.handle != null) {
-                      onWindowFocus?.(window.handle);
-                    }
-                  }}
-                  className={`
+                      if (window.handle != null) {
+                        onWindowFocus?.(window.handle);
+                      }
+                    }}
+                    className={`
                     relative overflow-hidden transition-all duration-200 border-solid
                     flex items-center gap-2.5 pl-5 pr-8 py-1.5 rounded-xl group
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
-                      window.isSelected
-                        ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 border border-theme-primary-300/5 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
-                        : "border border-theme-primary-600/10 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/10 hover:bg-theme-primary-800/15 hover:shadow-sm hover:shadow-theme-primary-500/8"
+                      isCaptionsWindow
+                        ? "border border-theme-primary-300/45 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(8,10,18,0.95),rgba(var(--theme-primary-900),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:border-theme-primary-200/70 hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
+                        : window.isSelected
+                          ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 border border-theme-primary-300/5 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                          : "border border-theme-primary-600/10 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/10 hover:bg-theme-primary-800/15 hover:shadow-sm hover:shadow-theme-primary-500/8"
                     }
                   `}
-                >
-                  {(() => {
-                    const isTimerWindow = window.id.startsWith(
-                      TIMER_FEATURE_WINDOW_PREFIX,
-                    );
-                    const hhmmss = window.name.match(/\b\d{1,2}:\d{2}:\d{2}\b/);
-                    const mmss = window.name.match(/\b\d{1,2}:\d{2}\b/);
-                    const timerText = hhmmss?.[0] ?? mmss?.[0] ?? window.name;
+                  >
+                    {(isCaptionsWindow || isTimerWindow) && (
+                      <DepthSurface
+                        className="pointer-events-none absolute inset-0 rounded-xl"
+                        surfaceClassName="depth-active-surface opacity-20 shadow-none"
+                      >
+                        <span className="sr-only">
+                          {isCaptionsWindow
+                            ? "Live captions surface"
+                            : "Timer surface"}
+                        </span>
+                      </DepthSurface>
+                    )}
 
-                    return (
-                      <>
-                        {/* Drag Handle - Left side with dotted grip icon */}
-                        <div
-                          onMouseDown={(e) => {
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                          className={`
+                    {(() => {
+                      const hhmmss = window.name.match(
+                        /\b\d{1,2}:\d{2}:\d{2}\b/,
+                      );
+                      const mmss = window.name.match(/\b\d{1,2}:\d{2}\b/);
+                      const timerText = hhmmss?.[0] ?? mmss?.[0] ?? window.name;
+
+                      return (
+                        <>
+                          {/* Drag Handle - Left side with dotted grip icon */}
+                          <div
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className={`
                       absolute left-0 top-0 w-4 h-full z-10
                       flex items-center justify-center
                       cursor-grab active:cursor-grabbing
@@ -327,161 +352,203 @@ export const WindowList: React.FC<WindowListProps> = ({
                       rounded-l-xl
                       ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
                     `}
-                          title="Drag to add window to layout"
-                        >
-                          {/* Grip dots */}
-                          <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
-                            <div className="flex gap-[3px]">
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                            </div>
-                            <div className="flex gap-[3px]">
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                            </div>
-                            <div className="flex gap-[3px]">
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                              <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                            title="Drag to add window to layout"
+                          >
+                            {/* Grip dots */}
+                            <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
+                              <div className="flex gap-[3px]">
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              </div>
+                              <div className="flex gap-[3px]">
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              </div>
+                              <div className="flex gap-[3px]">
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Magical shimmer effect */}
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none" />
-
-                        {/* Pin Button — absolute, doesn't affect layout */}
-                        {onWindowPin && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onWindowPin(window.id);
-                            }}
-                            className={`transition-all duration-200 ${
-                              window.isPinned
-                                ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
-                                : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                          {/* Magical shimmer effect */}
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none ${
+                              isCaptionsWindow
+                                ? "opacity-70 group-hover:opacity-95"
+                                : "opacity-0 group-hover:opacity-100"
                             }`}
-                            title={
-                              window.isPinned ? "Unpin window" : "Pin to top"
-                            }
-                          >
-                            <MdPushPin
-                              size={14}
-                              className={
-                                window.isPinned ? "rotate-0" : "rotate-45"
+                          />
+
+                          {isCaptionsWindow && (
+                            <DepthSurface className="absolute right-8  flex items-center justify-center h-6 py-0 z-20 rounded-full border border-theme-primary-200/45 bg-theme-primary-500 px-2  shadow-[0_0_14px_rgba(var(--theme-primary-300),0.45)]">
+                              <span className=" font-semibold uppercase  text-theme-primary-50">
+                                Live
+                              </span>
+                            </DepthSurface>
+                          )}
+
+                          {/* Pin Button — absolute, doesn't affect layout */}
+                          {!isCaptionsWindow && onWindowPin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onWindowPin(window.id);
+                              }}
+                              className={`transition-all duration-200 ${
+                                window.isPinned
+                                  ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
+                                  : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                              }`}
+                              title={
+                                window.isPinned ? "Unpin window" : "Pin to top"
                               }
-                            />
-                          </button>
-                        )}
-
-                        {/* App Icon */}
-                        <DepthButton
-                          sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
-                          className="!cursor-default"
-                          active={window.isSelected}
-                          inactiveClassName="text-theme-primary-200/85 border-theme-primary-500/25"
-                          activeClassName="text-theme-primary-50 border-theme-primary-300/70"
-                          inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
-                          activeSurfaceClassName="bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
-                          aria-hidden
-                          tabIndex={-1}
-                        >
-                          <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
-                            {window.icon ? (
-                              <img
-                                src={window.icon}
-                                alt={`${window.app} icon`}
-                                className="w-6 h-6 object-contain"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const fallback = e.currentTarget
-                                    .nextElementSibling as HTMLElement;
-                                  if (fallback) fallback.style.display = "flex";
-                                }}
-                              />
-                            ) : null}
-                            <div
-                              style={{ display: window.icon ? "none" : "flex" }}
-                              className="w-full h-full items-center justify-center"
                             >
-                              {getWindowFallbackIcon(window, 20)}
-                            </div>
-                          </div>
-                        </DepthButton>
-
-                        {/* Text Content */}
-                        <div className="flex-1 min-w-0 z-10">
-                          {/* App Name */}
-                          <div
-                            className={`text-xs font-semibold bg-gradient-to-r ${getAppGradient(window.app)} bg-clip-text text-transparent truncate leading-tight`}
-                          >
-                            {window.app}
-                          </div>
-                          {/* Window Title */}
-                          {isTimerWindow ? (
-                            <div className="text-[27px] font-[impact] tracking-[0.08em] text-white/85 group-hover:text-white truncate leading-none transition-colors duration-200 mt-0.5">
-                              {timerText}
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
-                              {window.name}
-                            </div>
+                              <MdPushPin
+                                size={14}
+                                className={
+                                  window.isPinned ? "rotate-0" : "rotate-45"
+                                }
+                              />
+                            </button>
                           )}
-                          {/* State pills */}
-                          {(window.isMinimized || window.isMaximized) && (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              {window.isMinimized && (
-                                <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
-                                  MIN
-                                </span>
-                              )}
-                              {window.isMaximized && (
-                                <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
-                                  MAX
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
 
-                        {/* Select / Check Handle — right side */}
-                        <div
-                          className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
-                            window.isSelected
-                              ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
-                              : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
-                          }`}
-                        >
-                          <div
-                            onMouseDown={(e) => {
-                              e.stopPropagation();
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
-                              window.isSelected
-                                ? "text-theme-primary-300"
-                                : "text-white/40 hover:text-white/70"
-                            }`}
-                            title={
-                              window.isSelected
-                                ? "Remove from selection"
-                                : "Drag to add window to layout"
+                          {/* App Icon */}
+                          <DepthButton
+                            sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
+                            className="!cursor-default"
+                            active={window.isSelected}
+                            inactiveClassName={
+                              isCaptionsWindow
+                                ? "text-theme-primary-50 border-theme-primary-300/45"
+                                : "text-theme-primary-200/85 border-theme-primary-500/25"
                             }
+                            activeClassName={
+                              isCaptionsWindow
+                                ? "text-theme-primary-50 border-theme-primary-200/75"
+                                : "text-theme-primary-50 border-theme-primary-300/70"
+                            }
+                            inactiveSurfaceClassName={
+                              isCaptionsWindow
+                                ? "bg-gradient-to-br from-theme-primary-500/40 via-theme-primary-400/30 to-theme-primary-700/45"
+                                : "bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
+                            }
+                            activeSurfaceClassName={
+                              isCaptionsWindow
+                                ? "bg-gradient-to-br from-theme-primary-300/90 via-theme-primary-400/95 to-theme-primary-600/92"
+                                : "bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
+                            }
+                            aria-hidden
+                            tabIndex={-1}
                           >
-                            {window.isSelected ? (
-                              <MdCheck size={16} />
+                            <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
+                              {window.icon ? (
+                                <img
+                                  src={window.icon}
+                                  alt={`${window.app} icon`}
+                                  className="w-6 h-6 object-contain"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                    const fallback = e.currentTarget
+                                      .nextElementSibling as HTMLElement;
+                                    if (fallback)
+                                      fallback.style.display = "flex";
+                                  }}
+                                />
+                              ) : null}
+                              <div
+                                style={{
+                                  display: window.icon ? "none" : "flex",
+                                }}
+                                className="w-full h-full items-center justify-center"
+                              >
+                                {getWindowFallbackIcon(window, 20)}
+                              </div>
+                            </div>
+                          </DepthButton>
+
+                          {/* Text Content */}
+                          <div className="flex-1 min-w-0 z-10">
+                            {/* App Name */}
+                            <div
+                              className={`text-xs font-semibold bg-gradient-to-r ${
+                                isCaptionsWindow
+                                  ? "from-theme-primary-50 via-theme-primary-100 to-theme-primary-200"
+                                  : getAppGradient(window.app)
+                              } bg-clip-text text-transparent truncate leading-tight`}
+                            >
+                              {isCaptionsWindow ? "AI Speech" : window.app}
+                            </div>
+                            {/* Window Title */}
+                            {isCaptionsWindow ? (
+                              <div className="text-[14px] font-[impact] tracking-[0.11em] uppercase text-theme-primary-50 drop-shadow-[0_0_8px_rgba(var(--theme-primary-300),0.5)] truncate leading-tight transition-colors duration-200 mt-0.5">
+                                {window.name}
+                              </div>
+                            ) : isTimerWindow ? (
+                              <div className="text-[27px] font-[impact] tracking-[0.08em] text-white/85 group-hover:text-white truncate leading-none transition-colors duration-200 mt-0.5">
+                                {timerText}
+                              </div>
                             ) : (
-                              <MdDragIndicator size={17} />
+                              <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
+                                {window.name}
+                              </div>
+                            )}
+                            {/* State pills */}
+                            {(window.isMinimized || window.isMaximized) && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {window.isMinimized && (
+                                  <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
+                                    MIN
+                                  </span>
+                                )}
+                                {window.isMaximized && (
+                                  <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
+                                    MAX
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </motion.div>
-              ))}
+
+                          {/* Select / Check Handle — right side */}
+                          <div
+                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
+                              window.isSelected
+                                ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
+                                : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
+                            }`}
+                          >
+                            <div
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                                window.isSelected
+                                  ? "text-theme-primary-300"
+                                  : "text-white/40 hover:text-white/70"
+                              }`}
+                              title={
+                                window.isSelected
+                                  ? "Remove from selection"
+                                  : "Drag to add window to layout"
+                              }
+                            >
+                              {window.isSelected ? (
+                                <MdCheck size={16} />
+                              ) : (
+                                <MdDragIndicator size={17} />
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}

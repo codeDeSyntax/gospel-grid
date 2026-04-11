@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, memo, useCallback } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { DepthButton } from "@/shared/DepthButton";
 import {
@@ -125,6 +125,8 @@ const FlipCard: React.FC<FlipCardProps> = ({
   );
 };
 
+const MemoizedFlipCard = memo(FlipCard);
+
 export const FeatureTimerView: React.FC = () => {
   const appTheme = useAppSelector((s) => s.app.theme);
   const displayAssignments = useAppSelector((s) => s.grid.displayAssignments);
@@ -144,20 +146,35 @@ export const FeatureTimerView: React.FC = () => {
     seconds: "00",
   });
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNowMs(Date.now());
-      setTimerCollection((prev) => {
-        const next = markCollectionCompletedIfElapsed(prev, Date.now());
-        if (next !== prev) {
-          saveFeatureTimerCollection(next);
-        }
-        return next;
-      });
-    }, 250);
+  const rafIdRef = React.useRef<number | null>(null);
+  const lastUpdateRef = React.useRef<number>(0);
 
-    return () => window.clearInterval(timer);
+  const throttledTimeUpdate = useCallback(() => {
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 200) {
+      rafIdRef.current = requestAnimationFrame(throttledTimeUpdate);
+      return;
+    }
+    lastUpdateRef.current = now;
+    setNowMs(now);
+    setTimerCollection((prev) => {
+      const next = markCollectionCompletedIfElapsed(prev, now);
+      if (next !== prev) {
+        saveFeatureTimerCollection(next);
+      }
+      return next;
+    });
+    rafIdRef.current = requestAnimationFrame(throttledTimeUpdate);
   }, []);
+
+  useEffect(() => {
+    rafIdRef.current = requestAnimationFrame(throttledTimeUpdate);
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, [throttledTimeUpdate]);
 
   const activeTimer = useMemo<FeatureTimerItem | null>(
     () => getActiveTimerItem(timerCollection),
@@ -339,7 +356,7 @@ export const FeatureTimerView: React.FC = () => {
               return (
                 <div
                   key={timer.id}
-                  className={`relative overflow-hidden transition-all duration-200 flex items-center gap-2 pl-2.5 pr-8 py-1 rounded-xl group ${
+                  className={`relative overflow-hidden transition-all duration-200 flex items-center gap-2 pl-2.5 pr-8 py-1 rounded-xl group pointer-events-auto ${
                     isActive
                       ? "bg-theme-primary-700/20 ring-1 ring-theme-primary-300/55"
                       : "bg-theme-primary-900 hover:bg-theme-primary-800/15"
@@ -349,12 +366,12 @@ export const FeatureTimerView: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={useCallback(() => {
                       setIsDraftMode(false);
                       applyCollection(
                         setActiveTimerId(timerCollection, timer.id),
                       );
-                    }}
+                    }, [timer.id, timerCollection])}
                     className="w-full text-left min-w-0 z-10 flex items-center gap-2"
                     title={timer.name}
                   >
@@ -384,11 +401,13 @@ export const FeatureTimerView: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      applyCollection(
-                        removeTimerFromCollection(timerCollection, timer.id),
-                      )
-                    }
+                    onClick={useCallback(
+                      () =>
+                        applyCollection(
+                          removeTimerFromCollection(timerCollection, timer.id),
+                        ),
+                      [timer.id, timerCollection],
+                    )}
                     className="absolute right-1.5 top-1 z-20 h-5 w-5 rounded-md text-theme-primary-200/70 text-[10px] leading-none hover:text-theme-primary-50"
                     title="Delete timer"
                   >
@@ -418,7 +437,7 @@ export const FeatureTimerView: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-5">
             {isCountdown ? (
               <>
-                <FlipCard
+                <MemoizedFlipCard
                   value={pad2(countdownParts.days)}
                   label="Days"
                   isDarkMode={isDarkMode}
@@ -430,7 +449,7 @@ export const FeatureTimerView: React.FC = () => {
                   onCancelEdit={cancelEdit}
                   onChangeEditValue={(next) => changeDraftValue("days", next)}
                 />
-                <FlipCard
+                <MemoizedFlipCard
                   value={pad2(countdownParts.hours)}
                   label="Hours"
                   isDarkMode={isDarkMode}
@@ -442,7 +461,7 @@ export const FeatureTimerView: React.FC = () => {
                   onCancelEdit={cancelEdit}
                   onChangeEditValue={(next) => changeDraftValue("hours", next)}
                 />
-                <FlipCard
+                <MemoizedFlipCard
                   value={pad2(countdownParts.minutes)}
                   label="Minutes"
                   isDarkMode={isDarkMode}
@@ -456,7 +475,7 @@ export const FeatureTimerView: React.FC = () => {
                     changeDraftValue("minutes", next)
                   }
                 />
-                <FlipCard
+                <MemoizedFlipCard
                   value={pad2(countdownParts.seconds)}
                   label="Seconds"
                   isDarkMode={isDarkMode}
@@ -473,7 +492,7 @@ export const FeatureTimerView: React.FC = () => {
               </>
             ) : (
               <>
-                <FlipCard
+                <MemoizedFlipCard
                   value={clockParts.hours}
                   label="Hours"
                   isDarkMode={isDarkMode}

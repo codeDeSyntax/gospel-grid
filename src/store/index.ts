@@ -3,6 +3,7 @@ import appSlice from "./slices/appSlice";
 import windowSlice from "./slices/windowSlice";
 import gridSlice from "./slices/gridSlice";
 import notificationSlice from "./slices/notificationSlice";
+import captionsSlice from "./slices/captionsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     window: windowSlice,
     grid: gridSlice,
     notification: notificationSlice,
+    captions: captionsSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

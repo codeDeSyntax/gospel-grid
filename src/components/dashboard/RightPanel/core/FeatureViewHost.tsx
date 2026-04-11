@@ -2,6 +2,7 @@ import React from "react";
 import { WindowLayoutCard } from "./WindowLayoutCard";
 import { OverlayTextPanel } from "../panels/OverlayTextPanel";
 import { FeatureTimerView } from "../features/timer/FeatureTimerView";
+import { FeatureCaptionsView } from "../features/captions/FeatureCaptionsView";
 import type { FeatureView, WindowLayoutCardProps } from "../types";
 
 interface FeatureViewHostProps extends WindowLayoutCardProps {
@@ -24,6 +25,10 @@ export const FeatureViewHost: React.FC<FeatureViewHostProps> = ({
 
   if (activeView === "timer") {
     return <FeatureTimerView />;
+  }
+
+  if (activeView === "captions") {
+    return <FeatureCaptionsView />;
   }
 
   return (

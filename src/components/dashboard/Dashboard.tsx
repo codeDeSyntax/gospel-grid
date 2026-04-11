@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { WindowList, type WindowInfo } from "./WindowList";
 import { CosmicBackground } from "./CosmicBackground";
+import { FloatingCaptionsOrb } from "./FloatingCaptionsOrb";
 import { RightPanel } from "./RightPanel/core/RightPanel";
 import type { PanelView } from "./RightPanel/types";
 import { TitleBar } from "@/shared/TitleBar";
@@ -45,6 +46,7 @@ import {
   getImageFeatureWindowId,
   loadFeatureImageCollection,
 } from "./RightPanel/featureImageState";
+import { CAPTIONS_FEATURE_WINDOW_ID } from "./RightPanel/featureCaptionsState";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -117,6 +119,17 @@ const buildImageFeatureWindow = (image: FeatureImageItem): WindowInfo => {
   };
 };
 
+const buildCaptionsFeatureWindow = (): WindowInfo => ({
+  id: CAPTIONS_FEATURE_WINDOW_ID,
+  app: "Feature Window",
+  name: "Live Captions",
+  isSelected: false,
+  isPinned: true,
+  icon: "/caption.png",
+  isVisible: true,
+  isMinimized: false,
+});
+
 interface DashboardProps {
   onHomeClick?: () => void;
 }
@@ -172,6 +185,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const [imageFeatureWindows, setImageFeatureWindows] = useState<WindowInfo[]>(
     [],
   );
+  const captionsFeatureWindow = useMemo(() => buildCaptionsFeatureWindow(), []);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -665,13 +679,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   const windowsForWindowList = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
-    return [...timerFeatureWindows, ...baseWindows];
-  }, [state.windows, timerFeatureWindows]);
+    return [captionsFeatureWindow, ...timerFeatureWindows, ...baseWindows];
+  }, [state.windows, timerFeatureWindows, captionsFeatureWindow]);
 
   const windowsForRightPanel = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
-    return [...timerFeatureWindows, ...imageFeatureWindows, ...baseWindows];
-  }, [state.windows, timerFeatureWindows, imageFeatureWindows]);
+    return [
+      captionsFeatureWindow,
+      ...timerFeatureWindows,
+      ...imageFeatureWindows,
+      ...baseWindows,
+    ];
+  }, [
+    state.windows,
+    timerFeatureWindows,
+    imageFeatureWindows,
+    captionsFeatureWindow,
+  ]);
 
   useEffect(() => {
     const validFeatureIds = new Set([
@@ -977,7 +1001,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       </div>
 
       {/* Bottom Status Bar - spacedesk style */}
-      <div className="h-8 bg-theme-primary-950 border-t-3 border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
+      <div className="h-8 bg-theme-primary-950 border-none border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
         {/* Left side - Status indicators */}
         <div className="flex items-center gap-4">
           {/* Projection status */}
@@ -1044,6 +1068,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
       {/* Toast Notifications */}
       <NotifierContainer />
+
+      {/* Global floating captions control */}
+      <FloatingCaptionsOrb />
     </div>
   );
 };

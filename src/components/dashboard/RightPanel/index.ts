@@ -7,6 +7,7 @@ export { FeatureRail } from "./core/FeatureRail";
 export { FeatureViewHost } from "./core/FeatureViewHost";
 export { RightPanel } from "./core/RightPanel";
 export { FeatureTimerView } from "./features/timer/FeatureTimerView";
+export { FeatureCaptionsView } from "./features/captions/FeatureCaptionsView";
 export { FeatureImageView } from "./features/image/FeatureImageView";
 export { FeatureImageMenu } from "./features/image/FeatureImageMenu";
 export * from "./types";

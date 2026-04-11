@@ -16,10 +16,11 @@ interface RailItem {
 }
 
 const railItems: RailItem[] = [
-  { id: "autofit", title: "Main Layout", iconSrc: "/wingrid.png" },
-  { id: "overlay", title: "Text Overlay", iconSrc: "/messages.png" },
-  { id: "timer", title: "Timer Feature", iconSrc: "/countdown.png" },
-  { id: "image", title: "Images", iconSrc: "/images.png" },
+  { id: "autofit", title: "Main Layout", iconSrc: "./wingrid.png" },
+  { id: "overlay", title: "Text Overlay", iconSrc: "./messages.png" },
+  { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
+  { id: "captions", title: "Live Captions", iconSrc: "./caption.png" },
+  { id: "image", title: "Images", iconSrc: "./images.png" },
 ];
 
 export const FeatureRail: React.FC<FeatureRailProps> = ({

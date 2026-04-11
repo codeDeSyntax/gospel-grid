@@ -74,6 +74,9 @@ export const createFeatureTimerItem = (name?: string): FeatureTimerItem => {
 export const createDefaultFeatureTimerCollection =
   (): FeatureTimerCollection => {
     const first = createFeatureTimerItem("Timer 1");
+    // Seed timer is for in-panel editing; keep it hidden from window list
+    // until the user explicitly adds/creates a timer window.
+    first.state.showInWindowList = false;
     return {
       timers: [first],
       activeTimerId: first.id,
@@ -191,7 +194,7 @@ export function normalizeFeatureTimerCollection(
       ? activeTimerIdRaw
       : (timers[0]?.id ?? null);
 
-  return {
+  const normalized: FeatureTimerCollection = {
     timers,
     activeTimerId,
     updatedAtMs: sanitizePositiveInt(
@@ -199,6 +202,33 @@ export function normalizeFeatureTimerCollection(
       Date.now(),
     ),
   };
+
+  // Migration: older versions could persist a single default seed timer as
+  // visible, causing a phantom timer row in WindowList on startup.
+  if (normalized.timers.length === 1) {
+    const only = normalized.timers[0];
+    const looksLikeSeedTimer =
+      /^Timer\s+1$/i.test(only.name) &&
+      only.state.mode === "countdown" &&
+      only.state.status === "idle" &&
+      only.state.durationMs === DEFAULT_DURATION_MS;
+
+    if (looksLikeSeedTimer && only.state.showInWindowList) {
+      normalized.timers = [
+        {
+          ...only,
+          state: {
+            ...only.state,
+            showInWindowList: false,
+            updatedAtMs: Date.now(),
+          },
+        },
+      ];
+      normalized.updatedAtMs = Date.now();
+    }
+  }
+
+  return normalized;
 }
 
 export function loadFeatureTimerState(): FeatureTimerState {

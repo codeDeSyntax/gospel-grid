@@ -19,6 +19,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { config } from "dotenv";
 import { update } from "./update";
 
@@ -40,16 +41,30 @@ import {
 } from "./thumbnailCapture";
 import { getWindowsWithThumbnails } from "./windowMapper";
 import { detectInternalDisplay, detectExternalDisplay } from "./displayManager";
+import { registerAssemblyAiIpc, shutdownAssemblyAiIpc } from "./assemblyAiIpc";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = path.join(__dirname, "../..");
 
 // Load environment variables
-config({ path: path.join(process.cwd(), ".env") });
+const envCandidates = [
+  path.join(process.cwd(), ".env"),
+  path.join(appRoot, ".env"),
+];
+
+let loadedEnvPath: string | null = null;
+for (const envPath of envCandidates) {
+  if (existsSync(envPath)) {
+    config({ path: envPath, override: false });
+    loadedEnvPath = envPath;
+    break;
+  }
+}
 
 console.log(
   "🔧 Loading environment variables from:",
-  path.join(process.cwd(), ".env"),
+  loadedEnvPath ?? "No .env file found",
 );
 console.log(
   "🔑 AssemblyAI API Key loaded:",
@@ -66,7 +81,7 @@ console.log(
 // ├─┬ dist
 // │ └── index.html    > Electron-Renderer
 //
-process.env.APP_ROOT = path.join(__dirname, "../..");
+process.env.APP_ROOT = appRoot;
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
@@ -311,6 +326,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(createWindow);
+registerAssemblyAiIpc();
 
 app.whenReady().then(() => {
   protocol.handle("local-image", (request) => {
@@ -1265,6 +1281,7 @@ app.whenReady().then(() => {
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
   stopPowerSaveBlocker();
+  void shutdownAssemblyAiIpc();
   if (tray && !tray.isDestroyed()) {
     tray.destroy();
     tray = null;
