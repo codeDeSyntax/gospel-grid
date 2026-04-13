@@ -1,6 +1,5 @@
 export { WindowLayoutCard } from "./core/WindowLayoutCard";
 export { SettingsPanel } from "./panels/SettingsPanel";
-export { PresetsPanel } from "./panels/PresetsPanel";
 export { OverlayTextPanel } from "./panels/OverlayTextPanel";
 export { DisplayRoutingPanel } from "./panels/DisplayRoutingPanel";
 export { FeatureRail } from "./core/FeatureRail";
