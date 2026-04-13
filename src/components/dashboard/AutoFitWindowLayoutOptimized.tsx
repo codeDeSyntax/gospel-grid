@@ -30,6 +30,7 @@ import {
   FEATURE_CAPTIONS_EVENT,
   loadFeatureCaptionsState,
 } from "./RightPanel/featureCaptionsState";
+import { FcDeleteRow } from "react-icons/fc";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -640,7 +641,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                                   <img
                                     src={win.icon}
                                     alt={`${win.app} icon`}
-                                    className="w-4 h-4 object-contain opacity-95"
+                                    className="w-10 h-10 object-contain opacity-95"
                                     draggable={false}
                                     onError={(e) => {
                                       e.currentTarget.style.display = "none";
@@ -665,16 +666,16 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
-                          <span
+                          <DepthButton
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFromDisplay(display.id, windowId);
                             }}
-                            className="absolute bottom-1.5 right-10 w-4 h-4 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20"
+                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20"
                             title="Remove window"
                           >
-                            <X className="w-2.5 h-2.5" />
-                          </span>
+                            <FcDeleteRow className="w-6 h-6" />
+                          </DepthButton>
                         </button>
                       );
                     })}
