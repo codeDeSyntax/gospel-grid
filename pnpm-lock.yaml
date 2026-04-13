@@ -19,7 +19,7 @@ importers:
         version: 17.1.2
       electron-updater:
         specifier: ^6.3.9
-        version: 6.6.2
+        version: 6.3.9
       framer-motion:
         specifier: ^12.23.15
         version: 12.23.15(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1039,12 +1039,12 @@ packages:
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
-  builder-util-runtime@9.2.4:
-    resolution: {integrity: sha512-upp+biKpN/XZMLim7aguUyW8s0FUpDvOtK6sbanMFDAMBzpHDqdhgVYm6zc9HJ6nWo7u2Lxk60i2M6Jd3aiNrA==}
+  builder-util-runtime@9.2.10:
+    resolution: {integrity: sha512-6p/gfG1RJSQeIbz8TK5aPNkoztgY1q5TgmGFMAXcY8itsGW6Y2ld1ALsZ5UJn8rog7hKF3zHx5iQbNQ8uLcRlw==}
     engines: {node: '>=12.0.0'}
 
-  builder-util-runtime@9.3.1:
-    resolution: {integrity: sha512-2/egrNDDnRaxVwK3A+cJq6UOlqOdedGA7JPqCeJjN2Zjk1/QB/6QUi3b714ScIGS7HafFXTyzJEOr5b44I3kvQ==}
+  builder-util-runtime@9.2.4:
+    resolution: {integrity: sha512-upp+biKpN/XZMLim7aguUyW8s0FUpDvOtK6sbanMFDAMBzpHDqdhgVYm6zc9HJ6nWo7u2Lxk60i2M6Jd3aiNrA==}
     engines: {node: '>=12.0.0'}
 
   builder-util@24.13.1:
@@ -1293,8 +1293,8 @@ packages:
   electron-to-chromium@1.5.218:
     resolution: {integrity: sha512-uwwdN0TUHs8u6iRgN8vKeWZMRll4gBkz+QMqdS7DDe49uiK68/UX92lFb61oiFPrpYZNeZIqa4bA7O6Aiasnzg==}
 
-  electron-updater@6.6.2:
-    resolution: {integrity: sha512-Cr4GDOkbAUqRHP5/oeOmH/L2Bn6+FQPxVLZtPbcmKZC63a1F3uu5EefYOssgZXG3u/zBlubbJ5PJdITdMVggbw==}
+  electron-updater@6.3.9:
+    resolution: {integrity: sha512-2PJNONi+iBidkoC5D1nzT9XqsE8Q1X28Fn6xRQhO3YX8qRRyJ3mkV4F1aQsuRnYPqq6Hw+E51y27W75WgDoofw==}
 
   electron@33.4.11:
     resolution: {integrity: sha512-xmdAs5QWRkInC7TpXGNvzo/7exojubk+72jn1oJL7keNeIlw7xNglf8TGtJtkR4rWC5FJq0oXiIXPS9BcK2Irg==}
@@ -3533,14 +3533,14 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  builder-util-runtime@9.2.4:
+  builder-util-runtime@9.2.10:
     dependencies:
       debug: 4.4.3
       sax: 1.4.1
     transitivePeerDependencies:
       - supports-color
 
-  builder-util-runtime@9.3.1:
+  builder-util-runtime@9.2.4:
     dependencies:
       debug: 4.4.3
       sax: 1.4.1
@@ -3863,15 +3863,15 @@ snapshots:
 
   electron-to-chromium@1.5.218: {}
 
-  electron-updater@6.6.2:
+  electron-updater@6.3.9:
     dependencies:
-      builder-util-runtime: 9.3.1
+      builder-util-runtime: 9.2.10
       fs-extra: 10.1.0
       js-yaml: 4.1.0
       lazy-val: 1.0.5
       lodash.escaperegexp: 4.1.2
       lodash.isequal: 4.5.0
-      semver: 7.7.2
+      semver: 7.7.4
       tiny-typed-emitter: 2.1.0
     transitivePeerDependencies:
       - supports-color
@@ -4851,8 +4851,7 @@ snapshots:
 
   semver@7.7.2: {}
 
-  semver@7.7.4:
-    optional: true
+  semver@7.7.4: {}
 
   serialize-error@7.0.1:
     dependencies:
