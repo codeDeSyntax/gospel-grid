@@ -212,6 +212,12 @@ contextBridge.exposeInMainWorld("speechToTextAPI", {
   // Restart AssemblyAI service
   restart: () => ipcRenderer.invoke("whisper-restart"),
 
+  // Secure key management (Electron safeStorage in main process)
+  setApiKey: (apiKey: string) =>
+    ipcRenderer.invoke("assembly-set-api-key", apiKey),
+  clearApiKey: () => ipcRenderer.invoke("assembly-clear-api-key"),
+  getApiKeyStatus: () => ipcRenderer.invoke("assembly-get-api-key-status"),
+
   // Event listeners for status updates
   onWhisperStatus: (callback: (status: any) => void) => {
     const listener = (_: any, status: any) => callback(status);

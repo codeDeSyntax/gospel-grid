@@ -197,6 +197,15 @@ export interface SpeechToTextAPI {
   }>;
   getStatus: () => Promise<WhisperStatusResult>;
   restart: () => Promise<{ success: boolean; error?: string }>;
+  setApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>;
+  clearApiKey: () => Promise<{ success: boolean; error?: string }>;
+  getApiKeyStatus: () => Promise<{
+    success: boolean;
+    hasKey?: boolean;
+    source?: "env" | "secure-storage" | "none";
+    safeStorageAvailable?: boolean;
+    error?: string;
+  }>;
   onWhisperStatus: (callback: (status: any) => void) => () => void;
 
   // Real-time speech result callback (for AssemblyAI streaming)

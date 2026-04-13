@@ -1,4 +1,12 @@
-import { BrowserWindow, ipcMain, type WebContents } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  safeStorage,
+  type WebContents,
+} from "electron";
+import fs from "node:fs/promises";
+import path from "node:path";
 import {
   createAssemblyAiLiveTranscriber,
   type AssemblyAiLiveTranscriber,
@@ -22,6 +30,67 @@ const status: SpeechStatus = {
 
 const DEFAULT_SAMPLE_RATE = 16000;
 const DEFAULT_SPEECH_MODEL = "u3-rt-pro";
+const SECURE_KEY_FILE_NAME = "assemblyai.key";
+
+function getSecureKeyFilePath() {
+  return path.join(app.getPath("userData"), "secrets", SECURE_KEY_FILE_NAME);
+}
+
+function isSafeStorageAvailable() {
+  return safeStorage.isEncryptionAvailable();
+}
+
+async function getApiKeyFromSecureStorage(): Promise<string | null> {
+  if (!isSafeStorageAvailable()) {
+    return null;
+  }
+
+  try {
+    const encrypted = await fs.readFile(getSecureKeyFilePath());
+    if (!encrypted.length) {
+      return null;
+    }
+
+    const decrypted = safeStorage.decryptString(encrypted).trim();
+    return decrypted || null;
+  } catch {
+    return null;
+  }
+}
+
+async function setApiKeyInSecureStorage(apiKey: string) {
+  if (!isSafeStorageAvailable()) {
+    return {
+      success: false,
+      error:
+        "Secure key storage is not available on this system. Use ASSEMBLYAI_API_KEY environment variable.",
+    };
+  }
+
+  const trimmed = apiKey.trim();
+  if (!trimmed) {
+    return { success: false, error: "API key cannot be empty." };
+  }
+
+  const filePath = getSecureKeyFilePath();
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  const encrypted = safeStorage.encryptString(trimmed);
+  await fs.writeFile(filePath, encrypted);
+  return { success: true };
+}
+
+async function clearApiKeyFromSecureStorage() {
+  try {
+    await fs.unlink(getSecureKeyFilePath());
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  return { success: true };
+}
 
 function toBufferLike(input: unknown): Buffer | null {
   if (Buffer.isBuffer(input)) {
@@ -78,9 +147,13 @@ async function stopActiveTranscriber() {
   }
 }
 
-function getApiKey(): string | null {
+async function getApiKey(): Promise<string | null> {
   const key = process.env.ASSEMBLYAI_API_KEY?.trim();
-  return key ? key : null;
+  if (key) {
+    return key;
+  }
+
+  return getApiKeyFromSecureStorage();
 }
 
 export function registerAssemblyAiIpc() {
@@ -96,11 +169,12 @@ export function registerAssemblyAiIpc() {
         speechModel?: string;
       },
     ) => {
-      const apiKey = getApiKey();
+      const apiKey = await getApiKey();
       if (!apiKey) {
         return {
           success: false,
-          error: "ASSEMBLYAI_API_KEY is missing. Add it to your .env file.",
+          error:
+            "AssemblyAI API key is missing. Set ASSEMBLYAI_API_KEY or save it with secure storage.",
         };
       }
 
@@ -212,11 +286,12 @@ export function registerAssemblyAiIpc() {
     ) => {
       await stopActiveTranscriber();
 
-      const apiKey = getApiKey();
+      const apiKey = await getApiKey();
       if (!apiKey) {
         return {
           success: false,
-          error: "ASSEMBLYAI_API_KEY is missing. Add it to your .env file.",
+          error:
+            "AssemblyAI API key is missing. Set ASSEMBLYAI_API_KEY or save it with secure storage.",
         };
       }
 
@@ -294,6 +369,46 @@ export function registerAssemblyAiIpc() {
       success: false,
       error:
         "Chunk transcription route is not wired yet. Use assembly-start-streaming.",
+    };
+  });
+
+  ipcMain.handle("assembly-set-api-key", async (_event, apiKey: string) => {
+    try {
+      return await setApiKeyInSecureStorage(apiKey);
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to save API key in secure storage.",
+      };
+    }
+  });
+
+  ipcMain.handle("assembly-clear-api-key", async () => {
+    try {
+      return await clearApiKeyFromSecureStorage();
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to clear API key from secure storage.",
+      };
+    }
+  });
+
+  ipcMain.handle("assembly-get-api-key-status", async () => {
+    const envKey = process.env.ASSEMBLYAI_API_KEY?.trim();
+    const secureKey = await getApiKeyFromSecureStorage();
+
+    return {
+      success: true,
+      hasKey: Boolean(envKey || secureKey),
+      source: envKey ? "env" : secureKey ? "secure-storage" : "none",
+      safeStorageAvailable: isSafeStorageAvailable(),
     };
   });
 }

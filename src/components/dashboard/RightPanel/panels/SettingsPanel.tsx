@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CustomSlider } from "@/components/ui/CustomSlider";
 import { CustomSelect } from "@/shared/Selector";
 import { RotateCcw } from "lucide-react";
@@ -52,6 +52,12 @@ interface PublishedQuality {
   brightness: number;
 }
 
+interface ApiKeyStatus {
+  hasKey: boolean;
+  source: "env" | "secure-storage" | "none";
+  safeStorageAvailable: boolean;
+}
+
 const SidebarMenuItem: React.FC<{
   item: SettingsMenuItem;
   isActive: boolean;
@@ -76,7 +82,7 @@ const SettingRow: React.FC<{
   last?: boolean;
 }> = ({ title, description, children, last }) => (
   <div
-    className={`flex items-start justify-between gap-6 py-6 ${
+    className={`flex items-start justify-between gap-6 py-3 ${
       !last ? "border-b border-theme-primary-500/10" : ""
     }`}
   >
@@ -98,6 +104,13 @@ const SectionContent: React.FC<{
   publishedQuality: PublishedQuality;
   refreshInterval: number;
   autoLoadLastPreset: boolean;
+  apiKeyInput: string;
+  setApiKeyInput: (value: string) => void;
+  apiKeyStatus: ApiKeyStatus;
+  apiKeyBusy: boolean;
+  apiKeyMessage: string | null;
+  onSaveApiKey: () => Promise<void>;
+  onClearApiKey: () => Promise<void>;
   dispatch: ReturnType<typeof useAppDispatch>;
 }> = ({
   tab,
@@ -105,6 +118,13 @@ const SectionContent: React.FC<{
   publishedQuality,
   refreshInterval,
   autoLoadLastPreset,
+  apiKeyInput,
+  setApiKeyInput,
+  apiKeyStatus,
+  apiKeyBusy,
+  apiKeyMessage,
+  onSaveApiKey,
+  onClearApiKey,
   dispatch,
 }) => {
   switch (tab) {
@@ -289,30 +309,105 @@ const SectionContent: React.FC<{
             </h3>
           </div>
           <div className="rounded-[24px] border border-theme-primary-500/10 bg-theme-primary-950/20 px-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] backdrop-blur-sm">
-            {[
-              [
-                "Render Pipeline",
-                "GPU Direct — frames stay on GPU, zero CPU readback",
-                "GPU Direct",
-              ],
-              ["Video Delivery", "MediaStream via getUserMedia", "MediaStream"],
-              [
-                "Active Theme",
-                "Current theme selected",
-                THEME_NAMES[colorTheme],
-              ],
-            ].map(([title, desc, value], i, arr) => (
-              <SettingRow
-                key={String(title)}
-                title={String(title)}
-                description={String(desc)}
-                last={i === arr.length - 1}
-              >
-                <span className="block text-right text-sm font-medium text-theme-primary-200/70">
-                  {String(value)}
-                </span>
-              </SettingRow>
-            ))}
+            <SettingRow
+              title="AssemblyAI API Key"
+              description="Paste your AssemblyAI key. It is encrypted using Electron safeStorage and stored on this device."
+            >
+              <div className="space-y-2">
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="Paste AssemblyAI API key"
+                  className="h-9 w-full rounded-lg border border-theme-primary-500/35 bg-theme-primary-900/30 px-3 text-xs text-theme-primary-50 outline-none placeholder:text-theme-primary-300/45 focus:border-theme-primary-300/70"
+                />
+                <div className="flex items-center gap-2">
+                  <DepthButton
+                    onClick={() => {
+                      void onSaveApiKey();
+                    }}
+                    disabled={apiKeyBusy || !apiKeyInput.trim()}
+                    sizeClassName="h-8 px-3 rounded-lg"
+                    inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide">
+                      Save
+                    </span>
+                  </DepthButton>
+                  <DepthButton
+                    onClick={() => {
+                      void onClearApiKey();
+                    }}
+                    disabled={apiKeyBusy}
+                    sizeClassName="h-8 px-3 rounded-lg"
+                    inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+                  >
+                    <span className="text-[11px] font-semibold uppercase tracking-wide">
+                      Clear
+                    </span>
+                  </DepthButton>
+                </div>
+                {apiKeyMessage ? (
+                  <p className="text-[11px] text-theme-primary-200/70">
+                    {apiKeyMessage}
+                  </p>
+                ) : null}
+              </div>
+            </SettingRow>
+
+            <SettingRow
+              title="Secure Storage Status"
+              description="Shows where Wingrid will read the key from at runtime. Environment variable has priority over secure storage."
+            >
+              <div className="space-y-1 text-right text-xs text-theme-primary-200/75">
+                <p>
+                  Key source:{" "}
+                  <span className="font-semibold">{apiKeyStatus.source}</span>
+                </p>
+                <p>
+                  Has key:{" "}
+                  <span className="font-semibold">
+                    {apiKeyStatus.hasKey ? "Yes" : "No"}
+                  </span>
+                </p>
+                <p>
+                  safeStorage:{" "}
+                  <span className="font-semibold">
+                    {apiKeyStatus.safeStorageAvailable
+                      ? "Available"
+                      : "Unavailable"}
+                  </span>
+                </p>
+              </div>
+            </SettingRow>
+
+            <SettingRow
+              title="Render Pipeline"
+              description="GPU Direct — frames stay on GPU, zero CPU readback"
+            >
+              <span className="block text-right text-sm font-medium text-theme-primary-200/70">
+                GPU Direct
+              </span>
+            </SettingRow>
+
+            <SettingRow
+              title="Video Delivery"
+              description="MediaStream via getUserMedia"
+            >
+              <span className="block text-right text-sm font-medium text-theme-primary-200/70">
+                MediaStream
+              </span>
+            </SettingRow>
+
+            <SettingRow
+              title="Active Theme"
+              description="Current theme selected"
+              last
+            >
+              <span className="block text-right text-sm font-medium text-theme-primary-200/70">
+                {THEME_NAMES[colorTheme]}
+              </span>
+            </SettingRow>
           </div>
         </section>
       );
@@ -324,6 +419,14 @@ const SectionContent: React.FC<{
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>("appearance");
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiKeyBusy, setApiKeyBusy] = useState(false);
+  const [apiKeyMessage, setApiKeyMessage] = useState<string | null>(null);
+  const [apiKeyStatus, setApiKeyStatus] = useState<ApiKeyStatus>({
+    hasKey: false,
+    source: "none",
+    safeStorageAvailable: false,
+  });
   const dispatch = useAppDispatch();
   const colorTheme = useAppSelector((s) => s.app.colorTheme);
   const publishedQuality = useAppSelector(
@@ -331,6 +434,64 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   ) as PublishedQuality;
   const refreshInterval = useAppSelector((s) => s.app.refreshInterval);
   const autoLoadLastPreset = useAppSelector((s) => s.app.autoLoadLastPreset);
+
+  const refreshApiKeyStatus = async () => {
+    const result = await window.speechToTextAPI.getApiKeyStatus();
+    if (!result?.success) {
+      setApiKeyMessage(result?.error || "Unable to read API key status.");
+      return;
+    }
+
+    setApiKeyStatus({
+      hasKey: Boolean(result.hasKey),
+      source: result.source || "none",
+      safeStorageAvailable: Boolean(result.safeStorageAvailable),
+    });
+  };
+
+  useEffect(() => {
+    void refreshApiKeyStatus();
+  }, []);
+
+  const handleSaveApiKey = async () => {
+    const trimmed = apiKeyInput.trim();
+    if (!trimmed) {
+      setApiKeyMessage("Enter an API key before saving.");
+      return;
+    }
+
+    setApiKeyBusy(true);
+    try {
+      const result = await window.speechToTextAPI.setApiKey(trimmed);
+      if (!result?.success) {
+        setApiKeyMessage(result?.error || "Failed to save API key.");
+        return;
+      }
+
+      setApiKeyInput("");
+      setApiKeyMessage("API key saved to secure storage.");
+      await refreshApiKeyStatus();
+    } finally {
+      setApiKeyBusy(false);
+    }
+  };
+
+  const handleClearApiKey = async () => {
+    setApiKeyBusy(true);
+    try {
+      const result = await window.speechToTextAPI.clearApiKey();
+      if (!result?.success) {
+        setApiKeyMessage(result?.error || "Failed to clear API key.");
+        return;
+      }
+
+      setApiKeyInput("");
+      setApiKeyMessage("Stored API key cleared.");
+      await refreshApiKeyStatus();
+    } finally {
+      setApiKeyBusy(false);
+    }
+  };
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden text-white">
@@ -386,6 +547,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
             publishedQuality={publishedQuality}
             refreshInterval={refreshInterval}
             autoLoadLastPreset={autoLoadLastPreset}
+            apiKeyInput={apiKeyInput}
+            setApiKeyInput={setApiKeyInput}
+            apiKeyStatus={apiKeyStatus}
+            apiKeyBusy={apiKeyBusy}
+            apiKeyMessage={apiKeyMessage}
+            onSaveApiKey={handleSaveApiKey}
+            onClearApiKey={handleClearApiKey}
             dispatch={dispatch}
           />
         </div>
