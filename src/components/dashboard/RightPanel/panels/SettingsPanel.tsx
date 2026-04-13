@@ -12,7 +12,6 @@ import {
   setPublishedBrightness,
   setRefreshInterval,
   resetQualitySettings,
-  setAutoLoadLastPreset,
 } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
 import type { SettingsPanelProps } from "../types";
@@ -103,7 +102,6 @@ const SectionContent: React.FC<{
   colorTheme: ColorTheme;
   publishedQuality: PublishedQuality;
   refreshInterval: number;
-  autoLoadLastPreset: boolean;
   apiKeyInput: string;
   setApiKeyInput: (value: string) => void;
   apiKeyStatus: ApiKeyStatus;
@@ -117,7 +115,6 @@ const SectionContent: React.FC<{
   colorTheme,
   publishedQuality,
   refreshInterval,
-  autoLoadLastPreset,
   apiKeyInput,
   setApiKeyInput,
   apiKeyStatus,
@@ -186,28 +183,6 @@ const SectionContent: React.FC<{
                   text: o.label,
                 }))}
               />
-            </SettingRow>
-
-            <SettingRow
-              title="Startup Profile"
-              description="Automatically restore the last loaded preset when the app starts."
-              last
-            >
-              <DepthButton
-                onClick={() =>
-                  dispatch(setAutoLoadLastPreset(!autoLoadLastPreset))
-                }
-                active={autoLoadLastPreset}
-                sizeClassName="w-full h-9 rounded-lg"
-                activeClassName="text-theme-primary-50 border-theme-primary-300/70"
-                activeSurfaceClassName="depth-active-surface"
-                inactiveClassName="text-theme-primary-200/70 border-theme-primary-500/30 hover:text-theme-primary-100"
-                inactiveSurfaceClassName="depth-inactive-surface"
-              >
-                <span className="inline-flex items-center gap-2 text-[12px] font-medium">
-                  {autoLoadLastPreset ? "Enabled" : "Disabled"}
-                </span>
-              </DepthButton>
             </SettingRow>
           </div>
         </section>
@@ -429,11 +404,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   });
   const dispatch = useAppDispatch();
   const colorTheme = useAppSelector((s) => s.app.colorTheme);
-  const publishedQuality = useAppSelector(
-    (s) => s.app.publishedQuality,
-  ) as PublishedQuality;
+  const publishedQuality = useAppSelector((s) => s.app.publishedQuality);
   const refreshInterval = useAppSelector((s) => s.app.refreshInterval);
-  const autoLoadLastPreset = useAppSelector((s) => s.app.autoLoadLastPreset);
 
   const refreshApiKeyStatus = async () => {
     const result = await window.speechToTextAPI.getApiKeyStatus();
@@ -546,7 +518,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
             colorTheme={colorTheme}
             publishedQuality={publishedQuality}
             refreshInterval={refreshInterval}
-            autoLoadLastPreset={autoLoadLastPreset}
             apiKeyInput={apiKeyInput}
             setApiKeyInput={setApiKeyInput}
             apiKeyStatus={apiKeyStatus}

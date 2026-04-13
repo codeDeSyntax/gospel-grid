@@ -67,12 +67,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   closePublishedWindows: (displayId?: number) =>
     ipcRenderer.invoke("close-published-windows", displayId),
 
-  // Preset management
-  savePreset: (preset: any) => ipcRenderer.invoke("save-preset", preset),
-  loadPresets: () => ipcRenderer.invoke("load-presets"),
-  deletePreset: (presetId: string) =>
-    ipcRenderer.invoke("delete-preset", presetId),
-
   // Cache management
   clearThumbnailCache: () => ipcRenderer.invoke("clear-thumbnail-cache"),
   getCacheStats: () => ipcRenderer.invoke("get-cache-stats"),

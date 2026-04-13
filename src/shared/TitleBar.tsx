@@ -8,14 +8,13 @@ import {
   Play,
   Undo2,
   Redo2,
-  Bookmark,
   Trash2,
   Settings,
 } from "lucide-react";
 import { DepthButton } from "./DepthButton";
 import { useWindowControls } from "../hooks/useWindowControls";
 
-type TitlePanel = "layout" | "settings" | "presets" | "overlay";
+type TitlePanel = "layout" | "settings" | "overlay";
 
 interface TitleBarProps {
   selectedWindowsCount: number;
@@ -168,17 +167,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
     },
     { kind: "divider", key: "divider-3" },
-    {
-      kind: "button",
-      key: "presets",
-      icon: <Bookmark className="w-3.5 h-3.5" strokeWidth={3} />,
-      onClick: () => onTogglePanel("presets"),
-      active: activePanel === "presets",
-      title: "Scene Presets",
-      activeClassName: "text-theme-primary-50 border-theme-primary-300/65",
-      inactiveClassName:
-        "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
-    },
     {
       kind: "button",
       key: "clear",

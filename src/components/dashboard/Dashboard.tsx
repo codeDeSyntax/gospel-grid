@@ -20,9 +20,6 @@ import {
   setBlackout,
   setFrozen,
   setProjectionOn,
-  setLastLoadedPresetId,
-  setScenePresets,
-  type ScenePreset,
 } from "@/store/slices/appSlice";
 import {
   clearDisplayAssignments,
@@ -677,55 +674,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     };
   }, [enumeratedWindows]);
 
-  // ── Startup profile: auto-load last preset once windows are available ──
-  const autoLoadLastPreset = useAppSelector((s) => s.app.autoLoadLastPreset);
-  const lastLoadedPresetId = useAppSelector((s) => s.app.lastLoadedPresetId);
-  const startupDoneRef = React.useRef(false);
-
-  useEffect(() => {
-    if (startupDoneRef.current) return;
-    if (!autoLoadLastPreset || !lastLoadedPresetId) return;
-    if (state.windows.length === 0) return; // wait for windows
-
-    startupDoneRef.current = true;
-
-    // Load presets from disk, find the last one, and apply it
-    (async () => {
-      try {
-        const result = await (window.electronAPI as any).loadPresets();
-        if (result.success && result.presets) {
-          dispatch(setScenePresets(result.presets));
-          const preset = (result.presets as ScenePreset[]).find(
-            (p) => p.id === lastLoadedPresetId,
-          );
-          if (preset) {
-            // Apply preset selection
-            let captured: WindowInfo[] = [];
-            setState((prev) => {
-              captured = prev.windows.map((w) => {
-                const match = preset.windows.find(
-                  (pw) =>
-                    pw.id === w.id || (pw.app === w.app && pw.name === w.name),
-                );
-                return { ...w, isSelected: !!match };
-              });
-              return { ...prev, windows: captured, focusedWindowId: null };
-            });
-            pushHistory(captured);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to auto-load startup preset:", err);
-      }
-    })();
-  }, [
-    autoLoadLastPreset,
-    lastLoadedPresetId,
-    state.windows.length,
-    dispatch,
-    pushHistory,
-  ]);
-
   // Section navigation handler
   const handleSectionChange = useCallback((section: string) => {
     setState((prev) => ({ ...prev, activeSection: section }));
@@ -950,26 +898,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     });
   }, [dispatch, isBlackout, isFrozen]);
 
-  // ── Load preset ────────────────────────────────────────────────────────
-  const handleLoadPreset = useCallback(
-    (preset: ScenePreset) => {
-      let captured: WindowInfo[] = [];
-      dispatch(clearDisplayAssignments());
-      setState((prev) => {
-        // Match preset windows to current windows by app name + window name
-        captured = prev.windows.map((w) => {
-          const match = preset.windows.find(
-            (pw) => pw.id === w.id || (pw.app === w.app && pw.name === w.name),
-          );
-          return { ...w, isSelected: !!match };
-        });
-        return { ...prev, windows: captured, focusedWindowId: null };
-      });
-      pushHistory(captured);
-    },
-    [dispatch, pushHistory],
-  );
-
   // ── Global hotkey listener ─────────────────────────────────────────────
   useEffect(() => {
     const unsubscribe = (window.electronAPI as any)?.onGlobalHotkey?.(
@@ -1157,13 +1085,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
             onWindowRemove={handleWindowRemove}
             onWindowAdd={handleWindowAdd}
             activePanel={activePanel}
-            onLoadPreset={handleLoadPreset}
           />
         </div>
       </div>
 
       {/* Bottom Status Bar - spacedesk style */}
-      <div className="h-8 bg-theme-primary-950 border-none border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
+      <div className="h-8 bg-theme-primary-950 border-none border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0">
         {/* Left side - Status indicators */}
         <div className="flex items-center gap-4">
           {/* Projection status */}

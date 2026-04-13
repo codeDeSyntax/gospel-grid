@@ -1,7 +1,6 @@
 import { type WindowInfo } from "../WindowList";
-import { type ScenePreset } from "@/store/slices/appSlice";
 
-export type PanelView = "layout" | "settings" | "presets" | "overlay";
+export type PanelView = "layout" | "settings" | "overlay";
 
 export interface RightPanelProps {
   windows: WindowInfo[];
@@ -13,8 +12,6 @@ export interface RightPanelProps {
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => void;
   activePanel: PanelView;
-  /** Scene Presets */
-  onLoadPreset?: (preset: ScenePreset) => void;
 }
 
 export interface WindowLayoutCardProps {

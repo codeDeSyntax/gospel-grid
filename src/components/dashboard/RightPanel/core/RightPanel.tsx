@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  type RightPanelProps,
-  type FeatureView,
-} from "../types";
+import { type RightPanelProps, type FeatureView } from "../types";
 import { SettingsPanel } from "../panels/SettingsPanel";
-import { PresetsPanel } from "../panels/PresetsPanel";
 import { FeatureImageMenu } from "../features/image/FeatureImageMenu";
 import { FeatureRail } from "./FeatureRail";
 import { FeatureViewHost } from "./FeatureViewHost";
@@ -21,7 +17,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   onWindowRemove,
   onWindowAdd,
   activePanel,
-  onLoadPreset,
 }) => {
   // Read projection state from Redux — no prop drilling
   const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
@@ -46,11 +41,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
       <div className="relative z-10 flex h-full min-h-0 flex-1 w-full overflow-hidden">
         {activePanel === "settings" ? (
           <SettingsPanel />
-        ) : activePanel === "presets" ? (
-          <PresetsPanel
-            selectedWindows={selectedWindows}
-            onLoadPreset={(preset) => onLoadPreset?.(preset)}
-          />
         ) : (
           <div className="flex h-full w-full items-stretch px-2 py-3">
             <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-theme-primary-800/50">

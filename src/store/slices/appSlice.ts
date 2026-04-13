@@ -8,8 +8,6 @@ interface PersistedSettings {
   colorTheme: ColorTheme;
   publishedQuality: { contrast: number; brightness: number };
   refreshInterval: number;
-  lastLoadedPresetId: string | null;
-  autoLoadLastPreset: boolean;
   overlayText: string;
   overlayVisible: boolean;
   overlayTargetDisplayId: number | null;
@@ -79,22 +77,6 @@ export function normalizeColorTheme(value: unknown): ColorTheme {
     : "grayscale";
 }
 
-// ─── Preset types ───────────────────────────────────────────────────────────
-
-export interface ScenePreset {
-  id: string;
-  name: string;
-  windowCount: number;
-  createdAt: string;
-  windows: Array<{
-    id: string;
-    name: string;
-    app: string;
-    sourceId?: string;
-    handle?: number;
-  }>;
-}
-
 // ─── State ──────────────────────────────────────────────────────────────────
 
 interface AppState {
@@ -117,18 +99,12 @@ interface AppState {
   isBlackout: boolean;
   /** Projection is frozen on the last frame */
   isFrozen: boolean;
-  /** Saved scene presets loaded from disk */
-  scenePresets: ScenePreset[];
   /** Text overlay shown on the projection */
   overlayText: string;
   /** Whether the overlay text is currently visible */
   overlayVisible: boolean;
   /** Selected display target for overlay message; null means all displays */
   overlayTargetDisplayId: number | null;
-  /** ID of last loaded preset (for startup profile) */
-  lastLoadedPresetId: string | null;
-  /** Auto-load last preset when app starts */
-  autoLoadLastPreset: boolean;
 }
 
 const persisted = loadPersistedSettings();
@@ -148,12 +124,9 @@ const initialState: AppState = {
   isProjectionOn: false,
   isBlackout: false,
   isFrozen: false,
-  scenePresets: [],
   overlayText: persisted.overlayText ?? "",
   overlayVisible: persisted.overlayVisible ?? false,
   overlayTargetDisplayId: persisted.overlayTargetDisplayId ?? null,
-  lastLoadedPresetId: persisted.lastLoadedPresetId ?? null,
-  autoLoadLastPreset: persisted.autoLoadLastPreset ?? false,
 };
 
 // ─── Helper to auto-persist after any settings mutation ────────────────────
@@ -163,8 +136,6 @@ function autoPersist(state: AppState) {
     colorTheme: state.colorTheme,
     publishedQuality: state.publishedQuality,
     refreshInterval: state.refreshInterval,
-    lastLoadedPresetId: state.lastLoadedPresetId,
-    autoLoadLastPreset: state.autoLoadLastPreset,
     overlayText: state.overlayText,
     overlayVisible: state.overlayVisible,
     overlayTargetDisplayId: state.overlayTargetDisplayId,
@@ -258,24 +229,6 @@ const appSlice = createSlice({
     toggleFrozen: (state) => {
       state.isFrozen = !state.isFrozen;
     },
-    setScenePresets: (state, action: PayloadAction<ScenePreset[]>) => {
-      state.scenePresets = action.payload;
-    },
-    addScenePreset: (state, action: PayloadAction<ScenePreset>) => {
-      const idx = state.scenePresets.findIndex(
-        (p) => p.id === action.payload.id,
-      );
-      if (idx >= 0) {
-        state.scenePresets[idx] = action.payload;
-      } else {
-        state.scenePresets.push(action.payload);
-      }
-    },
-    removeScenePreset: (state, action: PayloadAction<string>) => {
-      state.scenePresets = state.scenePresets.filter(
-        (p) => p.id !== action.payload,
-      );
-    },
     setOverlayText: (state, action: PayloadAction<string>) => {
       state.overlayText = action.payload;
       autoPersist(state);
@@ -293,14 +246,6 @@ const appSlice = createSlice({
       action: PayloadAction<number | null>,
     ) => {
       state.overlayTargetDisplayId = action.payload;
-      autoPersist(state);
-    },
-    setLastLoadedPresetId: (state, action: PayloadAction<string | null>) => {
-      state.lastLoadedPresetId = action.payload;
-      autoPersist(state);
-    },
-    setAutoLoadLastPreset: (state, action: PayloadAction<boolean>) => {
-      state.autoLoadLastPreset = action.payload;
       autoPersist(state);
     },
   },
@@ -324,14 +269,9 @@ export const {
   toggleBlackout,
   setFrozen,
   toggleFrozen,
-  setScenePresets,
-  addScenePreset,
-  removeScenePreset,
   setOverlayText,
   setOverlayVisible,
   toggleOverlayVisible,
   setOverlayTargetDisplayId,
-  setLastLoadedPresetId,
-  setAutoLoadLastPreset,
 } = appSlice.actions;
 export default appSlice.reducer;

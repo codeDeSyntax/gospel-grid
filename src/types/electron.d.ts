@@ -59,28 +59,6 @@ export interface WindowOperationResult {
   thumbnail?: string;
 }
 
-export interface SavedPreset {
-  id: string;
-  name: string;
-  windowCount: number;
-  createdAt: string;
-  windows: Array<{
-    id: string; // Native desktopCapturer source ID (e.g., "window:853982:0")
-    name: string; // Full window title
-    app: string; // Extracted app name (e.g., "Code", "Chrome")
-    icon?: string; // Base64 encoded icon data
-    hasNativeIcon?: boolean; // Whether the window has a native app icon available
-    sourceId?: string; // Original desktopCapturer source ID
-    handle?: number; // Window handle
-  }>;
-}
-
-export interface PresetOperationResult {
-  success: boolean;
-  error?: string;
-  presets?: SavedPreset[];
-}
-
 export interface ElectronAPI {
   enumerateWindows: (
     options: EnumerateWindowsOptions,
@@ -126,10 +104,6 @@ export interface ElectronAPI {
     closedCount?: number;
     error?: string;
   }>;
-  // Preset management
-  savePreset: (preset: SavedPreset) => Promise<PresetOperationResult>;
-  loadPresets: () => Promise<PresetOperationResult>;
-  deletePreset: (presetId: string) => Promise<PresetOperationResult>;
 
   // capturePage — snapshot projection window
   captureProjectionPage: () => Promise<{
