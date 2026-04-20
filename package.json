@@ -1,7 +1,7 @@
 {
   "name": "wingrid",
   "productName": "Wingrid",
-  "version": "2.2.10",
+  "version": "2.2.11",
   "main": "dist-electron/main/index.js",
   "description": "wingrid. A tool for aggregating different windows into one",
   "author": "https://josiahokport.vercel.app/",
