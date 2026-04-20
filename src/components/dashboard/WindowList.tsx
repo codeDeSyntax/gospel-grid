@@ -15,6 +15,7 @@ import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot } from "lucide-react";
 import { TIMER_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureTimerState";
+import { useAppSelector } from "@/store/hooks";
 
 const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
 
@@ -81,6 +82,8 @@ export const WindowList: React.FC<WindowListProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
   const showLoadingSkeleton = isLoading && windows.length === 0;
+  const themeMode = useAppSelector((s) => s.app.theme);
+  const isLightMode = themeMode === "light";
 
   const filteredWindows = useMemo(() => {
     const filtered = windows.filter((window) => {
@@ -128,9 +131,9 @@ export const WindowList: React.FC<WindowListProps> = ({
           {/* Timer + Refresh — gamified */}
           <div className="flex items-center gap-2">
             {countdownTime > 0 && (
-              <div className="relative overflow-hidden rounded-xl border border-theme-primary-400/35 bg-gradient-to-br from-theme-primary-700/45 via-theme-primary-800/40 to-theme-primary-950/60 px-2.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px_rgba(0,0,0,0.28)]">
-                <span className="pointer-events-none absolute inset-x-2 top-[2px] h-1.5 rounded-full blur-[1px] bg-white/20" />
-                <span className="pointer-events-none absolute inset-[1px] rounded-[10px] border border-white/10" />
+              <div className="relative overflow-hidden rounded-xl border border-theme-primary-400/35 depth-active-surface p-0.5 px-2 ">
+                <span className="pointer-events-none absolute inset-x-2 top-[2px] h-1.5 rounded-full blur-[1px] bg-theme-primary-50/20" />
+                <span className="pointer-events-none absolute inset-[1px] rounded-[10px] border border-theme-primary-50/10" />
                 <div className="relative z-10 flex items-center gap-2">
                   <div className="rounded-full border border-theme-primary-300/30 bg-theme-primary-100 p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
                     <CircularCountdown
@@ -140,7 +143,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                       isLoading={isLoading}
                     />
                   </div>
-                  <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-100 leading-none tracking-wide drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
+                  <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-100 leading-none tracking-wide drop-shadow-[0_1px_1px_rgba(var(--theme-primary-900),0.45)]">
                     {Math.ceil(countdownTime)}s
                   </span>
                   {onManualRefresh && (
@@ -150,11 +153,11 @@ export const WindowList: React.FC<WindowListProps> = ({
                       title="Refresh now"
                       inactiveClassName="text-theme-primary-100 border-theme-primary-300/45"
                       inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-600/40 via-theme-primary-700/75 to-theme-primary-900/80"
-                      className="active:scale-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),inset_0_-1px_0_rgba(0,0,0,0.5),0_10px_20px_rgba(0,0,0,0.3)] p-1 rounded-full"
+                      className="active:scale-95 shadow-[inset_0_1px_0_rgba(var(--theme-primary-50),0.24),inset_0_-1px_0_rgba(var(--theme-primary-900),0.5),0_10px_20px_rgba(var(--theme-primary-900),0.3)] p-1 rounded-full"
                     >
                       <RefreshCcwDot
                         size={20}
-                        className="transition-transform duration-500 group-hover:rotate-180 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]"
+                        className="transition-transform duration-500 group-hover:rotate-180 drop-shadow-[0_1px_1px_rgba(var(--theme-primary-900),0.45)]"
                       />
                     </DepthButton>
                   )}
@@ -193,19 +196,19 @@ export const WindowList: React.FC<WindowListProps> = ({
             ))}
           </div>
         ) : filteredWindows.length === 0 && !isLoading ? (
-          <div className="text-center py-6 text-stone-400">
+          <div className="text-center py-6 text-theme-primary-300/80">
             <MdMonitor size={40} className="mx-auto mb-2 opacity-50" />
             {searchTerm ? (
               <>
                 <p className="text-sm">No windows match your filters</p>
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-theme-primary-300/60 mt-1">
                   Try adjusting your search query
                 </p>
               </>
             ) : (
               <>
                 <p className="text-sm">No windows available</p>
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-theme-primary-300/60 mt-1">
                   Open some applications to see them here
                 </p>
               </>
@@ -305,10 +308,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
                       isCaptionsWindow
-                        ? "border border-theme-primary-300/45 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(8,10,18,0.95),rgba(var(--theme-primary-900),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:border-theme-primary-200/70 hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
+                        ? "border border-theme-primary-300/45 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:border-theme-primary-200/70 hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
                         : window.isSelected
                           ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 border border-theme-primary-300/5 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
-                          : "border border-theme-primary-600/10 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/10 hover:bg-theme-primary-800/15 hover:shadow-sm hover:shadow-theme-primary-500/8"
+                          : "border-none ring-1 ring-theme-primary-700/50 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/15 hover:bg-theme-primary-800/50 hover:shadow-sm hover:shadow-theme-primary-500/8 "
                     }
                   `}
                   >
@@ -348,7 +351,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                       cursor-grab active:cursor-grabbing
                       transition-all duration-200
                       hover:bg-theme-primary-400/20 active:bg-theme-primary-500/30
-                      border-r border-white/[0.04] hover:border-theme-primary-300/30
+                      border-r border-theme-primary-50/10 hover:border-theme-primary-300/30
                       rounded-l-xl
                       ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
                     `}
@@ -357,23 +360,23 @@ export const WindowList: React.FC<WindowListProps> = ({
                             {/* Grip dots */}
                             <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
                               <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
                               </div>
                               <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
                               </div>
                               <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-white rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
                               </div>
                             </div>
                           </div>
 
                           {/* Magical shimmer effect */}
                           <div
-                            className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none ${
+                            className={`absolute inset-0 bg-gradient-to-r from-transparent via-theme-primary-50/10 to-transparent -skew-x-12 transition-opacity duration-700 pointer-events-none ${
                               isCaptionsWindow
                                 ? "opacity-70 group-hover:opacity-95"
                                 : "opacity-0 group-hover:opacity-100"
@@ -398,7 +401,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                               className={`transition-all duration-200 ${
                                 window.isPinned
                                   ? "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-100 text-theme-primary-300 hover:text-theme-primary-200"
-                                  : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-white/50 hover:!opacity-100 hover:text-theme-primary-400"
+                                  : "absolute top-1.5 right-7 z-20 p-0.5 rounded opacity-0 group-hover:opacity-40 text-theme-primary-300/70 hover:!opacity-100 hover:text-theme-primary-400"
                               }`}
                               title={
                                 window.isPinned ? "Unpin window" : "Pin to top"
@@ -485,11 +488,25 @@ export const WindowList: React.FC<WindowListProps> = ({
                                 {window.name}
                               </div>
                             ) : isTimerWindow ? (
-                              <div className="text-[27px] font-[impact] tracking-[0.08em] text-white/85 group-hover:text-white truncate leading-none transition-colors duration-200 mt-0.5">
+                              <div
+                                className={`text-[26px] tabular-nums truncate leading-none text-theme-primary-50 transition-colors duration-200 mt-0.5 ${
+                                  isLightMode
+                                    ? "font-semibold tracking-[0.03em] text-theme-primary-50 group-hover:opacity-80"
+                                    : "font-[impact] tracking-[0.08em]  group-hover:opacity-100"
+                                }`}
+                                style={{ opacity: isLightMode ? 0.96 : 0.9 }}
+                              >
                                 {timerText}
                               </div>
                             ) : (
-                              <div className="text-[11px] text-white/40 group-hover:text-white/55 truncate leading-tight transition-colors duration-200 mt-0.5">
+                              <div
+                                className={`text-[11px] truncate leading-tight transition-colors duration-200 mt-0.5 ${
+                                  isLightMode
+                                    ? "theme-text-soft group-hover:opacity-100"
+                                    : "theme-text-soft group-hover:opacity-95"
+                                }`}
+                                style={{ opacity: isLightMode ? 0.82 : 0.72 }}
+                              >
                                 {window.name}
                               </div>
                             )}
@@ -512,10 +529,10 @@ export const WindowList: React.FC<WindowListProps> = ({
 
                           {/* Select / Check Handle — right side */}
                           <div
-                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-white/[0.04] transition-all duration-200 rounded-r-xl ${
+                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-theme-primary-50/10 transition-all duration-200 rounded-r-xl ${
                               window.isSelected
                                 ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
-                                : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
+                                : "opacity-0 group-hover:opacity-100 hover:bg-theme-primary-50/10"
                             }`}
                           >
                             <div
@@ -528,7 +545,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                               className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
                                 window.isSelected
                                   ? "text-theme-primary-300"
-                                  : "text-white/40 hover:text-white/70"
+                                  : "text-theme-primary-300/70 hover:text-theme-primary-200"
                               }`}
                               title={
                                 window.isSelected

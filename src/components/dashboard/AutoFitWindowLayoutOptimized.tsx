@@ -479,7 +479,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
+                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl ring-dashed ring-4 ring-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black/70`}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 
@@ -612,10 +612,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/95 via-black/85 to-black/70 z-0">
                               <div className="flex flex-col items-center gap-2 text-center px-2">
-                                <div className="rounded-full bg-black/55 p-2 border border-white/10 text-theme-primary-100">
+                                <div className="rounded-full bg-black/55 p-2 border border-white/10 theme-text-on-overlay">
                                   {getWindowFallbackIcon(win, 18)}
                                 </div>
-                                <span className="text-[10px] text-theme-primary-200/70 truncate max-w-[92%]">
+                                <span className="text-[10px] theme-text-on-overlay truncate max-w-[92%] opacity-80">
                                   {win.name}
                                 </span>
                               </div>
@@ -628,7 +628,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
                           {!isTimerFeature && !isCaptionsFeature && (
                             <div className="absolute top-1.5 left-1.5 z-20 max-w-[82%] rounded bg-black/70 px-1.5 py-0.5 backdrop-blur-sm">
-                              <span className="block text-[8px] leading-none text-theme-primary-100 truncate max-w-full">
+                              <span className="block text-[8px] leading-none theme-text-on-overlay truncate max-w-full">
                                 {win.name}
                               </span>
                             </div>
@@ -652,14 +652,14 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                                     }}
                                   />
                                   <span
-                                    className="text-theme-primary-100"
+                                    className="theme-text-on-overlay"
                                     style={{ display: "none" }}
                                   >
                                     {getWindowFallbackIcon(win, 14)}
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-theme-primary-100">
+                                <span className="theme-text-on-overlay">
                                   {getWindowFallbackIcon(win, 14)}
                                 </span>
                               )}

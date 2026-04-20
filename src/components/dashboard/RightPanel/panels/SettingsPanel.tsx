@@ -17,7 +17,8 @@ import { ThemeManager } from "@/utils/themeManager";
 import type { SettingsPanelProps } from "../types";
 
 const THEME_COLORS: Record<ColorTheme, string> = {
-  grayscale: "#6A6865",
+  "neutral-light": "#E5E7EB",
+  grayscale: "#A89F93",
   "royal-purple": "#5A4466",
   "sky-blue": "#72A8D4",
   "forest-green": "#4A6B44",

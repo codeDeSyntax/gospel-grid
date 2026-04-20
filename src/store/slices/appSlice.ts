@@ -34,6 +34,7 @@ function persistSettings(settings: PersistedSettings) {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type ColorTheme =
+  | "neutral-light"
   | "grayscale"
   | "royal-purple"
   | "sky-blue"
@@ -42,7 +43,8 @@ export type ColorTheme =
   | "fire-red";
 
 export const THEME_NAMES: Record<ColorTheme, string> = {
-  grayscale: "Grayscale",
+  "neutral-light": "Neutral Light",
+  "grayscale": "Grayscale",
   "royal-purple": "Royal Purple",
   "sky-blue": "Sky Blue",
   "forest-green": "Forest Green",
@@ -55,6 +57,10 @@ const COLOR_THEME_VALUES = new Set<ColorTheme>(
 );
 
 const LEGACY_THEME_ALIASES: Record<string, ColorTheme> = {
+  "neutral-light": "neutral-light",
+  "light-mode": "neutral-light",
+  "light-gray": "neutral-light",
+  stone: "grayscale",
   "warm-earth": "grayscale",
   "lavender-purple": "royal-purple",
   "ocean-blue": "sky-blue",

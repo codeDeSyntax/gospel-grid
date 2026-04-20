@@ -37,20 +37,20 @@ if (layoutId) {
       if (layoutData?.publishedQuality) {
         console.log(
           "Initializing published quality from layout data:",
-          layoutData.publishedQuality
+          layoutData.publishedQuality,
         );
         store.dispatch(setPublishedQuality(layoutData.publishedQuality));
       }
       if (layoutData?.captureQuality) {
         console.log(
           "Initializing capture quality from layout data:",
-          layoutData.captureQuality
+          layoutData.captureQuality,
         );
         store.dispatch(setCaptureQuality(layoutData.captureQuality));
       }
     })
     .catch((err: any) =>
-      console.error("Failed to load layout quality settings:", err)
+      console.error("Failed to load layout quality settings:", err),
     );
 }
 
@@ -59,7 +59,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <Provider store={store}>
       <App />
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 postMessage({ payload: "removeLoading" }, "*");

@@ -247,15 +247,15 @@ code {
 
 /* Theme-specific slider colors */
 [data-color-theme="grayscale"] .slider-theme::-webkit-slider-thumb {
-  background: #6a6865;
-  border-color: #b0b0b0;
-  box-shadow: 0 0 10px rgba(106, 104, 101, 0.35);
+  background: #a89f93;
+  border-color: #e4ded6;
+  box-shadow: 0 0 10px rgba(168, 159, 147, 0.35);
 }
 
 [data-color-theme="grayscale"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #5a5856;
-  border-color: #e5e5e5;
-  box-shadow: 0 0 15px rgba(106, 104, 101, 0.5);
+  background: #928576;
+  border-color: #f5f3f0;
+  box-shadow: 0 0 15px rgba(168, 159, 147, 0.5);
 }
 
 [data-color-theme="royal-purple"] .slider-theme::-webkit-slider-thumb {
@@ -316,4 +316,16 @@ code {
   background: #dc2626;
   border-color: #fee2e2;
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+[data-color-theme="neutral-light"] .slider-theme::-webkit-slider-thumb {
+  background: #6b7280;
+  border-color: #d1d5db;
+  box-shadow: 0 0 10px rgba(107, 114, 128, 0.3);
+}
+
+[data-color-theme="neutral-light"] .slider-theme::-webkit-slider-thumb:hover {
+  background: #4b5563;
+  border-color: #9ca3af;
+  box-shadow: 0 0 15px rgba(75, 85, 99, 0.45);
 }

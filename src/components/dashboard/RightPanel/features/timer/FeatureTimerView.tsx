@@ -82,13 +82,27 @@ const FlipCard: React.FC<FlipCardProps> = ({
         }}
         className={`relative h-28 w-28 overflow-hidden rounded-2xl border shadow-[0_14px_30px_rgba(0,0,0,0.30)] ${
           isDarkMode
-            ? "border-white/10 bg-black text-white"
-            : "border-black/12 bg-white text-black"
+            ? "border-theme-primary-200/22 bg-theme-primary-950 theme-text-on-overlay"
+            : "border-theme-primary-400/35 bg-gradient-to-b from-theme-primary-50 via-theme-primary-100 to-theme-primary-200/85 theme-text-main"
         } ${editable ? "cursor-text" : ""}`}
       >
-        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/12 to-transparent pointer-events-none" />
-        <div className="absolute inset-x-0 top-1/2 h-px bg-black/50" />
-        <div className="absolute inset-x-0 top-[calc(50%-1px)] h-[2px] bg-white/20" />
+        <div
+          className={`absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b pointer-events-none ${
+            isDarkMode
+              ? "from-white/12 to-transparent"
+              : "from-white/45 to-transparent"
+          }`}
+        />
+        <div
+          className={`absolute inset-x-0 top-1/2 h-px ${
+            isDarkMode ? "bg-black/50" : "bg-theme-primary-500/35"
+          }`}
+        />
+        <div
+          className={`absolute inset-x-0 top-[calc(50%-1px)] h-[2px] ${
+            isDarkMode ? "bg-white/20" : "bg-white/70"
+          }`}
+        />
         {editing ? (
           <div className="flex h-full items-center justify-center px-2">
             <input
@@ -106,19 +120,27 @@ const FlipCard: React.FC<FlipCardProps> = ({
                   onCancelEdit?.();
                 }
               }}
-              className={`h-16 w-full bg-transparent text-center font-[impact] text-[56px] leading-none tracking-wide outline-none ${
-                isDarkMode ? "text-white" : "text-black"
+              className={`h-16 w-full text-theme-primary-50 bg-transparent text-center font-[impact] text-[56px] leading-none tracking-wide outline-none ${
+                isDarkMode
+                  ? ""
+                  : "font-semibold tracking-[0.02em] [font-variant-numeric:tabular-nums]"
               }`}
               inputMode="numeric"
             />
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center font-[impact] text-[74px] leading-none tracking-wide">
+          <div
+            className={`flex h-full text-theme-primary-50 items-center justify-center leading-none  [font-variant-numeric:tabular-nums] ${
+              isDarkMode
+                ? "font-[impact] text-[74px] tracking-wide"
+                : "font-semibold text-[64px] tracking-[0.03em]"
+            }`}
+          >
             {value}
           </div>
         )}
       </div>
-      <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.14em] theme-text-muted">
         {label}
       </span>
     </div>
@@ -323,10 +345,12 @@ export const FeatureTimerView: React.FC = () => {
     return (
       <div
         className={`h-full w-full rounded-2xl px-6 py-6 overflow-auto no-scrollbar ${
-          isDarkMode ? "bg-black text-white" : "bg-white text-black"
+          isDarkMode
+            ? "bg-theme-primary-950 theme-text-on-overlay"
+            : "bg-theme-primary-50 theme-text-main"
         }`}
       >
-        <div className="h-full flex items-center justify-center text-theme-primary-300/80">
+        <div className="h-full flex items-center justify-center theme-text-muted">
           No timer instance available.
         </div>
       </div>
@@ -336,13 +360,15 @@ export const FeatureTimerView: React.FC = () => {
   return (
     <div
       className={`h-full w-full rounded-2xl px-6 py-6 overflow-auto no-scrollbar ${
-        isDarkMode ? "bg-black text-white" : "bg-white text-black"
+        isDarkMode
+          ? "bg-theme-primary-950 theme-text-on-overlay"
+          : "bg-theme-primary-50 theme-text-main"
       }`}
     >
       <div className="mx-auto flex w-full max-w-7xl gap-4 h-full min-h-0">
         <aside className="w-[240px] shrink-0 rounded-2xl border border-theme-primary-500/30 bg-theme-primary-900/22 p-3 overflow-auto">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-theme-primary-300">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] theme-text-muted">
               Timer Windows
             </p>
           </div>
@@ -386,10 +412,10 @@ export const FeatureTimerView: React.FC = () => {
                     </span>
 
                     <span className="min-w-0 flex-1 flex flex-col">
-                      <span className="text-[11px] font-semibold text-theme-primary-100 truncate leading-tight">
+                      <span className="text-[11px] font-semibold theme-text-main truncate leading-tight">
                         {timer.name}
                       </span>
-                      <span className="text-[10px] text-theme-primary-300/75 leading-tight">
+                      <span className="text-[10px] theme-text-soft leading-tight opacity-80">
                         {isActive
                           ? `Selected • ${assigned ? "Assigned" : "Not Assigned"}`
                           : assigned
@@ -418,7 +444,7 @@ export const FeatureTimerView: React.FC = () => {
             })}
           </div>
 
-          <div className="mt-3 rounded-lg border border-theme-primary-500/25 bg-theme-primary-900/15 p-2 text-[10px] text-theme-primary-300/75">
+          <div className="mt-3 rounded-lg border border-theme-primary-500/25 bg-theme-primary-900/15 p-2 text-[10px] theme-text-soft opacity-85">
             Drag a timer window from the left list to a display to enable
             start/stop/resume.
           </div>
@@ -426,10 +452,16 @@ export const FeatureTimerView: React.FC = () => {
 
         <div className="min-w-0 flex-1 flex flex-col gap-6">
           <div className="text-center">
-            <p className="text-[44px] font-[impact] tracking-[0.12em] uppercase text-theme-primary-300">
+            <p
+              className={`text-[44px] uppercase text-theme-primary-50 ${
+                isDarkMode
+                  ? "font-[impact] tracking-[0.12em] "
+                  : "font-semibold tracking-[0.06em]"
+              }`}
+            >
               {isCountdown ? "Countdown" : "Current Time"}
             </p>
-            <p className="text-xs uppercase tracking-[0.2em] text-theme-primary-400/80 mt-1">
+            <p className="text-xs uppercase tracking-[0.2em] theme-text-muted mt-1">
               Timer Feature Control
             </p>
           </div>
@@ -580,7 +612,7 @@ export const FeatureTimerView: React.FC = () => {
             </div>
 
             {isDraftMode && (
-              <p className="mt-2 text-center text-[11px] text-theme-primary-300/80">
+              <p className="mt-2 text-center text-[11px] theme-text-muted">
                 Draft mode: edit a new timer value, then click Add.
               </p>
             )}
@@ -653,7 +685,7 @@ export const FeatureTimerView: React.FC = () => {
               </DepthButton>
             </div>
             {!isAssignedToScreen && (
-              <p className="mt-3 text-center text-[11px] text-theme-primary-300/80">
+              <p className="mt-3 text-center text-[11px] theme-text-muted">
                 Assign this timer window to a screen first to enable Start,
                 Resume, and Stop.
               </p>

@@ -1035,7 +1035,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         {/* Left Panel - Window List */}
         <DepthSurface
           style={{ width: `${sidebarWidth}px` }}
-          className="relative flex flex-col overflow-hidden shrink-0 rounded-2xl h-full min-h-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+          className="relative flex flex-col overflow-hidden shrink-0 rounded-2xl h-full min-h-0 "
           surfaceClassName="depth-surface-shell"
         >
           <WindowList
@@ -1090,7 +1090,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       </div>
 
       {/* Bottom Status Bar - spacedesk style */}
-      <div className="h-8 bg-theme-primary-950 border-none border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0">
+      <div className="h-8 bg-theme-primary-950 border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
         {/* Left side - Status indicators */}
         <div className="flex items-center gap-4">
           {/* Projection status */}

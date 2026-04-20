@@ -251,7 +251,7 @@ export const FeatureCaptionsView: React.FC = () => {
           )}
         </div>
 
-        <div className="rounded-2xl border border-theme-primary-400/25 bg-black/60 p-4 min-h-[220px]">
+        <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-900 p-4 min-h-[220px]">
           <p className="text-[11px] uppercase tracking-[0.16em] text-theme-primary-300/80 mb-3">
             Caption Output
           </p>

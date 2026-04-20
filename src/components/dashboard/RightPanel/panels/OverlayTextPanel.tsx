@@ -3,7 +3,6 @@ import { MonitorPlay, X, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import type { RootState } from "@/store";
 import { DepthButton } from "@/shared/DepthButton";
-import { DepthSurface } from "@/shared/DepthSurface";
 import {
   setOverlayText,
   setOverlayVisible,
@@ -29,6 +28,7 @@ const saveHistory = (msgs: string[]) => {
 
 export const OverlayTextPanel: React.FC = () => {
   const dispatch = useAppDispatch();
+  const appTheme = useAppSelector((s: RootState) => s.app.theme);
   const overlayText = useAppSelector((s: RootState) => s.app.overlayText);
   const overlayVisible = useAppSelector((s: RootState) => s.app.overlayVisible);
   const overlayTargetDisplayId = useAppSelector(
@@ -80,6 +80,7 @@ export const OverlayTextPanel: React.FC = () => {
   }, [overlayText]);
 
   const isLive = overlayVisible && !!overlayText;
+  const isDarkMode = appTheme === "dark";
 
   const commitMessage = useCallback(
     (text: string) => {
@@ -132,10 +133,16 @@ export const OverlayTextPanel: React.FC = () => {
   }, [commitMessage, draftText]);
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center p-6 text-white">
-      <div className="w-full max-w-2xl flex flex-col gap-3 h-">
+    <div className="h-full w-full flex flex-col items-center justify-center p-6 theme-text-main">
+      <div className="w-full max-w-2xl flex flex-col gap-3">
         {/* Quick guide (outside card) */}
-        <div className="rounded-3xl bg-theme-primary-800/60 px-4 py-3">
+        <div
+          className={`rounded-3xl border px-4 py-3 ${
+            isDarkMode
+              ? "bg-theme-primary-800/60 border-theme-primary-600/35"
+              : "bg-theme-primary-900/90 border-theme-primary-700/70"
+          }`}
+        >
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 shrink-0 flex items-center justify-center">
               <img
@@ -145,16 +152,16 @@ export const OverlayTextPanel: React.FC = () => {
               />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-theme-primary-300/80">
+              <p className="text-[10px] uppercase tracking-[0.16em] theme-text-muted opacity-90">
                 Quick Guide
               </p>
-              <p className="mt-1 text-[11px] text-theme-primary-200/85 leading-relaxed">
+              <p className="mt-1 text-[11px] theme-text-soft leading-relaxed opacity-95">
                 1. Pick <span className="font-semibold">All</span> or a screen.
                 2. Type your message. 3. Press{" "}
                 <span className="font-semibold">Enter </span>
                 or use <span className="font-semibold">Send</span>.
               </p>
-              <p className="mt-1 text-[10px] text-theme-primary-300/70">
+              <p className="mt-1 text-[10px] theme-text-muted opacity-85">
                 Use the eye icon to show or hide the current overlay instantly.
               </p>
             </div>
@@ -162,9 +169,21 @@ export const OverlayTextPanel: React.FC = () => {
         </div>
 
         {/* ── Main Card ─────────────────────────────────────── */}
-        <div className="rounded-3xl bg-theme-primary-900  overflow-hidden">
+        <div
+          className={`rounded-3xl overflow-hidden border ${
+            isDarkMode
+              ? "bg-theme-primary-900 border-theme-primary-700/45"
+              : "bg-theme-primary-950 border-theme-primary-700/70"
+          }`}
+        >
           {/* Top row — icon · title · actions */}
-          <div className="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b from-theme-primary-900 to-theme-primary-900">
+          <div
+            className={`flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b ${
+              isDarkMode
+                ? "from-theme-primary-900 to-theme-primary-900"
+                : "from-theme-primary-900/75 to-theme-primary-900/45"
+            }`}
+          >
             {/* Status icon circle */}
             <div
               className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-500 ${
@@ -182,10 +201,10 @@ export const OverlayTextPanel: React.FC = () => {
 
             {/* Title */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white leading-none">
+              <p className="text-sm font-bold theme-text-main leading-none">
                 {isLive ? "Broadcasting" : "Text Overlay"}
               </p>
-              <p className="text-[10px] text-theme-primary-300/90 mt-0.5">
+              <p className="text-[10px] theme-text-soft mt-0.5 opacity-85">
                 {isLive
                   ? "Visible on projection screen"
                   : "Type a message to display"}
@@ -199,7 +218,7 @@ export const OverlayTextPanel: React.FC = () => {
                 className={`p-1.5 rounded-lg border transition-all duration-200 ${
                   overlayVisible
                     ? "text-green-400 border-green-500/35 bg-green-500/10 hover:bg-green-500/16"
-                    : "text-theme-primary-300 border-theme-primary-700 bg-theme-primary-800 hover:text-theme-primary-100 hover:border-theme-primary-500"
+                    : "theme-text-muted border-theme-primary-700 bg-theme-primary-800/75 hover:theme-text-main hover:border-theme-primary-500"
                 }`}
                 title={overlayVisible ? "Hide overlay" : "Show overlay"}
               >
@@ -211,7 +230,7 @@ export const OverlayTextPanel: React.FC = () => {
               </button>
               <button
                 onClick={handleClear}
-                className="p-1.5 rounded-lg border border-theme-primary-700 bg-theme-primary-800 text-theme-primary-400 hover:text-theme-primary-100 hover:border-theme-primary-500 transition-all duration-200"
+                className="p-1.5 rounded-lg border border-theme-primary-700 bg-theme-primary-800/75 theme-text-muted hover:theme-text-main hover:border-theme-primary-500 transition-all duration-200"
                 title="Clear"
               >
                 <X className="w-4 h-4" />
@@ -220,12 +239,12 @@ export const OverlayTextPanel: React.FC = () => {
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-theme-primary-700/70 mx-5 border-dashed border-3 border-theme-primary-900 " />
+          <div className="h-px bg-theme-primary-700/50 mx-5" />
 
           {/* Target selection */}
           <div className="px-4 pt-2 pb-1.5">
             <div className="flex items-start gap-2">
-              <span className="text-[10px] uppercase tracking-[0.16em] text-theme-primary-300/80 shrink-0">
+              <span className="text-[10px] uppercase tracking-[0.16em] theme-text-muted shrink-0 opacity-90">
                 Send to
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -233,9 +252,9 @@ export const OverlayTextPanel: React.FC = () => {
                   onClick={() => dispatch(setOverlayTargetDisplayId(null))}
                   active={overlayTargetDisplayId === null}
                   sizeClassName="h-7 px-3 rounded-full"
-                  activeClassName="text-theme-primary-50 border-theme-primary-400/70"
+                  activeClassName="theme-text-main border-theme-primary-400/70"
                   activeSurfaceClassName="depth-active-surface"
-                  inactiveClassName="text-theme-primary-300 border-theme-primary-700"
+                  inactiveClassName="theme-text-soft border-theme-primary-700"
                   inactiveSurfaceClassName="depth-inactive-surface"
                 >
                   <span className="text-[11px] font-medium">All</span>
@@ -250,9 +269,9 @@ export const OverlayTextPanel: React.FC = () => {
                       }
                       active={isActive}
                       sizeClassName="h-7 px-3 rounded-full"
-                      activeClassName="text-theme-primary-50 border-theme-primary-400/70"
+                      activeClassName="theme-text-main border-theme-primary-400/70"
                       activeSurfaceClassName="depth-active-surface"
-                      inactiveClassName="text-theme-primary-300 border-theme-primary-700"
+                      inactiveClassName="theme-text-soft border-theme-primary-700"
                       inactiveSurfaceClassName="depth-inactive-surface"
                     >
                       <span className="text-[11px] font-medium">
@@ -267,7 +286,7 @@ export const OverlayTextPanel: React.FC = () => {
             </div>
           </div>
           {/* Divider */}
-          <div className="h-px bg-theme-primary-700/70 mx-5 border-dashed border-3 border-theme-primary-900 " />
+          <div className="h-px bg-theme-primary-700/50 mx-5" />
           {/* Message input row */}
           <div className="px-4 pt-2.5 pb-2">
             <input
@@ -277,7 +296,11 @@ export const OverlayTextPanel: React.FC = () => {
               onKeyDown={handleKeyDown}
               placeholder="Type and press Enter to send…"
               // rows={1}
-              className="w-full border-none bg-theme-primary-700/20 rounded-full px-3 py-3 no-scrollbar text-[13px] text-theme-primary-100 placeholder-theme-primary-400/90 focus:outline-none ring-2 ring-theme-primary-500 focus:shadow-[0_0_0_1px_rgba(120,120,120,0.35)] resize-none leading-"
+              className={`w-full border placeholder-theme-primary-50 text-theme-primary-50 rounded-full px-3 py-3 no-scrollbar text-[13px] focus:outline-none resize-none leading-snug border-none   ${
+                isDarkMode
+                  ? "border-theme-primary-600/45 bg-theme-primary-700/20   focus:ring-2 focus:ring-theme-primary-500"
+                  : "border-theme-primary-600/65 bg-theme-primary-900   focus:ring-2 focus:ring-theme-primary-500/65"
+              }`}
               maxLength={MAX_LENGTH}
             />
             <div className="flex items-center justify-between mt-1">
@@ -285,7 +308,7 @@ export const OverlayTextPanel: React.FC = () => {
                 className={`text-[10px] tabular-nums transition-colors ${
                   draftText.length > MAX_LENGTH - 10
                     ? "text-amber-400/60"
-                    : "text-theme-primary-400"
+                    : "theme-text-muted"
                 }`}
               >
                 {draftText.length}/{MAX_LENGTH}
@@ -293,7 +316,7 @@ export const OverlayTextPanel: React.FC = () => {
               <button
                 onClick={handleSend}
                 disabled={!draftText.trim()}
-                className="text-[11px] font-semibold text-theme-primary-300 hover:text-theme-primary-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="text-[11px] font-semibold theme-text-soft hover:theme-text-main disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 ↵ Send
               </button>
@@ -303,35 +326,35 @@ export const OverlayTextPanel: React.FC = () => {
           {/* Recent messages */}
           {recentMessages.length > 0 && (
             <div className="p-3">
-              <p className="text-[10px] font-medium text-theme-primary-400/90 uppercase tracking-widest px-1">
+              <p className="text-[10px] font-medium theme-text-muted uppercase tracking-widest px-1">
                 Recent
               </p>
               <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                 {recentMessages.map((msg, i) => {
                   const isActive = msg === overlayText && overlayVisible;
                   return (
-                    <DepthSurface
+                    <button
+                      type="button"
                       key={i}
                       onClick={() => commitMessage(msg)}
-                      className={`w-full rounded-xl px-3.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer ${
+                      className={`w-full rounded-xl px-3.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer border ${
                         isActive
-                          ? "text-green-300"
-                          : "text-theme-primary-300 hover:text-theme-primary-100"
+                          ? "text-green-300 border-green-500/35 bg-green-500/10"
+                          : isDarkMode
+                            ? "theme-text-soft border-theme-primary-600/35 bg-theme-primary-700/35 hover:theme-text-on-overlay hover:border-theme-primary-500/60"
+                            : "theme-text-main border-theme-primary-600/45 bg-theme-primary-900/95 hover:theme-text-main hover:border-theme-primary-500/70"
                       }`}
-                      surfaceClassName={
-                        isActive
-                          ? "depth-inactive-surface"
-                          : "depth-inactive-surface"
-                      }
                       title={msg}
                     >
                       <span className="flex items-center truncate">
                         {isActive && (
                           <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 mr-2 mb-px animate-pulse" />
                         )}
-                        <span className="truncate">{msg}</span>
+                        <span className="truncate">
+                          {i + 1}. {msg}
+                        </span>
                       </span>
-                    </DepthSurface>
+                    </button>
                   );
                 })}
               </div>
@@ -341,9 +364,23 @@ export const OverlayTextPanel: React.FC = () => {
 
         {/* Projection off hint */}
         {!isProjectionOn && (
-          <div className="flex items-center gap-2.5 rounded-xl bg-amber-500/[0.05] border border-amber-400/[0.10] px-4 py-2.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400/50 shrink-0" />
-            <p className="text-[11px] text-amber-300/50">
+          <div
+            className={`flex items-center gap-2.5 rounded-xl border px-4 py-2.5 ${
+              isDarkMode
+                ? "bg-amber-500/[0.05] border-amber-400/[0.12]"
+                : "bg-amber-500/[0.08] border-amber-500/[0.22]"
+            }`}
+          >
+            <AlertTriangle
+              className={`w-3.5 h-3.5 shrink-0 ${
+                isDarkMode ? "text-amber-400/70" : "text-amber-600/80"
+              }`}
+            />
+            <p
+              className={`text-[11px] ${
+                isDarkMode ? "text-amber-300/70" : "text-amber-700"
+              }`}
+            >
               Start a projection to show the overlay on screen.
             </p>
           </div>

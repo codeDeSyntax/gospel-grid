@@ -58,7 +58,8 @@ const TimerBlock: React.FC<TimerBlockProps> = ({
             compact
               ? "text-[clamp(18px,2.6vw,48px)]"
               : "text-[clamp(58px,8.2vw,150px)]"
-          } ${isDark ? "text-white/95" : "text-theme-primary-950/95"}`}
+          } ${isDark ? "theme-text-on-overlay" : "theme-text-main"}`}
+          style={{ opacity: 0.95 }}
         >
           {value}
         </div>
@@ -66,7 +67,7 @@ const TimerBlock: React.FC<TimerBlockProps> = ({
 
       <p
         className={`${compact ? "text-[clamp(6px,0.72vw,11px)]" : "text-[clamp(11px,1.2vw,30px)]"} tracking-[0.1em] uppercase font-semibold ${
-          isDark ? "text-theme-primary-300" : "text-theme-primary-700"
+          isDark ? "theme-text-soft" : "theme-text-muted"
         }`}
       >
         {label}

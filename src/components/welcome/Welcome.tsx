@@ -118,9 +118,9 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <div className="space-y-2">
                 <button
                   onClick={onGetStarted}
-                  className="group relative cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-theme-primary-600 to-theme-primary-700 hover:from-theme-primary-700 hover:to-theme-primary-800 text-white font-medium py-2.5 px-5 rounded-full shadow-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
+                  className="group relative cursor-pointer inline-flex items-center gap-2 bg-theme-primary-400 hover:from-theme-primary-700 hover:to-theme-primary-800 text-theme-primary-50 font-medium py-2.5 px-5 rounded-full  transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
                 >
-                  <span className="relative z-10 text-sm">Get started</span>
+                  <span className="relative z-10 text-sm ">Get started</span>
                   <svg
                     className="relative z-10 w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform duration-300"
                     fill="none"
