@@ -33,22 +33,22 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   const selectedWindows = windows.filter((w) => w.isSelected);
 
   return (
-    <DepthSurface
-      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-2xl"
-      surfaceClassName="depth-surface-shell"
+    <div
+      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-l-[40px] bg-theme-primary-100/5 border border-theme-primary-500/20 "
+      // surfaceClassName="depth-surface-shell"
     >
       {/* Main Content Area - Scrollable */}
-      <div className="relative z-10 flex h-full min-h-0 flex-1 w-full overflow-hidden">
+      <div className="relative z-10 flex h-full min-h-0 flex-1 w-full overflow-hidden  ">
         {activePanel === "settings" ? (
           <SettingsPanel />
         ) : (
           <div className="flex h-full w-full items-stretch px-2 py-3">
-            <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl bg-theme-primary-800/50">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl ">
               <div className="absolute inset-x-2 top-2 z-20">
                 <FeatureImageMenu isOpen={isImageMenuOpen} />
               </div>
 
-              <div className="h-full min-h-0 overflow-hidden">
+              <div className="h-full min-h-0 overflow-hidden  p-2">
                 <FeatureViewHost
                   activeView={activeFeatureView}
                   windows={windows}
@@ -73,6 +73,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
           </div>
         )}
       </div>
-    </DepthSurface>
+    </div>
   );
 };

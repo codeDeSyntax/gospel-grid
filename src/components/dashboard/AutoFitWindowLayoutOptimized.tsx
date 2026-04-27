@@ -431,7 +431,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   return (
-    <div className="w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col">
+    <div className="w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col ">
       <div className="shrink-0 px-3 py-2 flex items-center justify-between">
         <div>
           <p className="text-[13px] font-semibold text-theme-primary-100">
@@ -479,7 +479,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl ring-dashed ring-4 ring-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black/70`}
+                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl ring-dashed ring-4 ring-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 

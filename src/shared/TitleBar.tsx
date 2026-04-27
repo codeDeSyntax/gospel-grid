@@ -18,6 +18,8 @@ type TitlePanel = "layout" | "settings" | "overlay";
 
 interface TitleBarProps {
   selectedWindowsCount: number;
+  windowsCount: number;
+  isLoadingWindows: boolean;
   isProjectionOn: boolean;
   isBlackout: boolean;
   isFrozen: boolean;
@@ -33,6 +35,16 @@ interface TitleBarProps {
   onRedo: () => void;
   onTogglePanel: (panel: TitlePanel) => void;
   onClearAll: () => void;
+  appVersion: string;
+  updateStatus: string;
+  updateProgress: number;
+  isCheckingUpdate: boolean;
+  isDownloadingUpdate: boolean;
+  updateReady: boolean;
+  updateVersion: string | null;
+  onCheckForUpdates: () => void;
+  onRestartToUpdate: () => void;
+  onStartDownload: () => void;
 }
 
 interface ActionButtonItem {
@@ -64,6 +76,8 @@ interface WindowControlItem {
 
 export const TitleBar: React.FC<TitleBarProps> = ({
   selectedWindowsCount,
+  windowsCount,
+  isLoadingWindows,
   isProjectionOn,
   isBlackout,
   isFrozen,
@@ -79,6 +93,16 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onRedo,
   onTogglePanel,
   onClearAll,
+  appVersion,
+  updateStatus,
+  updateProgress,
+  isCheckingUpdate,
+  isDownloadingUpdate,
+  updateReady,
+  updateVersion,
+  onCheckForUpdates,
+  onRestartToUpdate,
+  onStartDownload,
 }) => {
   const { isMaximized, minimize, maximize, close } = useWindowControls();
   const hasSelections = selectedWindowsCount > 0;
@@ -257,7 +281,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
   return (
     <div
-      className="relative z-20 h-8 flex items-center justify-between px-2 select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden backdrop-blur-sm"
+      className="relative z-20 flex h-14 flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden backdrop-blur-sm"
       style={{
         background: titlebarBackground,
         backgroundColor: "var(--studio-bg)",
@@ -270,69 +294,145 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             "linear-gradient(to bottom, transparent, rgb(var(--theme-primary-800) / 0.72))",
         }}
       />
-      <div
-        className="relative z-10 flex items-center gap-2 px-2"
-        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-      >
-        <button
-          type="button"
-          onClick={onHomeClick}
-          title="Go to home"
-          className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-400/20 bg-gradient-to-br from-theme-primary-500/30 via-theme-primary-600/20 to-theme-primary-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors hover:border-theme-primary-300/45"
+      <div className="relative z-10 flex h-8 items-center justify-between px-2">
+        <div
+          className="relative z-10 flex items-center gap-2 px-2"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
-          <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
-        </button>
-        <span className="text-[13px] text-theme-primary-100 font-[impact] tracking-wide">
-          Wingrid Driver Console
-        </span>
-      </div>
+          <button
+            type="button"
+            onClick={onHomeClick}
+            title="Go to home"
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-400/20 bg-gradient-to-br from-theme-primary-500/30 via-theme-primary-600/20 to-theme-primary-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors hover:border-theme-primary-300/45"
+          >
+            <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
+          </button>
+          <span className="text-[13px] text-theme-primary-100 font-[impact] tracking-wide">
+            Wingrid Driver Console
+          </span>
+        </div>
 
-      <div
-        className="absolute inset-0"
-        style={{ WebkitAppRegion: "drag" } as any}
-      />
+        <div
+          className="relative z-10 flex items-center h-full"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+        >
+          <div className="flex items-center gap-0.5 pr-1">
+            {actionItems.map((item) =>
+              item.kind === "divider" ? (
+                <div key={item.key} className="w-px h-4 bg-white/10 mx-0.5" />
+              ) : (
+                <DepthButton
+                  key={item.key}
+                  onClick={item.onClick}
+                  disabled={item.disabled}
+                  active={item.active}
+                  title={item.title}
+                  sizeClassName="w-6 h-6 rounded-md"
+                  activeClassName={item.activeClassName}
+                  inactiveClassName={item.inactiveClassName}
+                >
+                  {item.icon}
+                </DepthButton>
+              ),
+            )}
+          </div>
 
-      <div
-        className="relative z-10 flex items-center h-full"
-        style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-      >
-        <div className="flex items-center gap-0.5 pr-1">
-          {actionItems.map((item) =>
-            item.kind === "divider" ? (
-              <div key={item.key} className="w-px h-4 bg-white/10 mx-0.5" />
-            ) : (
+          <div className="w-px h-5 bg-white/8 mx-1" />
+
+          <div className="flex items-center gap-0.5 pr-0.5">
+            {windowControlItems.map((item) => (
               <DepthButton
                 key={item.key}
                 onClick={item.onClick}
-                disabled={item.disabled}
-                active={item.active}
                 title={item.title}
-                sizeClassName="w-6 h-6 rounded-md"
-                activeClassName={item.activeClassName}
+                sizeClassName={item.sizeClassName}
                 inactiveClassName={item.inactiveClassName}
-                // className="rounded-full"
+                className={item.className ?? ""}
               >
                 {item.icon}
               </DepthButton>
-            ),
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* stylish thin line with fading endings */}
+      <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" />
+
+      <div className="relative z-10 flex h-6 items-center justify-between  border-t border-white/10 px-3 text-[10px] leading-none font-[cursive]">
+        <div className="flex items-center gap-3 theme-text-soft font-bold">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isProjectionOn ? "bg-green-400 animate-pulse" : "bg-gray-500"
+              }`}
+            />
+            <span>Projection : {isProjectionOn ? " LIVE" : " OFF"}</span>
+          </span>
+          {isProjectionOn && isBlackout && (
+            <span className="inline-flex items-center gap-1.5 text-yellow-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+              Blackout
+            </span>
+          )}
+          {isProjectionOn && isFrozen && (
+            <span className="inline-flex items-center gap-1.5 text-cyan-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              Frozen
+            </span>
+          )}
+          <span className="h-3 w-px bg-white/10" />
+          {windowsCount > 0 ? (
+            <>
+              <span>Windows: {windowsCount}</span>
+              <span>Selected: {selectedWindowsCount}</span>
+            </>
+          ) : isLoadingWindows ? (
+            <span>Scanning...</span>
+          ) : (
+            <span>No windows</span>
           )}
         </div>
 
-        <div className="w-px h-5 bg-white/8 mx-1" />
-
-        <div className="flex items-center gap-0.5 pr-0.5">
-          {windowControlItems.map((item) => (
-            <DepthButton
-              key={item.key}
-              onClick={item.onClick}
-              title={item.title}
-              sizeClassName={item.sizeClassName}
-              inactiveClassName={item.inactiveClassName}
-              className={item.className ?? ""}
+        <div className="flex items-center gap-2 theme-text-soft">
+          <span className="">Version {appVersion}</span>
+          <span>{updateStatus}</span>
+          {isDownloadingUpdate && <span>{updateProgress.toFixed(1)}%</span>}
+          {updateReady && !isDownloadingUpdate ? (
+            <button
+              type="button"
+              onClick={onStartDownload}
+              className="rounded-md border border-blue-300/65 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-200 hover:bg-blue-500/25"
+              title="Download the update"
             >
-              {item.icon}
-            </DepthButton>
-          ))}
+              Download
+            </button>
+          ) : updateReady && isDownloadingUpdate ? (
+            <span>Downloading...</span>
+          ) : (
+            <button
+              type="button"
+              onClick={onCheckForUpdates}
+              disabled={isCheckingUpdate || isDownloadingUpdate}
+              className="rounded-md border border-theme-primary-500/35 bg-theme-primary-900 px-2 py-0.5 text-[10px] font-semibold text-theme-primary-100 hover:text-theme-primary-50 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isCheckingUpdate ? "Checking..." : "Check for Updates"}
+            </button>
+          )}
+          {updateReady && !isDownloadingUpdate && (
+            <button
+              type="button"
+              onClick={onRestartToUpdate}
+              className="rounded-md border border-emerald-300/65 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 hover:bg-emerald-500/25"
+              title={
+                updateVersion
+                  ? `Restart to install v${updateVersion}`
+                  : "Restart to install update"
+              }
+            >
+              Restart to Update
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -252,26 +252,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         if (arg?.newVersion) {
           setUpdateVersion(arg.newVersion);
         }
+        setUpdateReady(true);
         setUpdateStatus(
           arg?.newVersion
             ? `Update available: v${arg.newVersion}`
             : "Update available",
         );
-
-        if (!hasRequestedDownload) {
-          hasRequestedDownload = true;
-          setIsDownloadingUpdate(true);
-          void window.ipcRenderer
-            .invoke("start-download")
-            .catch((error: unknown) => {
-              setIsDownloadingUpdate(false);
-              setUpdateStatus(
-                error instanceof Error
-                  ? `Download failed: ${error.message}`
-                  : "Download failed",
-              );
-            });
-        }
       } else {
         setIsDownloadingUpdate(false);
         setUpdateReady(false);
@@ -328,16 +314,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     setUpdateStatus("Checking...");
     void window.ipcRenderer
       .invoke("check-update")
-      .then((result: { error?: { message?: string } } | undefined) => {
-        if (result?.error) {
-          setIsCheckingUpdate(false);
-          setUpdateStatus(
-            result.error.message
-              ? `Check failed: ${result.error.message}`
-              : "Check failed",
-          );
-        }
-      })
+      .then(
+        (
+          result:
+            | {
+                error?: { message?: string };
+                message?: string;
+                devMode?: boolean;
+              }
+            | undefined,
+        ) => {
+          if (result?.devMode) {
+            setIsCheckingUpdate(false);
+            setUpdateStatus("dev-mode no updates");
+          } else if (result?.error) {
+            setIsCheckingUpdate(false);
+            setUpdateStatus(
+              result.error.message
+                ? `Check failed: ${result.error.message}`
+                : "Check failed",
+            );
+          }
+        },
+      )
       .catch((error: unknown) => {
         setIsCheckingUpdate(false);
         setUpdateStatus(
@@ -364,16 +363,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
     void window.ipcRenderer
       .invoke("check-update")
-      .then((result: { error?: { message?: string } } | undefined) => {
-        if (result?.error) {
+      .then(
+        (
+          result:
+            | {
+                error?: { message?: string };
+                message?: string;
+                devMode?: boolean;
+              }
+            | undefined,
+        ) => {
           setIsCheckingUpdate(false);
-          setUpdateStatus(
-            result.error.message
-              ? `Check failed: ${result.error.message}`
-              : "Check failed",
-          );
-        }
-      })
+          if (result?.devMode) {
+            setUpdateStatus("dev-mode no updates");
+          } else if (result?.error) {
+            setUpdateStatus(
+              result.error.message
+                ? `Check failed: ${result.error.message}`
+                : "Check failed",
+            );
+          }
+        },
+      )
       .catch((error: unknown) => {
         setIsCheckingUpdate(false);
         setUpdateStatus(
@@ -386,6 +397,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   const handleRestartToUpdate = useCallback(() => {
     void window.ipcRenderer.invoke("quit-and-install");
+  }, []);
+
+  const handleStartDownload = useCallback(() => {
+    setIsDownloadingUpdate(true);
+    setUpdateStatus("Downloading...");
+    void window.ipcRenderer.invoke("start-download").catch((error: unknown) => {
+      setIsDownloadingUpdate(false);
+      setUpdateStatus(
+        error instanceof Error
+          ? `Download failed: ${error.message}`
+          : "Download failed",
+      );
+    });
   }, []);
 
   useEffect(() => {
@@ -1004,9 +1028,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col no-scrollbar bg-theme-primary-950 border-dashed border-b-8 border-t-0 border-x-8 border-theme-primary-500">
+    <div className="h-screen w-screen overflow-hidden flex flex-col no-scrollbar bg-theme-primary-950 border- border-none border-theme-primary-500">
       <TitleBar
         selectedWindowsCount={selectedWindows.length}
+        windowsCount={state.windows.length}
+        isLoadingWindows={isLoadingWindows}
         isProjectionOn={isProjectionOn}
         isBlackout={isBlackout}
         isFrozen={isFrozen}
@@ -1022,21 +1048,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         onRedo={handleRedo}
         onTogglePanel={togglePanel}
         onClearAll={handleClearAll}
+        appVersion={appVersion}
+        updateStatus={updateStatus}
+        updateProgress={updateProgress}
+        isCheckingUpdate={isCheckingUpdate}
+        isDownloadingUpdate={isDownloadingUpdate}
+        updateReady={updateReady}
+        updateVersion={updateVersion}
+        onCheckForUpdates={handleCheckForUpdates}
+        onRestartToUpdate={handleRestartToUpdate}
+        onStartDownload={handleStartDownload}
       />
 
       {/* Main Content Area */}
       <div
-        className="relative flex-1 flex overflow-hidden px-2 py-1 gap-3"
+        className="relative flex-1 flex overflow-hidden  py-1 gap-3"
         style={{
           background: mainSectionBackground,
           backgroundColor: "rgb(var(--theme-primary-800))",
         }}
       >
         {/* Left Panel - Window List */}
-        <DepthSurface
+        <div
           style={{ width: `${sidebarWidth}px` }}
           className="relative flex flex-col overflow-hidden shrink-0 rounded-2xl h-full min-h-0 "
-          surfaceClassName="depth-surface-shell"
+          // surfaceClassName="depth-surface-shell"
         >
           <WindowList
             windows={windowsForWindowList}
@@ -1071,10 +1107,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
               <div className="w-0.5 h-0.5 rounded-full bg-theme-primary-200"></div>
             </div>
           </div>
-        </DepthSurface>
+        </div>
 
         {/* Right Panel - Dynamic Content */}
-        <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-2xl">
+        <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-l-2xl ">
           <RightPanel
             windows={windowsForRightPanel}
             currentLayout={state.currentLayout}
@@ -1086,97 +1122,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
             onWindowAdd={handleWindowAdd}
             activePanel={activePanel}
           />
-        </div>
-      </div>
-
-      {/* Bottom Status Bar - spacedesk style */}
-      <div className="h-8 bg-theme-primary-950 border-x-0 border-b-0 border-theme-primary-400 flex items-center justify-between px-4 text-xs text-theme-primary-100 shrink-0 border-double">
-        {/* Left side - Status indicators */}
-        <div className="flex items-center gap-4">
-          {/* Projection status */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${isProjectionOn ? "bg-green-400 animate-pulse" : "bg-gray-500"}`}
-            ></div>
-            <span>
-              {isProjectionOn ? "Projection: LIVE" : "Projection: OFF"}
-            </span>
-          </div>
-
-          {/* Blackout indicator */}
-          {isProjectionOn && isBlackout && (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-              <span className="text-yellow-400">Blackout</span>
-            </div>
-          )}
-
-          {/* Freeze indicator */}
-          {isProjectionOn && isFrozen && (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-              <span className="text-cyan-400">Frozen</span>
-            </div>
-          )}
-
-          {/* Divider */}
-          <div className="w-px h-3 bg-white/10"></div>
-
-          {state.windows.length > 0 ? (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span>Windows: {state.windows.length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-theme-primary-400 rounded-full"></div>
-                <span>Selected: {selectedWindows.length}</span>
-              </div>
-            </>
-          ) : isLoadingWindows ? (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span>Scanning...</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-              <span>No windows</span>
-            </div>
-          )}
-        </div>
-
-        {/* Right side - Version info */}
-        <div className="flex items-center gap-3">
-          <span>Version {appVersion}</span>
-          <span className="text-theme-primary-300/85">{updateStatus}</span>
-          {isDownloadingUpdate && (
-            <span className="text-theme-primary-200/90">
-              {updateProgress.toFixed(1)}%
-            </span>
-          )}
-          {updateReady && (
-            <button
-              type="button"
-              onClick={handleRestartToUpdate}
-              className="rounded-md border border-emerald-300/65 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/25"
-              title={
-                updateVersion
-                  ? `Restart to install v${updateVersion}`
-                  : "Restart to install update"
-              }
-            >
-              Restart to Update
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleCheckForUpdates}
-            disabled={isCheckingUpdate || isDownloadingUpdate}
-            className="text-theme-primary-400 hover:text-theme-primary-200 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isCheckingUpdate ? "Checking..." : "Check for Updates"}
-          </button>
         </div>
       </div>
 

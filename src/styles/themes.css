@@ -13,29 +13,29 @@
   --theme-primary-700: 229 231 235; /* #e5e7eb */
   --theme-primary-800: 243 244 246; /* #f3f4f6 */
   --theme-primary-900: 249 250 251; /* #f9fafb */
-  --theme-primary-950: 255 255 255; /* #ffffff */
+  --theme-primary-950: 250 250 250; /* #fafafa */
 
   --theme-accent-light: 107 114 128; /* #6b7280 */
   --theme-accent-medium: 75 85 99; /* #4b5563 */
   --theme-accent-dark: 31 41 55; /* #1f2937 */
 
-  --theme-bg-gradient-1: 255 255 255; /* #ffffff */
+  --theme-bg-gradient-1: 250 250 250; /* #fafafa */
   --theme-bg-gradient-2: 249 250 251; /* #f9fafb */
   --theme-bg-gradient-3: 243 244 246; /* #f3f4f6 */
   --theme-bg-gradient-4: 229 231 235; /* #e5e7eb */
 
-  --studio-bg: #ffffff;
+  --studio-bg: #fafafa;
   --card-bg: #f9fafb;
   --card-bg-alt: #f3f4f6;
-  --header-gradient-from: #ffffff;
+  --header-gradient-from: #fafafa;
   --header-gradient-to: #f3f4f6;
   --btn-active-from: #e5e7eb;
   --btn-active-to: #d1d5db;
   --btn-normal-from: #f9fafb;
-  --btn-normal-to: #ffffff;
+  --btn-normal-to: #fafafa;
   --text-primary: #111827;
   --text-secondary: #374151;
-  --select-bg: #ffffff;
+  --select-bg: #fafafa;
   --select-bg-alt: #f9fafb;
   --select-hover: #f3f4f6;
   --select-border: #d1d5db;
