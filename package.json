@@ -7,6 +7,9 @@
   "author": "https://josiahokport.vercel.app/",
   "license": "MIT",
   "private": true,
+  "overrides": {
+    "builder-util-runtime": "9.3.1"
+  },
   "debug": {
     "env": {
       "VITE_DEV_SERVER_URL": "http://127.0.0.1:7777/"
@@ -57,10 +60,5 @@
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
     "vitest": "^2.1.5"
-  },
-  "pnpm": {
-    "overrides": {
-      "builder-util-runtime": "9.3.1"
-    }
   }
 }
