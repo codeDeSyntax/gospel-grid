@@ -1,6 +1,7 @@
 onlyBuiltDependencies:
   - electron
   - esbuild
+  - sharp
 
 ignoredBuiltDependencies:
   - extract-file-icon
