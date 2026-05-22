@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -27,7 +30,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build and publish
+      - name: Build renderer and Electron bundles
+        run: pnpm run build
+
+      - name: Package Windows app
+        run: pnpm exec electron-builder --win --publish=never
+
+      - name: Verify packaged updater dependencies
+        run: pnpm run verify:package
+
+      - name: Publish verified release files
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*/Wingrid_*.exe
+            release/*/Wingrid_*.exe.blockmap
+            release/*/latest.yml
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: pnpm run build && pnpm exec electron-builder --win --publish=always
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
