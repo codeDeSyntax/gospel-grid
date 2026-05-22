@@ -6,9 +6,52 @@ import type {
   UpdateInfo,
 } from "electron-updater";
 
-const { autoUpdater } = createRequire(import.meta.url)("electron-updater");
+type AutoUpdaterModule = typeof import("electron-updater");
+
+let autoUpdaterModule: AutoUpdaterModule | null = null;
+let autoUpdaterLoadError: Error | null = null;
+
+function getAutoUpdater() {
+  if (autoUpdaterModule) return autoUpdaterModule.autoUpdater;
+  if (autoUpdaterLoadError) return null;
+
+  try {
+    const loadedModule = createRequire(import.meta.url)(
+      "electron-updater",
+    ) as AutoUpdaterModule;
+    autoUpdaterModule = loadedModule;
+    return loadedModule.autoUpdater;
+  } catch (error) {
+    autoUpdaterLoadError =
+      error instanceof Error ? error : new Error(String(error));
+    console.error("Auto updater is unavailable:", autoUpdaterLoadError);
+    return null;
+  }
+}
 
 export function update(win: Electron.BrowserWindow) {
+  const autoUpdater = getAutoUpdater();
+
+  if (!autoUpdater) {
+    ipcMain.handle("check-update", async () => ({
+      message: "Auto updater unavailable",
+      error: {
+        message:
+          autoUpdaterLoadError?.message ||
+          "electron-updater could not be loaded",
+      },
+    }));
+    ipcMain.handle("start-download", () => ({
+      success: false,
+      error: autoUpdaterLoadError?.message || "Auto updater unavailable",
+    }));
+    ipcMain.handle("quit-and-install", () => ({
+      success: false,
+      error: autoUpdaterLoadError?.message || "Auto updater unavailable",
+    }));
+    return;
+  }
+
   // When set to false, the update download will be triggered through the API
   autoUpdater.autoDownload = false;
   autoUpdater.disableWebInstaller = false;
@@ -75,6 +118,15 @@ function startDownload(
   callback: (error: Error | null, info: ProgressInfo | null) => void,
   complete: (event: UpdateDownloadedEvent) => void,
 ) {
+  const autoUpdater = getAutoUpdater();
+  if (!autoUpdater) {
+    callback(
+      autoUpdaterLoadError ?? new Error("Auto updater unavailable"),
+      null,
+    );
+    return;
+  }
+
   autoUpdater.on("download-progress", (info: ProgressInfo) =>
     callback(null, info),
   );
