@@ -47,7 +47,8 @@ function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
   const [navigationDirection, setNavigationDirection] = useState(1);
-  const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] = useState(false);
+  const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] =
+    useState(false);
   const [publishedLayoutData, setPublishedLayoutData] = useState<{
     windows: WindowInfo[];
     layout: string;

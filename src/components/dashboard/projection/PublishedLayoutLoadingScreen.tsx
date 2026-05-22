@@ -71,8 +71,8 @@ export const PublishedLayoutLoadingScreen: React.FC = () => {
             Preparing your projection view
           </h1>
           <p className="mx-auto max-w-md text-sm leading-6 text-slate-300 sm:text-[0.95rem]">
-            Restoring the window arrangement, quality settings, and live
-            capture state for this published layout.
+            Restoring the window arrangement, quality settings, and live capture
+            state for this published layout.
           </p>
         </div>
 
