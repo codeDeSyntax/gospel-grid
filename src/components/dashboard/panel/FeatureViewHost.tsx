@@ -1,9 +1,9 @@
 import React from "react";
 import { WindowLayoutCard } from "./WindowLayoutCard";
-import { OverlayTextPanel } from "../panels/OverlayTextPanel";
-import { FeatureTimerView } from "../features/timer/FeatureTimerView";
-import { FeatureCaptionsView } from "../features/captions/FeatureCaptionsView";
-import type { FeatureView, WindowLayoutCardProps } from "../types";
+import { OverlayTextPanel } from "./OverlayTextPanel";
+import { FeatureTimerView } from "./FeatureTimerView";
+import { FeatureCaptionsView } from "./FeatureCaptionsView";
+import type { FeatureView, WindowLayoutCardProps } from "../RightPanel/types";
 
 interface FeatureViewHostProps extends WindowLayoutCardProps {
   activeView: FeatureView;

@@ -1,13 +1,12 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { WindowList, type WindowInfo } from "./WindowList";
-import { CosmicBackground } from "./CosmicBackground";
-import { FloatingCaptionsOrb } from "./FloatingCaptionsOrb";
-import { RightPanel } from "./RightPanel/core/RightPanel";
-import type { PanelView } from "./RightPanel/types";
+import { WindowPicker, type WindowInfo } from "./picker/WindowPicker";
+import { CosmicBackground } from "./background/CosmicBackground";
+import { FloatingCaptionsOrb } from "./captions/FloatingCaptionsOrb";
+import { InspectorPanel } from "./inspector/InspectorPanel";
+import type { PanelView } from "./inspector/types";
 import { TitleBar } from "@/shared/TitleBar";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
-import { PublishedLayout } from "./PublishedLayout";
 import { NotifierContainer } from "@/components/ui/NotifierContainer";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -36,14 +35,14 @@ import {
   loadFeatureTimerCollection,
   markCollectionCompletedIfElapsed,
   saveFeatureTimerCollection,
-} from "./RightPanel/featureTimerState";
+} from "./inspector/featureTimerState";
 import {
   FEATURE_IMAGE_EVENT,
   type FeatureImageItem,
   getImageFeatureWindowId,
   loadFeatureImageCollection,
-} from "./RightPanel/featureImageState";
-import { CAPTIONS_FEATURE_WINDOW_ID } from "./RightPanel/featureCaptionsState";
+} from "./inspector/featureImageState";
+import { CAPTIONS_FEATURE_WINDOW_ID } from "./inspector/featureCaptionsState";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -811,12 +810,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     [state.windows, state.focusedWindowId, pushHistory],
   );
 
-  const windowsForWindowList = useMemo(() => {
+  const windowsForPicker = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
     return [captionsFeatureWindow, ...timerFeatureWindows, ...baseWindows];
   }, [state.windows, timerFeatureWindows, captionsFeatureWindow]);
 
-  const windowsForRightPanel = useMemo(() => {
+  const windowsForInspector = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
     return [
       captionsFeatureWindow,
@@ -1062,20 +1061,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
       {/* Main Content Area */}
       <div
-        className="relative flex-1 flex overflow-hidden  py-1 gap-3"
-        style={{
-          background: mainSectionBackground,
-          backgroundColor: "rgb(var(--theme-primary-800))",
-        }}
+        className="relative flex-1 flex overflow-hidden bg-theme-primary-950  gap-3"
+        style={
+          {
+            // background: mainSectionBackground,
+            // backgroundColor: "rgb(var(--theme-primary-800))",
+          }
+        }
       >
         {/* Left Panel - Window List */}
         <div
           style={{ width: `${sidebarWidth}px` }}
-          className="relative flex flex-col overflow-hidden shrink-0 rounded-2xl h-full min-h-0 "
+          className="relative flex flex-col overflow-hidden bg-theme-primary-950 shrink-0 h-full min-h-0 "
           // surfaceClassName="depth-surface-shell"
         >
-          <WindowList
-            windows={windowsForWindowList}
+          <WindowPicker
+            windows={windowsForPicker}
             onWindowSelect={handleWindowSelect}
             onWindowPin={handleWindowPin}
             onWindowFocus={focusWindowNative}
@@ -1110,9 +1111,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         </div>
 
         {/* Right Panel - Dynamic Content */}
-        <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-l-2xl ">
-          <RightPanel
-            windows={windowsForRightPanel}
+        <div className="flex h-full min-h-0 flex-1 min-w-0 overflow-hidden rounded-tl-none ">
+          <InspectorPanel
+            windows={windowsForInspector}
             currentLayout={state.currentLayout}
             focusedWindowId={state.focusedWindowId}
             onLayoutChange={handleLayoutChange}

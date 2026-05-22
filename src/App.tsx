@@ -4,8 +4,9 @@ import { ThemeManager } from "./utils/theme";
 import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
-import { PublishedLayout } from "./components/dashboard/PublishedLayout";
-import { WindowInfo } from "./components/dashboard/WindowList";
+import { ProjectionLayout } from "./components/dashboard/projection/ProjectionLayout";
+import { PublishedLayoutLoadingScreen } from "./components/dashboard/projection/PublishedLayoutLoadingScreen";
+import { type WindowInfo } from "./components/dashboard/picker/WindowPicker";
 import { useAppDispatch } from "./store/hooks";
 import {
   setPublishedQuality,
@@ -46,6 +47,7 @@ function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
   const [navigationDirection, setNavigationDirection] = useState(1);
+  const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] = useState(false);
   const [publishedLayoutData, setPublishedLayoutData] = useState<{
     windows: WindowInfo[];
     layout: string;
@@ -72,6 +74,9 @@ function App() {
     const layoutId = urlParams.get("layoutId");
 
     if (layoutId) {
+      navigateTo("published");
+      setIsPublishedLayoutLoading(true);
+
       // Fetch layout data from main process using the ID
       (window.electronAPI as any)
         .getPublishedLayout(layoutId)
@@ -83,7 +88,7 @@ function App() {
               focusedWindowId: layoutData.focusedWindowId,
               layoutId,
             });
-            navigateTo("published");
+            setIsPublishedLayoutLoading(false);
             systemLogger.log(
               "app",
               "info",
@@ -91,6 +96,9 @@ function App() {
               `📊 Published layout loaded with ${layoutData.windows.length} windows`,
             );
           } else {
+            setIsPublishedLayoutLoading(false);
+            setPublishedLayoutData(null);
+            navigateTo("welcome");
             systemLogger.log(
               "app",
               "error",
@@ -100,6 +108,9 @@ function App() {
           }
         })
         .catch((error: any) => {
+          setIsPublishedLayoutLoading(false);
+          setPublishedLayoutData(null);
+          navigateTo("welcome");
           systemLogger.log(
             "app",
             "error",
@@ -150,10 +161,29 @@ function App() {
         },
       );
 
+      const unsubscribePublishedLayout = (
+        window.electronAPI as any
+      )?.onPublishedLayoutUpdated?.((layoutData: any) => {
+        if (!layoutData?.layoutId || layoutData.layoutId !== layoutId) {
+          return;
+        }
+
+        if (layoutData.windows && layoutData.layout) {
+          setPublishedLayoutData({
+            windows: layoutData.windows,
+            layout: layoutData.layout,
+            focusedWindowId: layoutData.focusedWindowId ?? null,
+            layoutId,
+          });
+        }
+      });
+
       return () => {
         if (typeof unsubscribe === "function") unsubscribe();
         if (typeof unsubscribeProjection === "function")
           unsubscribeProjection();
+        if (typeof unsubscribePublishedLayout === "function")
+          unsubscribePublishedLayout();
       };
     }
   }, [dispatch]);
@@ -210,15 +240,17 @@ function App() {
       case "dashboard":
         return <Dashboard onHomeClick={handleBackToWelcome} />;
       case "published":
-        return publishedLayoutData ? (
-          <PublishedLayout
+        return isPublishedLayoutLoading || !publishedLayoutData ? (
+          <PublishedLayoutLoadingScreen />
+        ) : (
+          <ProjectionLayout
             windows={publishedLayoutData.windows}
             layout={publishedLayoutData.layout}
             focusedWindowId={publishedLayoutData.focusedWindowId}
             onMinimize={handleMinimizePublished}
             onClose={handleClosePublished}
           />
-        ) : null;
+        );
       case "settings":
         return (
           <div className="h-screen no-scrollbar bg-background-primary text-text-primary flex items-center justify-center">

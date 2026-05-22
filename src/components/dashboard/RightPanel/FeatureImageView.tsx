@@ -1,1 +1,1 @@
-export { FeatureImageView } from "./features/image/FeatureImageView";
+export { FeatureImageView } from "../panel/FeatureImageView";

@@ -10,7 +10,7 @@ import {
   type FeatureImageCollection,
   type FeatureImageItem,
   type FeatureImageSource,
-} from "./featureImageState";
+} from "../RightPanel/featureImageState";
 
 const buildDragPayload = (image: FeatureImageItem) => {
   const windowInfo = {

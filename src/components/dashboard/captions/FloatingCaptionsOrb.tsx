@@ -4,14 +4,14 @@ import { DepthSurface } from "@/shared/DepthSurface";
 import { DepthButton } from "@/shared/DepthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { replaceCaptionsState } from "@/store/slices/captionsSlice";
-import { startRendererMicStreaming } from "./audio/micCapture";
+import { startRendererMicStreaming } from "../audio/micCapture";
 import {
   FEATURE_CAPTIONS_EVENT,
   loadFeatureCaptionsState,
   mergeRecentCaptionWords,
   saveFeatureCaptionsState,
   type FeatureCaptionsState,
-} from "./RightPanel/featureCaptionsState";
+} from "../RightPanel/featureCaptionsState";
 
 const TARGET_SAMPLE_RATE = 16000;
 

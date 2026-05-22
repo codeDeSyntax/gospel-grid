@@ -63,6 +63,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("publish-layout", layoutData),
   getPublishedLayout: (layoutId: string) =>
     ipcRenderer.invoke("get-published-layout", layoutId),
+  updatePublishedLayout: (layoutData: any) =>
+    ipcRenderer.invoke("update-published-layout", layoutData),
   checkPublishedWindows: () => ipcRenderer.invoke("check-published-windows"),
   closePublishedWindows: (displayId?: number) =>
     ipcRenderer.invoke("close-published-windows", displayId),
@@ -131,6 +133,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     const listener = (_: any, state: any) => callback(state);
     ipcRenderer.on("projection-state-changed", listener);
     return () => ipcRenderer.off("projection-state-changed", listener);
+  },
+
+  onPublishedLayoutUpdated: (callback: (payload: any) => void) => {
+    const listener = (_: any, payload: any) => callback(payload);
+    ipcRenderer.on("published-layout-updated", listener);
+    return () => ipcRenderer.off("published-layout-updated", listener);
   },
 
   // Global hotkey events forwarded from main process

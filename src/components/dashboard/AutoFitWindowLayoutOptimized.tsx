@@ -5,21 +5,33 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Cast, Monitor, RefreshCcw, X, MonitorOff } from "lucide-react";
-import { WindowInfo } from "../dashboard/WindowList";
+import {
+  Cast,
+  Monitor,
+  RefreshCcw,
+  X,
+  MonitorOff,
+  EyeOff,
+  EyeClosed,
+} from "lucide-react";
+import { FcDeleteRow } from "react-icons/fc";
+import { type WindowInfo } from "./picker/WindowPicker";
 import { getWindowFallbackIcon } from "@/utils/appIconMapping";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   assignWindowToDisplay,
+  hideWindowOnDisplay,
   removeWindowFromDisplay,
   setDisplayAssignments,
+  setDisplayHiddenAssignments,
   setWindowThumbnails,
+  showWindowOnDisplay,
 } from "@/store/slices/gridSlice";
 import { publishDisplayLayout } from "@/store/slices/notificationSlice";
 import { setProjectionOn } from "@/store/slices/appSlice";
-import { TimerProjectionScreen } from "./TimerProjectionScreen";
+import { TimerProjectionScreen } from "./projection/TimerProjectionScreen";
 import {
   getCountdownRemainingMs,
   getTimerFeatureWindowId,
@@ -30,7 +42,7 @@ import {
   FEATURE_CAPTIONS_EVENT,
   loadFeatureCaptionsState,
 } from "./RightPanel/featureCaptionsState";
-import { FcDeleteRow } from "react-icons/fc";
+import { ManageDisplayMenu } from "./ManageDisplayMenu";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -92,6 +104,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const [displays, setDisplays] = useState<DisplayInfo[]>([]);
   const [loadingDisplays, setLoadingDisplays] = useState(false);
   const [publishedDisplayIds, setPublishedDisplayIds] = useState<number[]>([]);
+  const [openManageDisplayId, setOpenManageDisplayId] = useState<number | null>(
+    null,
+  );
   const [captionsText, setCaptionsText] = useState(
     () => loadFeatureCaptionsState().text,
   );
@@ -99,6 +114,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const displayAssignments = useAppSelector(
     (state) => state.grid.displayAssignments,
   );
+  const displayHiddenAssignments =
+    useAppSelector((state) => state.grid.displayHiddenAssignments) ?? {};
   const windowThumbnails =
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
 
@@ -221,6 +238,25 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     return () => clearInterval(timer);
   }, [refreshPublicationState]);
 
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (openManageDisplayId === null) return;
+
+      const menuRoot = document.querySelector(
+        `[data-manage-menu-root="${openManageDisplayId}"]`,
+      );
+
+      if (menuRoot && menuRoot.contains(event.target as Node)) {
+        return;
+      }
+
+      setOpenManageDisplayId(null);
+    };
+
+    document.addEventListener("mousedown", handleDocumentClick);
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
+  }, [openManageDisplayId]);
+
   const windowMap = useMemo(() => {
     const map = new Map<string, WindowInfo>();
     windows.forEach((w) => map.set(w.id, w));
@@ -247,39 +283,81 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
       if (missingIds.length === 0) return;
 
-      await Promise.all(
-        missingIds.map(async (windowId) => {
-          thumbnailRequestsInFlightRef.current.add(windowId);
-          try {
-            const result = await window.electronAPI.getWindowThumbnail(
-              windowId,
-              {
-                width: 1280,
-                height: 720,
-                scaleFactor: 1.5,
-                quality: 95,
-                forceRefresh: true,
-              },
-            );
-            const dataUrl = result?.thumbnail?.dataUrl ?? result?.thumbnail;
-            if (!cancelled && result?.success && dataUrl) {
-              dispatch(
-                setWindowThumbnails({
-                  [windowId]: dataUrl,
-                }),
-              );
+      // Prefer the batch API for every missing thumbnail. The single-window
+      // capture path is kept only as a fallback because it is unreliable in
+      // bundled builds.
+      missingIds.forEach((id) => thumbnailRequestsInFlightRef.current.add(id));
+
+      try {
+        if (
+          window.electronAPI &&
+          typeof window.electronAPI.batchCaptureThumbnails === "function"
+        ) {
+          const result = await window.electronAPI.batchCaptureThumbnails(
+            missingIds,
+            {
+              width: 1280,
+              height: 720,
+              scaleFactor: 1.5,
+              quality: 95,
+              forceRefresh: true,
+            },
+          );
+
+          if (result?.success && Array.isArray(result.thumbnails)) {
+            const payload: Record<string, string> = {};
+            result.thumbnails.forEach((t: any) => {
+              if (t && t.windowId && t.dataUrl) {
+                payload[t.windowId] = t.dataUrl;
+              }
+            });
+
+            if (!cancelled && Object.keys(payload).length > 0) {
+              dispatch(setWindowThumbnails(payload));
             }
-          } catch (error) {
-            console.error("Failed to load display thumbnail:", error);
-          } finally {
-            thumbnailRequestsInFlightRef.current.delete(windowId);
+            return;
           }
-        }),
-      );
+        }
+
+        await Promise.all(
+          missingIds.map(async (windowId) => {
+            try {
+              const result = await window.electronAPI.getWindowThumbnail(
+                windowId,
+                {
+                  width: 1280,
+                  height: 720,
+                  scaleFactor: 1.5,
+                  quality: 95,
+                  forceRefresh: true,
+                },
+              );
+              const dataUrl = result?.thumbnail?.dataUrl ?? result?.thumbnail;
+              if (!cancelled && result?.success && dataUrl) {
+                dispatch(
+                  setWindowThumbnails({
+                    [windowId]: dataUrl,
+                  }),
+                );
+              }
+            } catch (error) {
+              console.error("Failed to load display thumbnail:", error);
+            } finally {
+              thumbnailRequestsInFlightRef.current.delete(windowId);
+            }
+          }),
+        );
+      } catch (error) {
+        console.error("Batch thumbnail capture failed:", error);
+      } finally {
+        missingIds.forEach((id) =>
+          thumbnailRequestsInFlightRef.current.delete(id),
+        );
+      }
     };
 
     requestMissingThumbnails();
-    const retryTimer = window.setInterval(requestMissingThumbnails, 2000);
+    const retryTimer = window.setInterval(requestMissingThumbnails, 800);
 
     return () => {
       cancelled = true;
@@ -373,6 +451,62 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     }
   };
 
+  const handleToggleHiddenOnDisplay = (displayId: number, windowId: string) => {
+    const hiddenIds = displayHiddenAssignments[displayId] ?? [];
+    if (hiddenIds.includes(windowId)) {
+      dispatch(showWindowOnDisplay({ displayId, windowId }));
+    } else {
+      dispatch(hideWindowOnDisplay({ displayId, windowId }));
+    }
+  };
+
+  const syncPublishedLayout = useCallback(
+    async (
+      displayId: number,
+      nextAssignments = displayAssignments,
+      nextHidden = displayHiddenAssignments,
+    ) => {
+      if (!publishedDisplayIds.includes(displayId)) return;
+
+      const assignedIds = nextAssignments[displayId] ?? [];
+      const hiddenIds = new Set(nextHidden[displayId] ?? []);
+      const visibleWindows = assignedIds
+        .filter((windowId) => !hiddenIds.has(windowId))
+        .map((windowId) => windowMap.get(windowId))
+        .filter((window): window is WindowInfo => !!window);
+
+      try {
+        await window.electronAPI.updatePublishedLayout({
+          displayId,
+          windows: visibleWindows,
+          layout: currentLayout,
+          focusedWindowId,
+        });
+      } catch (error) {
+        console.error("Failed to sync published layout:", error);
+      }
+    },
+    [
+      currentLayout,
+      displayAssignments,
+      displayHiddenAssignments,
+      focusedWindowId,
+      publishedDisplayIds,
+      windowMap,
+    ],
+  );
+
+  useEffect(() => {
+    publishedDisplayIds.forEach((displayId) => {
+      void syncPublishedLayout(displayId);
+    });
+  }, [
+    displayAssignments,
+    displayHiddenAssignments,
+    publishedDisplayIds,
+    syncPublishedLayout,
+  ]);
+
   const handleToggleDisplayProjection = async (displayId: number) => {
     const isActive = publishedDisplayIds.includes(displayId);
 
@@ -403,6 +537,12 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     await refreshPublicationState();
   };
 
+  const getVisibleAssignedIds = (displayId: number) => {
+    const assignedIds = displayAssignments[displayId] ?? [];
+    const hiddenIds = new Set(displayHiddenAssignments[displayId] ?? []);
+    return assignedIds.filter((windowId) => !hiddenIds.has(windowId));
+  };
+
   const getGridClasses = (count: number) => {
     if (count <= 1) return "grid-cols-1";
     if (count === 2) return "grid-cols-2";
@@ -431,14 +571,11 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   return (
-    <div className="w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col ">
-      <div className="shrink-0 px-3 py-2 flex items-center justify-between">
+    <div className="relative w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col ">
+      <div className="shrink-0 px-3 py-2 flex items-center justify-between rounded-3xl mx-3 bg-theme-primary-700/10">
         <div>
           <p className="text-[13px] font-semibold text-theme-primary-100">
             Unified Display Workspace
-          </p>
-          <p className="text-[10px] text-theme-primary-300/65">
-            Drag windows from the left list into detected screens.
           </p>
         </div>
 
@@ -468,10 +605,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         </div>
       ) : (
         <div
-          className={`flex-1 min-h-0 p-3 grid gap-3 ${getGridClasses(displays.length)} auto-rows-fr content-stretch items-stretch overflow-hidden`}
+          className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-fr content-stretch items-stretch overflow-visible`}
         >
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
+            const hiddenIds = new Set(
+              displayHiddenAssignments[display.id] ?? [],
+            );
             const isPublished = publishedDisplayIds.includes(display.id);
             return (
               <div
@@ -479,7 +619,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl ring-dashed ring-4 ring-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
+                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
 
@@ -497,7 +637,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </DepthButton>
                   <DepthButton
                     onClick={() => handleToggleDisplayProjection(display.id)}
-                    disabled={!isPublished && assignedIds.length === 0}
+                    disabled={
+                      !isPublished &&
+                      getVisibleAssignedIds(display.id).length === 0
+                    }
                     sizeClassName="h-6 px-2 py-1 rounded-xl shrink-0 pointer-events-auto"
                     title={
                       isPublished
@@ -519,8 +662,26 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                       {isPublished ? "Close" : "Project"}
                     </span>
                   </DepthButton>
-                </div>
+                  <div className="pointer-events-auto">
+                    <DepthButton
+                      onClick={() => {
+                        if (openManageDisplayId === display.id) {
+                          setOpenManageDisplayId(null);
+                          return;
+                        }
 
+                        setOpenManageDisplayId(display.id);
+                      }}
+                      sizeClassName="h-6 px-2 py-1 rounded-xl shrink-0"
+                      inactiveClassName="text-theme-primary-50 border-theme-primary-400/50"
+                      inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/60 via-theme-primary-700 to-theme-primary-800/60"
+                    >
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase">
+                        Manage
+                      </span>
+                    </DepthButton>
+                  </div>
+                </div>
                 {assignedIds.length === 0 ? (
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
                     <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
@@ -561,6 +722,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                         windowId === CAPTIONS_FEATURE_WINDOW_ID;
                       const thumbnail =
                         windowThumbnails[windowId] || win.thumbnail || null;
+                      const isHidden = hiddenIds.has(windowId);
 
                       const timerPreview = timerPreviewMap[windowId] ?? {
                         days: "00",
@@ -635,13 +797,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
 
                           {!isTimerFeature && !isCaptionsFeature && (
-                            <div className="absolute bottom-1.5 right-1.5 z-20 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
+                            <div className="absolute bottom-1.5 right-1.5 z-10 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
                               {win.icon ? (
                                 <>
                                   <img
                                     src={win.icon}
                                     alt={`${win.app} icon`}
-                                    className="w-10 h-10 object-contain opacity-95"
+                                    className="w-8 h-8 object-contain opacity-95"
                                     draggable={false}
                                     onError={(e) => {
                                       e.currentTarget.style.display = "none";
@@ -666,12 +828,28 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
+                          {isHidden && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-md">
+                              <div
+                                onClick={() =>
+                                  handleToggleHiddenOnDisplay(
+                                    display.id,
+                                    windowId,
+                                  )
+                                }
+                                className="rounded-full border border-white/10 bg-black/50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90"
+                              >
+                                <EyeClosed className="w-5 h-5" />
+                              </div>
+                            </div>
+                          )}
+
                           <DepthButton
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFromDisplay(display.id, windowId);
                             }}
-                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20"
+                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
                             title="Remove window"
                           >
                             <FcDeleteRow className="w-6 h-6" />
@@ -681,6 +859,21 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                     })}
                   </div>
                 )}
+
+                <ManageDisplayMenu
+                  open={openManageDisplayId === display.id}
+                  menuRootId={display.id}
+                  assignedWindowIds={assignedIds}
+                  hiddenWindowIds={hiddenIds}
+                  windowMap={windowMap}
+                  onClose={() => setOpenManageDisplayId(null)}
+                  onToggleHidden={(windowId) =>
+                    handleToggleHiddenOnDisplay(display.id, windowId)
+                  }
+                  onRemove={(windowId) =>
+                    handleRemoveFromDisplay(display.id, windowId)
+                  }
+                />
               </div>
             );
           })}

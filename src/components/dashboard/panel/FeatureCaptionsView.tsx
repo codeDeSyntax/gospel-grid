@@ -10,7 +10,7 @@ import {
   mergeRecentCaptionWords,
   saveFeatureCaptionsState,
   type FeatureCaptionsState,
-} from "./featureCaptionsState";
+} from "../RightPanel/featureCaptionsState";
 
 const TARGET_SAMPLE_RATE = 16000;
 

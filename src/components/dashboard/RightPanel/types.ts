@@ -1,4 +1,4 @@
-import { type WindowInfo } from "../WindowList";
+import { type WindowInfo } from "../picker/WindowPicker";
 
 export type PanelView = "layout" | "settings" | "overlay";
 

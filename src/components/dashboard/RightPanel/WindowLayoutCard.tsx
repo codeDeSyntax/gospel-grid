@@ -1,1 +1,1 @@
-export { WindowLayoutCard } from "./core/WindowLayoutCard";
+export { WindowLayoutCard } from "../panel/WindowLayoutCard";

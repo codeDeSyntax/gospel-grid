@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WindowInfo } from "./WindowList";
-import { LiveWindowGrid } from "./LiveWindowGrid";
+import { type WindowInfo } from "../picker/WindowPicker";
+import { LiveWindowGrid } from "../live/LiveWindowGrid";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useAppSelector } from "@/store/hooks";
 import { Minimize2, X } from "lucide-react";

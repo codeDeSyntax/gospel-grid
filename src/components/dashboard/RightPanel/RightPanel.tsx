@@ -1,1 +1,1 @@
-export { RightPanel } from "./core/RightPanel";
+export { RightPanel } from "../panel/RightPanel";

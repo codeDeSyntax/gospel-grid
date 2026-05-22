@@ -1,4 +1,5 @@
 import { desktopCapturer, NativeImage } from "electron";
+import { createHash } from "node:crypto";
 import { thumbnailCache } from "./thumbnailCache";
 
 export interface ThumbnailOptions {
@@ -81,16 +82,36 @@ export async function captureWindowThumbnail(
       return null;
     }
 
-    // Check cache first (unless force refresh)
+    // Check cache first (unless force refresh). If we have a thumbnail
+    // available from the source, compute a light hash and use that to
+    // validate cache freshness so we don't return stale images when window
+    // content has changed.
+    let imageHash: string | undefined;
+    if (
+      !forceRefresh &&
+      targetSource &&
+      targetSource.thumbnail &&
+      !targetSource.thumbnail.isEmpty()
+    ) {
+      try {
+        const png = targetSource.thumbnail.toPNG();
+        imageHash = createHash("sha1").update(png).digest("hex");
+      } catch (err) {
+        // hashing failed, fall back to cache without hash
+        imageHash = undefined;
+      }
+    }
+
     if (!forceRefresh) {
       const cachedThumbnail = thumbnailCache.get(
         windowId,
         windowTitle,
         options,
+        undefined,
+        imageHash,
       );
 
       if (cachedThumbnail) {
-        // console.log(`Using cached thumbnail for: "${windowTitle}"`);
         return cachedThumbnail;
       }
     }
@@ -105,8 +126,15 @@ export async function captureWindowThumbnail(
       timestamp: Date.now(),
     };
 
-    // Cache the thumbnail
-    thumbnailCache.set(windowId, windowTitle, thumbnail, options);
+    // Cache the thumbnail using the computed image hash if available
+    thumbnailCache.set(
+      windowId,
+      windowTitle,
+      thumbnail,
+      options,
+      undefined,
+      imageHash,
+    );
 
     // console.log(`Successfully captured thumbnail for: "${windowTitle}"`);
     return thumbnail;
@@ -268,10 +296,27 @@ export async function batchCaptureThumbnails(
 
   // ── Extract thumbnails from the single snapshot ─────────────────────
   const results: (WindowThumbnail | null)[] = windowIds.map((windowId) => {
-    // Check cache first (unless force refresh)
+    // Check cache first (unless force refresh). If a source exists for this
+    // window, compute a quick image hash and use it to validate the cache.
+    const src = sourceMap.get(windowId);
+    let imageHash: string | undefined;
+    if (src && src.thumbnail && !src.thumbnail.isEmpty()) {
+      try {
+        const png = src.thumbnail.toPNG();
+        imageHash = createHash("sha1").update(png).digest("hex");
+      } catch (err) {
+        imageHash = undefined;
+      }
+    }
+
     if (!forceRefresh) {
-      const src = sourceMap.get(windowId);
-      const cached = thumbnailCache.get(windowId, src?.name ?? "", options);
+      const cached = thumbnailCache.get(
+        windowId,
+        src?.name ?? "",
+        options,
+        undefined,
+        imageHash,
+      );
       if (cached) return cached;
     }
 
@@ -287,8 +332,15 @@ export async function batchCaptureThumbnails(
       timestamp: Date.now(),
     };
 
-    // Cache it
-    thumbnailCache.set(windowId, source.name, thumbnail, options);
+    // Cache it (include image hash if we computed one)
+    thumbnailCache.set(
+      windowId,
+      source.name,
+      thumbnail,
+      options,
+      undefined,
+      imageHash,
+    );
     return thumbnail;
   });
 

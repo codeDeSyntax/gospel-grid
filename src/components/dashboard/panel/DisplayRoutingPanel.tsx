@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Monitor, Link2, Sparkles, Copy, RefreshCcw } from "lucide-react";
-import { type WindowInfo } from "../../WindowList";
+import { type WindowInfo } from "../picker/WindowPicker";
 
 interface DisplayInfo {
   id: number;

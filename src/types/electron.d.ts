@@ -28,6 +28,7 @@ export interface ConnectedDisplay {
 export interface EnumerateWindowsOptions {
   includeMinimized?: boolean;
   includeSystemWindows?: boolean;
+  captureThumbnails?: boolean;
 }
 
 export interface WindowEnumerationResult {
@@ -48,6 +49,7 @@ export interface WindowEnumerationResult {
     parentHandle?: number;
     hasChildren?: boolean;
     zOrder?: number;
+    thumbnail?: string;
   }>;
   error?: string;
 }
@@ -88,6 +90,15 @@ export interface ElectronAPI {
     captureQuality?: number;
     displayId?: number;
   }) => Promise<{ success: boolean; windowId?: number; error?: string }>;
+  updatePublishedLayout: (layoutData: {
+    windows: any[];
+    layout: string;
+    focusedWindowId: string | null;
+    publishedQuality?: { contrast: number; brightness: number };
+    captureQuality?: number;
+    displayId?: number;
+    layoutId?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
   getPublishedLayout: (layoutId: string) => Promise<any | null>;
   checkPublishedWindows: () => Promise<{
     hasActivePublications: boolean;
@@ -116,6 +127,7 @@ export interface ElectronAPI {
 
   // Tray action events
   onTrayAction: (callback: (action: string) => void) => () => void;
+  onPublishedLayoutUpdated: (callback: (payload: any) => void) => () => void;
 }
 
 // Extend the global Window interface to include our APIs

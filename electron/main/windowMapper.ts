@@ -25,7 +25,7 @@ export async function getWindowSourceMapping(
     const sources = await desktopCapturer.getSources({
       types: ["window"],
       thumbnailSize: captureThumbnails
-        ? { width: 300, height: 200 }
+        ? { width: 1280, height: 720 }
         : { width: 1, height: 1 }, // Minimal size when not capturing
       fetchWindowIcons: true, // Enable fetching window icons!
     });
@@ -118,7 +118,7 @@ export async function getWindowsWithThumbnails(
       sourceId: source.sourceId, // Keep the original source ID for thumbnail capture
       icon: source.appIcon ? source.appIcon.toDataURL() : null, // Convert app icon to base64 data URL
       hasNativeIcon: source.hasIcon, // Flag to indicate if native icon is available
-      thumbnail: null, // Thumbnails are fetched on-demand via captureWindowThumbnail
+      thumbnail: source.thumbnail ? source.thumbnail.toDataURL() : null,
     }));
   } catch (error) {
     console.error("Failed to get windows with thumbnails:", error);

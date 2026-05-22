@@ -1,1 +1,1 @@
-export { DisplayRoutingPanel } from "./panels/DisplayRoutingPanel";
+export { DisplayRoutingPanel } from "../panel/DisplayRoutingPanel";

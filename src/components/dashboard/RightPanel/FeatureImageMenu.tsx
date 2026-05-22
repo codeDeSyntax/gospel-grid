@@ -1,1 +1,1 @@
-export { FeatureImageMenu } from "./features/image/FeatureImageMenu";
+export { FeatureImageMenu } from "../panel/FeatureImageMenu";

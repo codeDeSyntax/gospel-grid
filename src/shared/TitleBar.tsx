@@ -281,9 +281,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
   return (
     <div
-      className="relative z-20 flex h-14 flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden backdrop-blur-sm"
+      className="relative z-20 flex h-16 flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden backdrop-blur-sm bg-theme-primary-700"
       style={{
-        background: titlebarBackground,
+        // background: titlebarBackground,
         backgroundColor: "var(--studio-bg)",
       }}
     >
@@ -357,9 +357,9 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       </div>
 
       {/* stylish thin line with fading endings */}
-      <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" />
+      {/* <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" /> */}
 
-      <div className="relative z-10 flex h-6 items-center justify-between  border-t border-white/10 px-3 text-[10px] leading-none font-[cursive]">
+      <div className="relative z-10 flex h-8 items-center justify-between bg-theme-primary-900  border-b border-solid border-x-0 border-t-0 border-white/10 px-3 text-[10px] leading-none font-[cursive]">
         <div className="flex items-center gap-3 theme-text-soft font-bold">
           <span className="inline-flex items-center gap-1.5">
             <span

@@ -109,6 +109,25 @@ const publishedLayoutData = new Map<string, any>(); // Store layout data tempora
 // Map of active capture loops per published layout
 const publishCaptureLoops = new Map<string, NodeJS.Timeout>();
 
+function findPublishedLayoutEntry(displayId?: number, layoutId?: string) {
+  if (layoutId) {
+    const data = publishedLayoutData.get(layoutId);
+    if (data) {
+      return { layoutId, data };
+    }
+  }
+
+  if (typeof displayId === "number") {
+    for (const [entryLayoutId, data] of publishedLayoutData.entries()) {
+      if (data.displayId === displayId) {
+        return { layoutId: entryLayoutId, data };
+      }
+    }
+  }
+
+  return null;
+}
+
 // ── powerSaveBlocker — prevent display sleep while projecting ─────────────
 let powerSaveBlockerId: number | null = null;
 
@@ -246,6 +265,27 @@ function broadcastProjectionState(targetDisplayId?: number | null) {
   });
   if (win && !win.isDestroyed()) {
     win.webContents.send("projection-state-changed", projectionState);
+  }
+}
+
+function broadcastPublishedLayoutUpdate(layoutId: string) {
+  const data = publishedLayoutData.get(layoutId);
+  if (!data) return;
+
+  const targetWindows = publishedWindows.filter((window) => {
+    if (window.isDestroyed()) return false;
+    return data.windowId === window.id;
+  });
+
+  const payload = { layoutId, ...data };
+  targetWindows.forEach((window) => {
+    if (!window.isDestroyed()) {
+      window.webContents.send("published-layout-updated", payload);
+    }
+  });
+
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("published-layout-updated", payload);
   }
 }
 
@@ -531,8 +571,10 @@ ipcMain.handle("get-connected-displays", async () => {
 // Window enumeration IPC handlers
 ipcMain.handle("enumerate-windows", async (event, options) => {
   try {
-    // Use the new window mapper that provides direct thumbnail access
-    const windows = await getWindowsWithThumbnails();
+    const captureThumbnails = options?.captureThumbnails !== false;
+    // Capture thumbnails during enumeration so views can render immediately
+    // without relying on a separate post-drop thumbnail fetch.
+    const windows = await getWindowsWithThumbnails(captureThumbnails);
 
     return { success: true, windows };
   } catch (error) {
@@ -708,6 +750,38 @@ ipcMain.handle("get-published-layout", async (event, layoutId: string) => {
     return null;
   }
   return layoutData;
+});
+
+ipcMain.handle("update-published-layout", async (_event, layoutData: any) => {
+  try {
+    const { displayId, layoutId } = layoutData ?? {};
+    const entry = findPublishedLayoutEntry(displayId, layoutId);
+
+    if (!entry) {
+      return { success: false, error: "Published layout not found" };
+    }
+
+    const nextData = {
+      ...entry.data,
+      windows: Array.isArray(layoutData.windows) ? layoutData.windows : [],
+      layout: layoutData.layout ?? entry.data.layout,
+      focusedWindowId:
+        layoutData.focusedWindowId ?? entry.data.focusedWindowId ?? null,
+      publishedQuality:
+        layoutData.publishedQuality ?? entry.data.publishedQuality,
+      captureQuality: layoutData.captureQuality ?? entry.data.captureQuality,
+    };
+
+    publishedLayoutData.set(entry.layoutId, nextData);
+    broadcastPublishedLayoutUpdate(entry.layoutId);
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 });
 
 // Check for existing published windows

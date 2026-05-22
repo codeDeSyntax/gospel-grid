@@ -1,5 +1,5 @@
 import React from "react";
-import type { FeatureView } from "../types";
+import type { FeatureView } from "../RightPanel/types";
 import { DepthButton } from "@/shared/DepthButton";
 
 interface FeatureRailProps {

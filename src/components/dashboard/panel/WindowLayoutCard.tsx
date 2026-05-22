@@ -1,6 +1,6 @@
 import React from "react";
-import { AutoFitWindowLayout } from "../../AutoFitWindowLayoutOptimized";
-import type { WindowLayoutCardProps } from "../types";
+import { PreviewLayout } from "../preview/PreviewLayout";
+import type { WindowLayoutCardProps } from "../RightPanel/types";
 
 export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
   ({
@@ -12,9 +12,9 @@ export const WindowLayoutCard: React.FC<WindowLayoutCardProps> = React.memo(
     onWindowAdd,
     isProjectionOn = false,
   }) => {
-    // Always render AutoFitWindowLayout so drop zone is always available
+    // Always render the preview layout so the drop zone is always available
     return (
-      <AutoFitWindowLayout
+      <PreviewLayout
         windows={windows}
         currentLayout={currentLayout}
         focusedWindowId={focusedWindowId}

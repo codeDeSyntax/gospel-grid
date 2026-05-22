@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { WindowInfo } from "@/components/dashboard/WindowList";
+import { type WindowInfo } from "@/components/dashboard/picker/WindowPicker";
 import { useActivityMonitor } from "./useActivityMonitor";
 import { systemLogger } from "./useSystemLogger";
 
@@ -11,7 +11,7 @@ export interface WindowEnumerationOptions {
 }
 
 export const useWindowEnumeration = (
-  options: WindowEnumerationOptions = {}
+  options: WindowEnumerationOptions = {},
 ) => {
   const [windows, setWindows] = useState<WindowInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +66,7 @@ export const useWindowEnumeration = (
           (window: WindowInfo) => ({
             ...window,
             isSelected: false,
-          })
+          }),
         );
 
         setWindows(windowsWithSelection);
@@ -75,7 +75,7 @@ export const useWindowEnumeration = (
         systemLogger.window(
           "enumerate-windows-detail",
           `Logging all ${windowsWithSelection.length} enumerated windows`,
-          { count: windowsWithSelection.length }
+          { count: windowsWithSelection.length },
         );
 
         windowsWithSelection.forEach((window: any, index: number) => {
@@ -93,7 +93,7 @@ export const useWindowEnumeration = (
               }x${window.bounds?.height || 0}`,
               isVisible: window.isVisible,
               handle: window.handle,
-            }
+            },
           );
         });
 
@@ -105,7 +105,7 @@ export const useWindowEnumeration = (
             duration,
             includeMinimized,
             includeSystemWindows,
-          }
+          },
         );
 
         // Update system stats
@@ -115,14 +115,14 @@ export const useWindowEnumeration = (
             ? activityState.isActive
               ? 3000
               : activityState.isIdle
-              ? 15000
-              : 60000
+                ? 15000
+                : 60000
             : refreshInterval,
           activityState: activityState.isActive
             ? "active"
             : activityState.isIdle
-            ? "idle"
-            : "paused",
+              ? "idle"
+              : "paused",
         });
       } else {
         const errorMsg = result?.error || "Failed to enumerate windows";
@@ -132,7 +132,7 @@ export const useWindowEnumeration = (
           "error",
           "WindowEnumeration",
           `Enumeration failed: ${errorMsg}`,
-          { duration }
+          { duration },
         );
       }
     } catch (err) {
@@ -145,7 +145,7 @@ export const useWindowEnumeration = (
         "error",
         "WindowEnumeration",
         `Exception during enumeration: ${errorMsg}`,
-        { err, duration }
+        { err, duration },
       );
       console.error("Window enumeration error:", err);
     } finally {
@@ -169,14 +169,14 @@ export const useWindowEnumeration = (
         return null;
       }
     },
-    []
+    [],
   );
 
   const getWindowThumbnail = useCallback(
     async (handle: number): Promise<string | null> => {
       try {
         const result = await window.electronAPI?.getWindowThumbnail(
-          handle.toString()
+          handle.toString(),
         );
         return result?.success ? result.thumbnail || null : null;
       } catch (err) {
@@ -184,7 +184,7 @@ export const useWindowEnumeration = (
         return null;
       }
     },
-    []
+    [],
   );
 
   const focusWindow = useCallback(async (handle: number): Promise<boolean> => {
@@ -207,7 +207,7 @@ export const useWindowEnumeration = (
         return false;
       }
     },
-    []
+    [],
   );
 
   const maximizeWindow = useCallback(
@@ -220,7 +220,7 @@ export const useWindowEnumeration = (
         return false;
       }
     },
-    []
+    [],
   );
 
   const closeWindow = useCallback(async (handle: number): Promise<boolean> => {
@@ -239,7 +239,7 @@ export const useWindowEnumeration = (
       x: number,
       y: number,
       width: number,
-      height: number
+      height: number,
     ): Promise<boolean> => {
       try {
         const result = await window.electronAPI?.moveWindow(handle, {
@@ -254,7 +254,7 @@ export const useWindowEnumeration = (
         return false;
       }
     },
-    []
+    [],
   );
 
   const showWindow = useCallback(async (handle: number): Promise<boolean> => {
@@ -294,7 +294,7 @@ export const useWindowEnumeration = (
         {
           interval: fixedInterval,
           smartRefresh: false, // Disabled for stability
-        }
+        },
       );
 
       // Initialize countdown

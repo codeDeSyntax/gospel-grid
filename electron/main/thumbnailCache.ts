@@ -24,7 +24,7 @@ class ThumbnailCache {
     totalSize: 0,
   };
 
-  constructor(maxSize = 50, maxAgeMinutes = 5) {
+  constructor(maxSize = 50, maxAgeMinutes = 1) {
     this.maxSize = maxSize;
     this.maxAge = maxAgeMinutes * 60 * 1000;
   }
@@ -34,7 +34,7 @@ class ThumbnailCache {
    */
   private generateCacheKey(
     windowId: string,
-    options: ThumbnailOptions
+    options: ThumbnailOptions,
   ): string {
     const {
       width = 300,
@@ -50,12 +50,13 @@ class ThumbnailCache {
    */
   private generateCaptureHash(
     windowTitle: string,
-    windowRect?: { width: number; height: number }
+    windowRect?: { width: number; height: number },
   ): string {
     const rectStr = windowRect
       ? `${windowRect.width}x${windowRect.height}`
       : "";
-    return `${windowTitle}_${rectStr}_${Date.now()}`.substring(0, 32);
+    // Stable hash based on title + geometry (no timestamp) for change detection
+    return `${windowTitle}_${rectStr}`.substring(0, 64);
   }
 
   /**
@@ -122,12 +123,21 @@ class ThumbnailCache {
     windowId: string,
     windowTitle: string,
     options: ThumbnailOptions,
-    windowRect?: { width: number; height: number }
+    windowRect?: { width: number; height: number },
+    imageHash?: string,
   ): WindowThumbnail | null {
     const key = this.generateCacheKey(windowId, options);
     const entry = this.cache.get(key);
 
     if (!entry || !this.isValidCacheEntry(entry)) {
+      this.stats.misses++;
+      return null;
+    }
+
+    // If caller provided an imageHash for the current source, use it to
+    // validate that the cached entry matches the current window content.
+    if (imageHash && entry.captureHash && entry.captureHash !== imageHash) {
+      // Content changed
       this.stats.misses++;
       return null;
     }
@@ -149,15 +159,17 @@ class ThumbnailCache {
     windowTitle: string,
     thumbnail: WindowThumbnail,
     options: ThumbnailOptions,
-    windowRect?: { width: number; height: number }
+    windowRect?: { width: number; height: number },
+    captureHash?: string,
   ): void {
     const key = this.generateCacheKey(windowId, options);
-    const captureHash = this.generateCaptureHash(windowTitle, windowRect);
+    const finalHash =
+      captureHash ?? this.generateCaptureHash(windowTitle, windowRect);
 
     const entry: CacheEntry = {
       thumbnail,
       lastAccessed: Date.now(),
-      captureHash,
+      captureHash: finalHash,
     };
 
     // Cleanup expired entries first
@@ -181,7 +193,7 @@ class ThumbnailCache {
     windowId: string,
     windowTitle: string,
     options: ThumbnailOptions,
-    windowRect?: { width: number; height: number }
+    windowRect?: { width: number; height: number },
   ): boolean {
     const key = this.generateCacheKey(windowId, options);
     const entry = this.cache.get(key);

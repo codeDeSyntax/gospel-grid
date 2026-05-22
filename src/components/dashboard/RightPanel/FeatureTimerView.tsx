@@ -1,1 +1,1 @@
-export { FeatureTimerView } from "./features/timer/FeatureTimerView";
+export { FeatureTimerView } from "../panel/FeatureTimerView";

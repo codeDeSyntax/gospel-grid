@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { type RightPanelProps, type FeatureView } from "../types";
-import { SettingsPanel } from "../panels/SettingsPanel";
-import { FeatureImageMenu } from "../features/image/FeatureImageMenu";
-import { FeatureRail } from "./FeatureRail";
-import { FeatureViewHost } from "./FeatureViewHost";
+import { SettingsPanel } from "../SettingsPanel";
+import { FeatureImageMenu } from "../FeatureImageMenu";
+import { FeatureRail } from "../FeatureRail";
+import { FeatureViewHost } from "../FeatureViewHost";
 import { useAppSelector } from "@/store/hooks";
 import { DepthSurface } from "@/shared/DepthSurface";
 
@@ -34,7 +34,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-l-[40px] bg-theme-primary-100/5 border border-theme-primary-500/20 "
+      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-tl-[0px] bg-theme-primary-950 border border-theme-primary-500/20 "
       // surfaceClassName="depth-surface-shell"
     >
       {/* Main Content Area - Scrollable */}

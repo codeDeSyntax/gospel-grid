@@ -56,6 +56,7 @@ interface Window {
     hideWindow: (handle: number) => Promise<any>;
     moveWindow: (handle: number, bounds: any) => Promise<any>;
     publishLayout: (layoutData: any) => Promise<any>;
+    updatePublishedLayout: (layoutData: any) => Promise<any>;
 
     // Cache management
     clearThumbnailCache?: () => Promise<any>;
@@ -80,5 +81,6 @@ interface Window {
 
     // Tray action events
     onTrayAction: (callback: (action: string) => void) => () => void;
+    onPublishedLayoutUpdated: (callback: (payload: any) => void) => () => void;
   };
 }

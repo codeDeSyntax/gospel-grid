@@ -14,7 +14,7 @@ import { CircularCountdown } from "@/components/ui/CircularCountdown";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot } from "lucide-react";
-import { TIMER_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureTimerState";
+import { TIMER_FEATURE_WINDOW_PREFIX } from "../RightPanel/featureTimerState";
 import { useAppSelector } from "@/store/hooks";
 
 const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
@@ -110,7 +110,7 @@ export const WindowList: React.FC<WindowListProps> = ({
   }, [windows, searchTerm]);
 
   return (
-    <div className="h-full flex flex-col p-2">
+    <div className="h-full flex flex-col p-2 py-4">
       {/* Fixed Header Section */}
       <div className="flex-shrink-0 mb-2 px-1 space-y-2">
         {/* Title row */}
@@ -182,7 +182,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={`window-skeleton-${index}`}
-                className="relative overflow-hidden rounded-xl border border-theme-primary-600/12 bg-theme-primary-900/12 px-2 py-1.5"
+                className="relative overflow-hidden rounded-xl ring-1 ring-theme-primary-600/12 bg-theme-primary-900/12 px-2 py-1.5"
               >
                 <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-theme-primary-300/10 to-transparent" />
                 <div className="relative z-10 flex items-center gap-2.5 pl-3 pr-5">
@@ -215,7 +215,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-1 pb-2 ">
+          <div className="space-y-1.5 pb-2 ">
             <AnimatePresence mode="popLayout">
               {filteredWindows.map((window, index) => {
                 const isCaptionsWindow =
@@ -302,16 +302,16 @@ export const WindowList: React.FC<WindowListProps> = ({
                       }
                     }}
                     className={`
-                    relative overflow-hidden transition-all duration-200 border-solid
+                    relative overflow-hidden transition-all duration-200
                     flex items-center gap-2.5 pl-5 pr-8 py-1.5 rounded-xl group
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
                       isCaptionsWindow
-                        ? "border border-theme-primary-300/45 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:border-theme-primary-200/70 hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
+                        ? "bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
                         : window.isSelected
-                          ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 border border-theme-primary-300/5 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
-                          : "border-none ring-1 ring-theme-primary-700/50 hover:border-theme-primary-400/25 backdrop-blur-md bg-theme-primary-900/15 hover:bg-theme-primary-800/50 hover:shadow-sm hover:shadow-theme-primary-500/8 "
+                          ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                          : "backdrop-blur-md hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
                     }
                   `}
                   >

@@ -24,7 +24,7 @@ import {
   type FeatureTimerCollection,
   type FeatureTimerItem,
   type FeatureTimerState,
-} from "./featureTimerState";
+} from "../RightPanel/featureTimerState";
 import { FaThemeco } from "react-icons/fa";
 import { FaThemeisle } from "react-icons/fa6";
 
@@ -392,12 +392,12 @@ export const FeatureTimerView: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={useCallback(() => {
+                    onClick={() => {
                       setIsDraftMode(false);
                       applyCollection(
                         setActiveTimerId(timerCollection, timer.id),
                       );
-                    }, [timer.id, timerCollection])}
+                    }}
                     className="w-full text-left min-w-0 z-10 flex items-center gap-2"
                     title={timer.name}
                   >
@@ -427,13 +427,11 @@ export const FeatureTimerView: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={useCallback(
-                      () =>
-                        applyCollection(
-                          removeTimerFromCollection(timerCollection, timer.id),
-                        ),
-                      [timer.id, timerCollection],
-                    )}
+                    onClick={() =>
+                      applyCollection(
+                        removeTimerFromCollection(timerCollection, timer.id),
+                      )
+                    }
                     className="absolute right-1.5 top-1 z-20 h-5 w-5 rounded-md text-theme-primary-200/70 text-[10px] leading-none hover:text-theme-primary-50"
                     title="Delete timer"
                   >

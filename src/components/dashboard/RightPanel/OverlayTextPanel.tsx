@@ -1,1 +1,1 @@
-export { OverlayTextPanel } from "./panels/OverlayTextPanel";
+export { OverlayTextPanel } from "../panel/OverlayTextPanel";

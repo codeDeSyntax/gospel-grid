@@ -1,5 +1,5 @@
 import React from "react";
-import { WindowInfo } from "../../WindowList";
+import { type WindowInfo } from "../../picker/WindowPicker";
 
 interface DualWindowLayoutLiveProps {
   windows: [WindowInfo, WindowInfo];

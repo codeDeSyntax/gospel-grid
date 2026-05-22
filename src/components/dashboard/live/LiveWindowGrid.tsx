@@ -1,13 +1,13 @@
 import React, { useRef, useMemo, useEffect, useState } from "react";
-import { WindowInfo } from "./WindowList";
+import { type WindowInfo } from "../picker/WindowPicker";
 import { useAppSelector } from "@/store/hooks";
 import { useMediaStreams } from "@/hooks/useMediaStreams";
-import { VideoWindow } from "./VideoWindow";
-import { SingleWindowLayoutLive } from "./layouts/live/SingleWindowLayoutLive";
-import { DualWindowLayoutLive } from "./layouts/live/DualWindowLayoutLive";
-import { TripleWindowLayoutLive } from "./layouts/live/TripleWindowLayoutLive";
-import { QuadWindowLayoutLive } from "./layouts/live/QuadWindowLayoutLive";
-import { TimerProjectionScreen } from "./TimerProjectionScreen";
+import { VideoWindow } from "../media/VideoWindow";
+import { SingleWindowLayoutLive } from "../layouts/live/SingleWindowLayoutLive";
+import { DualWindowLayoutLive } from "../layouts/live/DualWindowLayoutLive";
+import { TripleWindowLayoutLive } from "../layouts/live/TripleWindowLayoutLive";
+import { QuadWindowLayoutLive } from "../layouts/live/QuadWindowLayoutLive";
+import { TimerProjectionScreen } from "../projection/TimerProjectionScreen";
 import {
   TIMER_FEATURE_WINDOW_PREFIX,
   getCountdownRemainingMs,
@@ -15,14 +15,14 @@ import {
   markCollectionCompletedIfElapsed,
   saveFeatureTimerCollection,
   type FeatureTimerProjectionTheme,
-} from "./RightPanel/featureTimerState";
-import { IMAGE_FEATURE_WINDOW_PREFIX } from "./RightPanel/featureImageState";
+} from "../RightPanel/featureTimerState";
+import { IMAGE_FEATURE_WINDOW_PREFIX } from "../RightPanel/featureImageState";
 import {
   CAPTIONS_FEATURE_WINDOW_ID,
   FEATURE_CAPTIONS_EVENT,
   loadFeatureCaptionsState,
   type FeatureCaptionsState,
-} from "./RightPanel/featureCaptionsState";
+} from "../RightPanel/featureCaptionsState";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE

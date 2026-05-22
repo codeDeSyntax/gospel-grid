@@ -1,1 +1,1 @@
-export { FeatureRail } from "./core/FeatureRail";
+export { FeatureRail } from "../panel/FeatureRail";

@@ -14,10 +14,10 @@ import {
   resetQualitySettings,
 } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
-import type { SettingsPanelProps } from "../types";
+import type { SettingsPanelProps } from "../RightPanel/types";
 
 const THEME_COLORS: Record<ColorTheme, string> = {
-  "neutral-light": "#E5E7EB",
+  "neutral-light": "#D6DDE5",
   grayscale: "#A89F93",
   "royal-purple": "#5A4466",
   "sky-blue": "#72A8D4",

@@ -1,5 +1,5 @@
 import React from "react";
-import type { FeatureTimerProjectionTheme } from "./RightPanel/featureTimerState";
+import type { FeatureTimerProjectionTheme } from "../RightPanel/featureTimerState";
 
 interface TimerProjectionScreenProps {
   days: string;

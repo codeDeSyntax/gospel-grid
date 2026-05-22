@@ -1,1 +1,1 @@
-export { FeatureViewHost } from "./core/FeatureViewHost";
+export { FeatureViewHost } from "../panel/FeatureViewHost";

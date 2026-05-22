@@ -28,6 +28,7 @@ interface GridState {
     rows: number;
   };
   displayAssignments: Record<number, string[]>;
+  displayHiddenAssignments: Record<number, string[]>;
   windowThumbnails: Record<string, string>;
   presets: GridPreset[];
   activePresetId: string | null;
@@ -40,6 +41,7 @@ const initialState: GridState = {
   tiles: [],
   gridSize: { columns: 4, rows: 3 },
   displayAssignments: {},
+  displayHiddenAssignments: {},
   windowThumbnails: {},
   presets: [
     {
@@ -166,6 +168,12 @@ const gridSlice = createSlice({
     ) => {
       state.displayAssignments = action.payload;
     },
+    setDisplayHiddenAssignments: (
+      state,
+      action: PayloadAction<Record<number, string[]>>,
+    ) => {
+      state.displayHiddenAssignments = action.payload;
+    },
     assignWindowToDisplay: (
       state,
       action: PayloadAction<{ displayId: number; windowId: string }>,
@@ -193,9 +201,50 @@ const gridSlice = createSlice({
       }
 
       state.displayAssignments[action.payload.displayId] = next;
+
+      const hiddenCurrent =
+        state.displayHiddenAssignments[action.payload.displayId] ?? [];
+      const hiddenNext = hiddenCurrent.filter(
+        (windowId) => windowId !== action.payload.windowId,
+      );
+
+      if (hiddenNext.length === 0) {
+        delete state.displayHiddenAssignments[action.payload.displayId];
+      } else {
+        state.displayHiddenAssignments[action.payload.displayId] = hiddenNext;
+      }
     },
     clearDisplayAssignments: (state) => {
       state.displayAssignments = {};
+      state.displayHiddenAssignments = {};
+    },
+    hideWindowOnDisplay: (
+      state,
+      action: PayloadAction<{ displayId: number; windowId: string }>,
+    ) => {
+      const current =
+        state.displayHiddenAssignments[action.payload.displayId] ?? [];
+      if (!current.includes(action.payload.windowId)) {
+        state.displayHiddenAssignments[action.payload.displayId] = [
+          ...current,
+          action.payload.windowId,
+        ];
+      }
+    },
+    showWindowOnDisplay: (
+      state,
+      action: PayloadAction<{ displayId: number; windowId: string }>,
+    ) => {
+      const current =
+        state.displayHiddenAssignments[action.payload.displayId] ?? [];
+      const next = current.filter(
+        (windowId) => windowId !== action.payload.windowId,
+      );
+      if (next.length === 0) {
+        delete state.displayHiddenAssignments[action.payload.displayId];
+      } else {
+        state.displayHiddenAssignments[action.payload.displayId] = next;
+      }
     },
     setWindowThumbnails: (
       state,
@@ -238,9 +287,12 @@ export const {
   setSnapToGrid,
   setShowGrid,
   setDisplayAssignments,
+  setDisplayHiddenAssignments,
   assignWindowToDisplay,
   removeWindowFromDisplay,
   clearDisplayAssignments,
+  hideWindowOnDisplay,
+  showWindowOnDisplay,
   setWindowThumbnails,
   assignWindowToTile,
   removeWindowFromTile,

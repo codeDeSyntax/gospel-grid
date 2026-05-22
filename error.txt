@@ -1,0 +1,128 @@
+Warning: React has detected a change in the order of Hooks called by FeatureTimerView. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+1. useContext                 useContext
+2. useRef                     useRef
+3. useCallback                useCallback
+4. useRef                     useRef
+5. useMemo                    useMemo
+6. useSyncExternalStore       useSyncExternalStore
+7. useEffect                  useEffect
+8. useDebugValue              useDebugValue
+9. useDebugValue              useDebugValue
+10. useContext                useContext
+11. useRef                    useRef
+12. useCallback               useCallback
+13. useRef                    useRef
+14. useMemo                   useMemo
+15. useSyncExternalStore      useSyncExternalStore
+16. useEffect                 useEffect
+17. useDebugValue             useDebugValue
+18. useDebugValue             useDebugValue
+19. useState                  useState
+20. useState                  useState
+21. useState                  useState
+22. useState                  useState
+23. useState                  useState
+24. useState                  useState
+25. useRef                    useRef
+26. useRef                    useRef
+27. useCallback               useCallback
+28. useEffect                 useEffect
+29. useMemo                   useMemo
+30. useMemo                   useMemo
+31. useMemo                   useMemo
+32. useMemo                   useMemo
+33. useMemo                   useMemo
+34. useCallback               useCallback
+35. useCallback               useCallback
+36. undefined                 useCallback
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    at FeatureTimerView (http://localhost:5173/src/components/dashboard/RightPanel/features/timer/FeatureTimerView.tsx:196:20)
+    at FeatureViewHost (http://localhost:5173/src/components/dashboard/RightPanel/core/FeatureViewHost.tsx:22:3)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at RightPanel (http://localhost:5173/src/components/dashboard/RightPanel/core/RightPanel.tsx:25:3)
+    at div
+    at div
+    at div
+    at Dashboard (http://localhost:5173/src/components/dashboard/Dashboard.tsx:113:29)
+    at div
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=3bb841d7:5338:40)
+    at PresenceChild (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=3bb841d7:4314:24)
+    at AnimatePresence (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=3bb841d7:4393:26)
+    at div
+    at ThemeProvider (http://localhost:5173/src/utils/themeContext.tsx:32:33)
+    at App (http://localhost:5173/src/App.tsx:57:20)
+    at Provider (http://localhost:5173/node_modules/.vite/deps/react-redux.js?v=3bb841d7:923:11)
+console.error @ useSystemLogger.ts:96
+printWarning @ chunk-A4PLE5AR.js?v=3bb841d7:521
+error @ chunk-A4PLE5AR.js?v=3bb841d7:505
+warnOnHookMismatchInDev @ chunk-A4PLE5AR.js?v=3bb841d7:11495
+updateHookTypesDev @ chunk-A4PLE5AR.js?v=3bb841d7:11465
+useCallback @ chunk-A4PLE5AR.js?v=3bb841d7:12692
+useCallback @ chunk-HDWYUXML.js?v=3bb841d7:1090
+(anonymous) @ FeatureTimerView.tsx:395
+FeatureTimerView @ FeatureTimerView.tsx:377
+renderWithHooks @ chunk-A4PLE5AR.js?v=3bb841d7:11548
+updateFunctionComponent @ chunk-A4PLE5AR.js?v=3bb841d7:14582
+beginWork @ chunk-A4PLE5AR.js?v=3bb841d7:15924
+beginWork$1 @ chunk-A4PLE5AR.js?v=3bb841d7:19753
+performUnitOfWork @ chunk-A4PLE5AR.js?v=3bb841d7:19198
+workLoopSync @ chunk-A4PLE5AR.js?v=3bb841d7:19137
+renderRootSync @ chunk-A4PLE5AR.js?v=3bb841d7:19116
+performSyncWorkOnRoot @ chunk-A4PLE5AR.js?v=3bb841d7:18874
+flushSyncCallbacks @ chunk-A4PLE5AR.js?v=3bb841d7:9119
+(anonymous) @ chunk-A4PLE5AR.js?v=3bb841d7:18627
+Show 16 more frames
+Show less
+useSystemLogger.ts:229 [ERROR] [console] Warning: React has detected a change in the order of Hooks called by %s. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+%s   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%s FeatureTimerView 1. useContext                 useContext
+2. useRef                     useRef
+3. useCallback                useCallback
+4. useRef                     useRef
+5. useMemo                    useMemo
+6. useSyncExternalStore       useSyncExternalStore
+7. useEffect                  useEffect
+8. useDebugValue              useDebugValue
+9. useDebugValue              useDebugValue
+10. useContext                useContext
+11. useRef                    useRef
+12. useCallback               useCallback
+13. useRef                    useRef
+14. useMemo                   useMemo
+15. useSyncExternalStore      useSyncExternalStore
+16. useEffect                 useEffect
+17. useDebugValue             useDebugValue
+18. useDebugValue             useDebugValue
+19. useState                  useState
+20. useState                  useState
+21. useState                  useState
+22. useState                  useState
+23. useState                  useState
+24. useState                  useState
+25. useRef                    useRef
+26. useRef                    useRef
+27. useCallback               useCallback
+28. useEffect                 useEffect
+29. useMemo                   useMemo
+30. useMemo                   useMemo
+31. useMemo                   useMemo
+32. useMemo                   useMemo
+33. useMemo                   useMemo
+34. useCallback               useCallback
+35. useCallback               useCallback
+36. undefined                 useCallback
+ 
+    at FeatureTimerView (http://localhost:5173/src/components/dashboard/RightPanel/features/timer/FeatureTimerView.tsx:196:20)
+    at FeatureViewHost (http://localhost:5173/src/components/dashboard/RightPanel/core/FeatureViewHost.tsx:22:3)
+    at div

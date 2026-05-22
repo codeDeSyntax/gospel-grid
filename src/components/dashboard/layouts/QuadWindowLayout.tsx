@@ -1,12 +1,12 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WindowInfo } from "../WindowList";
+import { type WindowInfo } from "../picker/WindowPicker";
 
 interface QuadWindowLayoutProps {
   windows: [WindowInfo, WindowInfo, WindowInfo, WindowInfo];
   renderWindow: (
     window: WindowInfo,
-    style: React.CSSProperties
+    style: React.CSSProperties,
   ) => React.ReactNode;
 }
 
