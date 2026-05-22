@@ -46,6 +46,7 @@
     "ws": "^8.20.0"
   },
   "devDependencies": {
+    "@electron/asar": "3.4.1",
     "@playwright/test": "^1.48.2",
     "@types/node": "^24.4.0",
     "@types/react": "^18.3.12",
