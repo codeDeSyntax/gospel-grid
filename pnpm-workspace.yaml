@@ -1,8 +1,6 @@
-onlyBuiltDependencies:
-  - electron
-  - esbuild
-  - sharp
-
-ignoredBuiltDependencies:
-  - extract-file-icon
-  - node-window-manager
+allowBuilds:
+  electron: true
+  esbuild: true
+  sharp: true
+  extract-file-icon: false
+  node-window-manager: false
