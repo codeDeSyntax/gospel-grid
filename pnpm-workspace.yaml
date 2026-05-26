@@ -4,6 +4,7 @@ overrides:
 allowBuilds:
   electron: true
   esbuild: true
+  protobufjs: true
   sharp: true
   extract-file-icon: false
   node-window-manager: false
