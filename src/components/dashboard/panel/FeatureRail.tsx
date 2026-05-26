@@ -20,6 +20,7 @@ const railItems: RailItem[] = [
   { id: "overlay", title: "Text Overlay", iconSrc: "./messages.png" },
   { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
   { id: "captions", title: "Live Captions", iconSrc: "./caption.png" },
+  { id: "remote", title: "Remote Screens", iconSrc: "./extend.svg" },
   { id: "image", title: "Images", iconSrc: "./images.png" },
 ];
 

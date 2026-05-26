@@ -13,11 +13,35 @@ import { getWindowFallbackIcon, getAppGradient } from "@/utils/appIconMapping";
 import { CircularCountdown } from "@/components/ui/CircularCountdown";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
-import { RefreshCcwDot } from "lucide-react";
+import { RefreshCcwDot, ShieldAlert, Sparkles } from "lucide-react";
 import { TIMER_FEATURE_WINDOW_PREFIX } from "../RightPanel/featureTimerState";
 import { useAppSelector } from "@/store/hooks";
+import {
+  classifyWindow,
+  sortWindowsByIntelligence,
+  type WindowIntelligenceResult,
+} from "@/utils/windowIntelligence";
 
 const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
+
+const getIntelligenceBadgeClasses = (
+  intel: WindowIntelligenceResult,
+  tag: string,
+) => {
+  if (intel.riskLevel === "high" || intel.recommendation === "avoid") {
+    return "border-red-300/35 bg-red-500/18 text-red-100";
+  }
+
+  if (tag === "Recommended") {
+    return "border-emerald-300/45 bg-emerald-500/18 text-emerald-100";
+  }
+
+  if (intel.riskLevel === "medium") {
+    return "border-amber-300/35 bg-amber-500/15 text-amber-100";
+  }
+
+  return "border-theme-primary-400/25 bg-theme-primary-800/70 text-theme-primary-100";
+};
 
 export interface WindowInfo {
   id: string;
@@ -84,6 +108,20 @@ export const WindowList: React.FC<WindowListProps> = ({
   const showLoadingSkeleton = isLoading && windows.length === 0;
   const themeMode = useAppSelector((s) => s.app.theme);
   const isLightMode = themeMode === "light";
+  const intelligenceByWindowId = useMemo(() => {
+    return new Map(
+      windows.map((window) => [window.id, classifyWindow(window)]),
+    );
+  }, [windows]);
+  const selectedRiskWindows = useMemo(
+    () =>
+      windows.filter((window) => {
+        if (!window.isSelected) return false;
+        const intel = intelligenceByWindowId.get(window.id);
+        return intel?.riskLevel === "medium" || intel?.riskLevel === "high";
+      }),
+    [windows, intelligenceByWindowId],
+  );
 
   const filteredWindows = useMemo(() => {
     const filtered = windows.filter((window) => {
@@ -101,13 +139,12 @@ export const WindowList: React.FC<WindowListProps> = ({
       return true;
     });
 
-    // Pinned windows always appear first
-    return filtered.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return 0;
-    });
-  }, [windows, searchTerm]);
+    return sortWindowsByIntelligence(
+      filtered,
+      (window) =>
+        intelligenceByWindowId.get(window.id) ?? classifyWindow(window),
+    );
+  }, [windows, searchTerm, intelligenceByWindowId]);
 
   return (
     <div className="h-full flex flex-col p-2 py-4">
@@ -173,6 +210,19 @@ export const WindowList: React.FC<WindowListProps> = ({
             <span className="text-[11px]">{error}</span>
           </div>
         )}
+
+        {selectedRiskWindows.length > 0 && (
+          <div className="rounded-2xl border-none  border-amber-400/25 bg-amber-500/10 px-2 py-1.5 text-amber-100">
+            <div className="flex items-start gap-1.5">
+              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <p className="text-[11px] leading-snug">
+                Privacy check: {selectedRiskWindows.length} selected window
+                {selectedRiskWindows.length === 1 ? "" : "s"} may expose
+                sensitive content.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Scrollable Window List */}
@@ -223,6 +273,12 @@ export const WindowList: React.FC<WindowListProps> = ({
                 const isTimerWindow = window.id.startsWith(
                   TIMER_FEATURE_WINDOW_PREFIX,
                 );
+                const intelligence =
+                  intelligenceByWindowId.get(window.id) ??
+                  classifyWindow(window);
+                const hasPrivacyWarning =
+                  intelligence.riskLevel === "medium" ||
+                  intelligence.riskLevel === "high";
 
                 return (
                   <motion.div
@@ -302,16 +358,16 @@ export const WindowList: React.FC<WindowListProps> = ({
                       }
                     }}
                     className={`
-                    relative overflow-hidden transition-all duration-200
+                    relative overflow-hidden border border-solid transition-all duration-200
                     flex items-center gap-2.5 pl-5 pr-8 py-1.5 rounded-xl group
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
                       isCaptionsWindow
-                        ? "bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
+                        ? "border-theme-primary-300/35 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
                         : window.isSelected
-                          ? "bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
-                          : "backdrop-blur-md hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
+                          ? "border-theme-primary-300/35 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                          : "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
                     }
                   `}
                   >
@@ -499,15 +555,48 @@ export const WindowList: React.FC<WindowListProps> = ({
                                 {timerText}
                               </div>
                             ) : (
-                              <div
-                                className={`text-[11px] truncate leading-tight transition-colors duration-200 mt-0.5 ${
-                                  isLightMode
-                                    ? "theme-text-soft group-hover:opacity-100"
-                                    : "theme-text-soft group-hover:opacity-95"
-                                }`}
-                                style={{ opacity: isLightMode ? 0.82 : 0.72 }}
-                              >
-                                {window.name}
+                              <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                                <span
+                                  className={`min-w-0 truncate text-[11px] leading-tight transition-colors duration-200 ${
+                                    isLightMode
+                                      ? "theme-text-soft group-hover:opacity-100"
+                                      : "theme-text-soft group-hover:opacity-95"
+                                  }`}
+                                  style={{
+                                    opacity: isLightMode ? 0.82 : 0.72,
+                                  }}
+                                >
+                                  {window.name}
+                                </span>
+                                {intelligence.tags.length > 0 && (
+                                  <span className="flex min-w-0 shrink-0 items-center gap-1">
+                                    {intelligence.tags
+                                      .slice(0, 2)
+                                      .map((tag) => (
+                                        <span
+                                          key={`${window.id}-${tag}`}
+                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full border border-solid px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
+                                            intelligence,
+                                            tag,
+                                          )}`}
+                                          title={
+                                            hasPrivacyWarning
+                                              ? intelligence.warnings.join(" ")
+                                              : intelligence.reasons.join(" ")
+                                          }
+                                        >
+                                          {tag === "Recommended" ? (
+                                            <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                          ) : hasPrivacyWarning ? (
+                                            <ShieldAlert className="h-2.5 w-2.5 shrink-0" />
+                                          ) : null}
+                                          <span className="truncate">
+                                            {tag}
+                                          </span>
+                                        </span>
+                                      ))}
+                                  </span>
+                                )}
                               </div>
                             )}
                             {/* State pills */}
@@ -526,6 +615,35 @@ export const WindowList: React.FC<WindowListProps> = ({
                               </div>
                             )}
                           </div>
+
+                          {false &&
+                            !isCaptionsWindow &&
+                            !isTimerWindow &&
+                            intelligence.tags.length > 0 && (
+                              <div className="pointer-events-none absolute bottom-1 right-8 z-20 flex max-w-[46%] items-center justify-end gap-1">
+                                {intelligence.tags.slice(0, 2).map((tag) => (
+                                  <span
+                                    key={`${window.id}-${tag}`}
+                                    className={`inline-flex min-w-0 max-w-[110px] items-center gap-1 truncate rounded-full border border-solid px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
+                                      intelligence,
+                                      tag,
+                                    )}`}
+                                    title={
+                                      hasPrivacyWarning
+                                        ? intelligence.warnings.join(" ")
+                                        : intelligence.reasons.join(" ")
+                                    }
+                                  >
+                                    {tag === "Recommended" ? (
+                                      <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                    ) : hasPrivacyWarning ? (
+                                      <ShieldAlert className="h-2.5 w-2.5 shrink-0" />
+                                    ) : null}
+                                    <span className="truncate">{tag}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
 
                           {/* Select / Check Handle — right side */}
                           <div

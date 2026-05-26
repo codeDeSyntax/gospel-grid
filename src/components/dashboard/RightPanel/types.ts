@@ -36,4 +36,5 @@ export type FeatureView =
   | "overlay"
   | "timer"
   | "image"
-  | "captions";
+  | "captions"
+  | "remote";

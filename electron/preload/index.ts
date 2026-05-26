@@ -161,6 +161,74 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Wrapper for compatibility
   captureWindowThumbnail: (windowId: string, options?: any) =>
     ipcRenderer.invoke("get-window-thumbnail", windowId, options),
+
+  remoteScreen: {
+    getStatus: () => ipcRenderer.invoke("remote-screen:get-status"),
+    startSignaling: (options?: { host?: string; port?: number }) =>
+      ipcRenderer.invoke("remote-screen:start-signaling", options),
+    stopSignaling: () => ipcRenderer.invoke("remote-screen:stop-signaling"),
+    connectClient: (serverUrl: string) =>
+      ipcRenderer.invoke("remote-screen:connect-client", { serverUrl }),
+    disconnectClient: () => ipcRenderer.invoke("remote-screen:disconnect-client"),
+    listDevices: () => ipcRenderer.invoke("remote-screen:list-devices"),
+    listNearbyDevices: () =>
+      ipcRenderer.invoke("remote-screen:list-nearby-devices"),
+    requestView: (deviceId: string) =>
+      ipcRenderer.invoke("remote-screen:request-view", { deviceId }),
+    acceptViewRequest: (requestId: string) =>
+      ipcRenderer.invoke("remote-screen:accept-view-request", { requestId }),
+    denyViewRequest: (requestId: string) =>
+      ipcRenderer.invoke("remote-screen:deny-view-request", { requestId }),
+    sendSignal: (deviceId: string, signal: unknown) =>
+      ipcRenderer.invoke("remote-screen:send-signal", { deviceId, signal }),
+    endSession: (deviceId: string, reason?: string) =>
+      ipcRenderer.invoke("remote-screen:end-session", { deviceId, reason }),
+    onStatusChanged: (callback: (status: any) => void) => {
+      const listener = (_: any, status: any) => callback(status);
+      ipcRenderer.on("remote-screen:status-changed", listener);
+      return () => ipcRenderer.off("remote-screen:status-changed", listener);
+    },
+    onDevicesChanged: (callback: (devices: any[]) => void) => {
+      const listener = (_: any, devices: any[]) => callback(devices);
+      ipcRenderer.on("remote-screen:devices-changed", listener);
+      return () => ipcRenderer.off("remote-screen:devices-changed", listener);
+    },
+    onNearbyDevicesChanged: (callback: (devices: any[]) => void) => {
+      const listener = (_: any, devices: any[]) => callback(devices);
+      ipcRenderer.on("remote-screen:nearby-devices-changed", listener);
+      return () => ipcRenderer.off("remote-screen:nearby-devices-changed", listener);
+    },
+    onDiscoveryError: (callback: (payload: any) => void) => {
+      const listener = (_: any, payload: any) => callback(payload);
+      ipcRenderer.on("remote-screen:discovery-error", listener);
+      return () => ipcRenderer.off("remote-screen:discovery-error", listener);
+    },
+    onIncomingRequest: (callback: (request: any) => void) => {
+      const listener = (_: any, request: any) => callback(request);
+      ipcRenderer.on("remote-screen:incoming-request", listener);
+      return () => ipcRenderer.off("remote-screen:incoming-request", listener);
+    },
+    onRequestAccepted: (callback: (request: any) => void) => {
+      const listener = (_: any, request: any) => callback(request);
+      ipcRenderer.on("remote-screen:request-accepted", listener);
+      return () => ipcRenderer.off("remote-screen:request-accepted", listener);
+    },
+    onRequestDenied: (callback: (request: any) => void) => {
+      const listener = (_: any, request: any) => callback(request);
+      ipcRenderer.on("remote-screen:request-denied", listener);
+      return () => ipcRenderer.off("remote-screen:request-denied", listener);
+    },
+    onSignal: (callback: (signal: any) => void) => {
+      const listener = (_: any, signal: any) => callback(signal);
+      ipcRenderer.on("remote-screen:signal", listener);
+      return () => ipcRenderer.off("remote-screen:signal", listener);
+    },
+    onSessionEnded: (callback: (event: any) => void) => {
+      const listener = (_: any, event: any) => callback(event);
+      ipcRenderer.on("remote-screen:session-ended", listener);
+      return () => ipcRenderer.off("remote-screen:session-ended", listener);
+    },
+  },
 });
 
 // --------- Whisper Speech-to-Text API (Now using AssemblyAI) ---------

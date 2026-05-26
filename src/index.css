@@ -298,18 +298,6 @@ code {
   box-shadow: 0 0 15px rgba(74, 107, 68, 0.5);
 }
 
-[data-color-theme="vibrant-green"] .slider-theme::-webkit-slider-thumb {
-  background: #12c92b;
-  border-color: #b2ddbc;
-  box-shadow: 0 0 10px rgba(18, 201, 43, 0.35);
-}
-
-[data-color-theme="vibrant-green"] .slider-theme::-webkit-slider-thumb:hover {
-  background: #017828;
-  border-color: #d0f0d6;
-  box-shadow: 0 0 15px rgba(18, 201, 43, 0.5);
-}
-
 [data-color-theme="fire-red"] .slider-theme::-webkit-slider-thumb {
   background: #ef4444;
   border-color: #fecaca;

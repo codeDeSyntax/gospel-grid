@@ -8,6 +8,7 @@ interface PersistedSettings {
   colorTheme: ColorTheme;
   publishedQuality: { contrast: number; brightness: number };
   refreshInterval: number;
+  remoteScreensAutoStart: boolean;
   overlayText: string;
   overlayVisible: boolean;
   overlayTargetDisplayId: number | null;
@@ -39,7 +40,6 @@ export type ColorTheme =
   | "royal-purple"
   | "sky-blue"
   | "forest-green"
-  | "vibrant-green"
   | "fire-red";
 
 export const THEME_NAMES: Record<ColorTheme, string> = {
@@ -48,7 +48,6 @@ export const THEME_NAMES: Record<ColorTheme, string> = {
   "royal-purple": "Royal Purple",
   "sky-blue": "Sky Blue",
   "forest-green": "Forest Green",
-  "vibrant-green": "Vibrant Green",
   "fire-red": "Fire Red",
 };
 
@@ -64,7 +63,8 @@ const LEGACY_THEME_ALIASES: Record<string, ColorTheme> = {
   "warm-earth": "grayscale",
   "lavender-purple": "royal-purple",
   "ocean-blue": "sky-blue",
-  "matrix-green": "vibrant-green",
+  "matrix-green": "forest-green",
+  "vibrant-green": "forest-green",
   "cosmic-blue": "sky-blue",
   "earth-brown": "grayscale",
   "steel-gray": "grayscale",
@@ -97,6 +97,8 @@ interface AppState {
   };
   /** Window list refresh interval in milliseconds */
   refreshInterval: number;
+  /** Whether Remote Screens becomes available automatically when opened */
+  remoteScreensAutoStart: boolean;
   /** Legacy: kept for IPC compatibility (not shown in settings UI) */
   captureQuality: number;
   /** Whether projection is currently active */
@@ -126,6 +128,7 @@ const initialState: AppState = {
     brightness: 1.0,
   },
   refreshInterval: persisted.refreshInterval ?? 60000,
+  remoteScreensAutoStart: persisted.remoteScreensAutoStart ?? true,
   captureQuality: 80,
   isProjectionOn: false,
   isBlackout: false,
@@ -142,6 +145,7 @@ function autoPersist(state: AppState) {
     colorTheme: state.colorTheme,
     publishedQuality: state.publishedQuality,
     refreshInterval: state.refreshInterval,
+    remoteScreensAutoStart: state.remoteScreensAutoStart,
     overlayText: state.overlayText,
     overlayVisible: state.overlayVisible,
     overlayTargetDisplayId: state.overlayTargetDisplayId,
@@ -209,6 +213,10 @@ const appSlice = createSlice({
       state.refreshInterval = action.payload;
       autoPersist(state);
     },
+    setRemoteScreensAutoStart: (state, action: PayloadAction<boolean>) => {
+      state.remoteScreensAutoStart = action.payload;
+      autoPersist(state);
+    },
     resetQualitySettings: (state) => {
       state.publishedQuality = {
         contrast: 1.0,
@@ -268,6 +276,7 @@ export const {
   setPublishedBrightness,
   setPublishedQuality,
   setRefreshInterval,
+  setRemoteScreensAutoStart,
   setCaptureQuality,
   resetQualitySettings,
   setProjectionOn,

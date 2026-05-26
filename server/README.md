@@ -1,4 +1,16 @@
-# wingrid Speech-to-Text Server
+# Wingrid Local Services
+
+This directory contains local Node services used by Wingrid.
+
+## Folder Structure
+
+- `index.js` - Backwards-compatible entrypoint for the audio transcription service.
+- `audio-transcription/` - Local Whisper-based speech-to-text service.
+- `remote-screen/signaling/` - TypeScript LAN remote screen signaling foundation for device-to-device viewing requests.
+
+The audio transcription service and remote screen service are intentionally separated. Audio transcription owns Whisper/model loading. Remote screen owns device identity, request approval, and WebRTC signaling coordination.
+
+## Audio Transcription Service
 
 A local Whisper-based speech-to-text server that provides privacy-focused, offline transcription capabilities.
 
@@ -24,6 +36,12 @@ A local Whisper-based speech-to-text server that provides privacy-focused, offli
 
    ```bash
    npm start
+   ```
+
+   Or use the explicit service name:
+
+   ```bash
+   npm run start:audio
    ```
 
 3. **First Run**
@@ -63,9 +81,9 @@ ws.send(JSON.stringify({ type: "stop_recognition" }));
 
 ## Configuration
 
-Edit `index.js` to customize:
+Use environment variables to customize:
 
-- **Model Size**: Change `'Xenova/whisper-small.en'` to:
+- **Model Size**: Set `WHISPER_MODEL` to:
 
   - `whisper-tiny.en` - Fastest, lower accuracy
   - `whisper-base.en` - Balanced
@@ -73,7 +91,18 @@ Edit `index.js` to customize:
   - `whisper-medium.en` - Better accuracy, slower
   - `whisper-large` - Best accuracy, slowest
 
-- **Port**: Set environment variable `PORT=3001`
+- **Port**: Set `PORT=3001`
+- **Device**: Set `WHISPER_DEVICE=cpu` or another supported Transformers.js device
+
+## Remote Screen Service
+
+The remote screen source is checked by the root TypeScript config:
+
+```bash
+pnpm run check:remote-screen
+```
+
+It does not have a separate package, separate TypeScript config, or committed build output. The future Electron integration should import from `server/remote-screen/signaling`.
 
 ## Model Information
 

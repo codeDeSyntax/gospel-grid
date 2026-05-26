@@ -5,7 +5,7 @@ import { FeatureImageMenu } from "./FeatureImageMenu";
 import { FeatureRail } from "./FeatureRail";
 import { FeatureViewHost } from "./FeatureViewHost";
 import { useAppSelector } from "@/store/hooks";
-import { DepthSurface } from "@/shared/DepthSurface";
+import { useRemoteWebRtc } from "@/hooks/useRemoteWebRtc";
 
 export const RightPanel: React.FC<RightPanelProps> = ({
   windows,
@@ -23,6 +23,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   const [activeFeatureView, setActiveFeatureView] =
     useState<FeatureView>("autofit");
   const [isImageMenuOpen, setIsImageMenuOpen] = useState(false);
+  const remoteWebRtc = useRemoteWebRtc();
 
   useEffect(() => {
     if (activePanel === "overlay") {
@@ -58,6 +59,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
                   onWindowRemove={onWindowRemove}
                   onWindowAdd={onWindowAdd}
                   isProjectionOn={isProjectionOn}
+                  remoteWebRtc={remoteWebRtc}
                 />
               </div>
             </div>

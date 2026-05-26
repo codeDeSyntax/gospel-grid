@@ -25,6 +25,88 @@ export interface ConnectedDisplay {
   rotation: number;
 }
 
+export interface RemoteScreenDevice {
+  id: string;
+  name: string;
+  appVersion: string;
+  connectedAt: string;
+  lastSeenAt: string;
+}
+
+export interface RemoteScreenNearbyDevice {
+  deviceId: string;
+  name: string;
+  appVersion: string;
+  address: string;
+  signalingPort: number;
+  connectUrl: string;
+  lastSeenAt: string;
+}
+
+export interface RemoteScreenStatus {
+  isRunning: boolean;
+  host: string;
+  port: number;
+  devices: RemoteScreenDevice[];
+  nearbyDevices?: RemoteScreenNearbyDevice[];
+  client?: {
+    isConnected: boolean;
+    isConnecting: boolean;
+    serverUrl: string | null;
+    localDevice: RemoteScreenDevice | null;
+    devices: RemoteScreenDevice[];
+    lastError: string | null;
+  };
+}
+
+export interface RemoteScreenViewRequest {
+  request: {
+    id: string;
+    fromDeviceId: string;
+    toDeviceId: string;
+    status: "pending" | "accepted" | "denied" | "expired";
+    createdAt: string;
+    expiresAt: string;
+    resolvedAt?: string;
+  };
+  fromDevice: RemoteScreenDevice | null;
+}
+
+export interface RemoteScreenResult<T = unknown> {
+  success: boolean;
+  error?: string;
+  status?: RemoteScreenStatus;
+  devices?: RemoteScreenDevice[];
+  data?: T;
+}
+
+export interface RemoteScreenAPI {
+  getStatus: () => Promise<RemoteScreenResult>;
+  startSignaling: (options?: {
+    host?: string;
+    port?: number;
+  }) => Promise<RemoteScreenResult>;
+  stopSignaling: () => Promise<RemoteScreenResult>;
+  connectClient: (serverUrl: string) => Promise<RemoteScreenResult>;
+  disconnectClient: () => Promise<RemoteScreenResult>;
+  listDevices: () => Promise<RemoteScreenResult>;
+  listNearbyDevices: () => Promise<RemoteScreenResult & { devices?: RemoteScreenNearbyDevice[] }>;
+  requestView: (deviceId: string) => Promise<RemoteScreenResult>;
+  acceptViewRequest: (requestId: string) => Promise<RemoteScreenResult>;
+  denyViewRequest: (requestId: string) => Promise<RemoteScreenResult>;
+  sendSignal: (deviceId: string, signal: unknown) => Promise<RemoteScreenResult>;
+  endSession: (deviceId: string, reason?: string) => Promise<RemoteScreenResult>;
+  onStatusChanged: (callback: (status: RemoteScreenStatus) => void) => () => void;
+  onDevicesChanged: (callback: (devices: RemoteScreenDevice[]) => void) => () => void;
+  onNearbyDevicesChanged: (callback: (devices: RemoteScreenNearbyDevice[]) => void) => () => void;
+  onDiscoveryError: (callback: (payload: { error: string }) => void) => () => void;
+  onIncomingRequest: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
+  onRequestAccepted: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
+  onRequestDenied: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
+  onSignal: (callback: (signal: unknown) => void) => () => void;
+  onSessionEnded: (callback: (event: unknown) => void) => () => void;
+}
+
 export interface EnumerateWindowsOptions {
   includeMinimized?: boolean;
   includeSystemWindows?: boolean;
@@ -61,12 +143,25 @@ export interface WindowOperationResult {
   thumbnail?: string;
 }
 
+export interface DesktopCaptureSource {
+  id: string;
+  name: string;
+  display_id?: string;
+  thumbnail?: string | null;
+  appIcon?: string | null;
+}
+
 export interface ElectronAPI {
   enumerateWindows: (
     options: EnumerateWindowsOptions,
   ) => Promise<WindowEnumerationResult>;
   getWindowIcon: (handle: number) => Promise<WindowOperationResult>;
   getWindowThumbnail: (handle: number) => Promise<WindowOperationResult>;
+  getDesktopSources: (options: {
+    types: Array<"screen" | "window">;
+    thumbnailSize?: { width: number; height: number };
+    fetchWindowIcons?: boolean;
+  }) => Promise<DesktopCaptureSource[]>;
   focusWindow: (handle: number) => Promise<WindowOperationResult>;
   minimizeWindow: (handle: number) => Promise<WindowOperationResult>;
   maximizeWindow: (handle: number) => Promise<WindowOperationResult>;
@@ -128,6 +223,8 @@ export interface ElectronAPI {
   // Tray action events
   onTrayAction: (callback: (action: string) => void) => () => void;
   onPublishedLayoutUpdated: (callback: (payload: any) => void) => () => void;
+
+  remoteScreen: RemoteScreenAPI;
 }
 
 // Extend the global Window interface to include our APIs

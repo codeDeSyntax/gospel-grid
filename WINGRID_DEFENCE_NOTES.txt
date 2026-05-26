@@ -1,0 +1,367 @@
+WINGRID FINAL YEAR PROJECT DEFENCE NOTES
+University of Ghana - Level 400 Final Year Project
+
+Project Title Options
+---------------------
+1. Wingrid: A Network-Aware Multi-Window Presentation Control System
+
+2. Wingrid: A Multi-Window Presentation Orchestration and Remote Viewing System
+   for Live Display Environments
+
+3. Wingrid: A Desktop Application for Curated Multi-Window Projection and
+   Remote Screen Collaboration
+
+Recommended title:
+Wingrid: A Network-Aware Multi-Window Presentation Control System
+
+
+Core Identity of the Project
+----------------------------
+Wingrid is not simply a screen sharing application.
+Wingrid is not simply a remote desktop application.
+Wingrid is not simply a projection tool.
+
+Wingrid is a multi-window presentation orchestration system designed for
+environments where one operator needs to select, arrange, project, and manage
+content from multiple live Windows applications without exposing the full
+desktop or repeatedly changing Windows display settings.
+
+The main value of Wingrid is controlled presentation composition.
+
+
+Simple Project Description
+--------------------------
+Wingrid is an Electron-based desktop application that allows an operator to
+select multiple live application windows, arrange them into a clean audience
+layout, and project the curated layout to another display. It also supports
+network-aware features such as detecting nearby Wingrid devices and requesting
+permission-based remote screen viewing through WebRTC.
+
+
+Main Problem Statement
+----------------------
+In live presentation environments such as churches, classrooms, teaching spaces,
+and hybrid meetings, operators often need to present content from different
+applications at the same time.
+
+However, existing tools usually create three major problems:
+
+1. Different applications expect different display modes.
+   Some applications work better in extended display mode, while others are
+   easier to manage in duplicate mode. This forces the operator to keep changing
+   Windows display settings during live use.
+
+2. Online meeting platforms usually allow only one screen or one application
+   window to be shared at a time.
+   This makes it difficult for a host to present multiple live sources as one
+   curated layout.
+
+3. Sharing the entire desktop can expose private or unwanted content.
+   Notifications, files, taskbars, desktop icons, or unrelated applications may
+   become visible to the audience.
+
+Wingrid solves these problems by allowing the operator to choose specific live
+application windows, compose them into a controlled layout, and project only the
+curated output.
+
+
+Original Problems Identified
+----------------------------
+Problem 1:
+In presentation environments where different applications are used, different
+applications may require different display modes. For example, in a church
+setting, one application may require extended display mode while another may be
+easier to use in duplicate display mode. The operator is forced to keep switching
+between display modes, which wastes time and creates room for mistakes.
+
+Problem 2:
+On online meeting platforms, a host is usually limited to sharing one screen or
+one application window at a time. If the host wants to show multiple windows
+together, they often have to share the entire screen or manually switch between
+windows. This is inefficient and can expose unwanted desktop content.
+
+
+Wingrid's Solution
+------------------
+Wingrid provides a controlled presentation workspace where an operator can:
+
+1. Detect available application windows.
+2. Select only the windows needed for presentation.
+3. Arrange selected windows into curated layouts.
+4. Project the final layout to an audience display.
+5. Keep the controller view separate from the audience view.
+6. Avoid switching between Windows duplicate and extend display modes.
+7. Add supporting presentation features such as timers, images, captions, and
+   overlay text.
+8. Detect nearby Wingrid devices on the same network.
+9. Request permission-based remote screen viewing from another Wingrid machine.
+
+
+Strong Defence Summary
+----------------------
+Wingrid solves the problem of fragmented presentation workflows. Instead of
+forcing operators to switch Windows display modes, expose their desktop, or
+share only one application at a time, Wingrid allows multiple live windows to be
+selected, arranged, projected, and remotely viewed in a controlled way. The
+system is designed for churches, classrooms, teaching spaces, and hybrid
+presentation environments where speed, privacy, and display separation matter.
+
+
+What Makes Wingrid Different
+----------------------------
+Wingrid should not be presented as a normal screen sharing tool.
+
+The difference is that Wingrid focuses on curated multi-source presentation.
+
+Normal screen sharing:
+- Usually shares one screen or one application window.
+- Often exposes the desktop if full screen sharing is used.
+- Does not provide proper local projection control.
+- Does not solve display-mode switching for different applications.
+
+Wingrid:
+- Allows multiple live application windows to be selected.
+- Combines selected windows into one curated projection layout.
+- Keeps the operator/controller view separate from the audience view.
+- Routes the projection to the correct display.
+- Adds presentation-specific features like timers, images, captions, and text
+  overlays.
+- Adds LAN device detection and permission-based WebRTC remote viewing.
+
+
+How to Respond if Asked: "Does This Already Exist?"
+---------------------------------------------------
+Possible answer:
+
+"Some tools solve parts of this problem, but Wingrid focuses on a specific
+presentation workflow. OBS is mainly a broadcast production tool, while Zoom and
+Teams are meeting communication platforms. Wingrid is designed for local and
+hybrid presentation control, where an operator needs to combine multiple live
+application windows, maintain controller/audience separation, avoid display-mode
+switching, and project a clean curated layout. The system also extends this into
+a local network environment by supporting Wingrid device detection and
+permission-based remote screen viewing."
+
+
+Comparison With Existing Tools
+------------------------------
+OBS Studio:
+OBS can combine multiple sources, but it is designed mainly for broadcasting and
+recording. It is powerful, but it may be too complex for simple live projection
+workflows. Wingrid focuses on fast operator control, direct application-window
+selection, projection display routing, and presentation-specific use cases.
+
+Zoom / Microsoft Teams / Google Meet:
+These platforms are designed for meetings. They usually allow one window or one
+screen to be shared at a time. Wingrid focuses on preparing a composed
+multi-window layout before projection or sharing.
+
+Windows Display Settings:
+Windows allows duplicate and extended display modes, but it does not provide an
+application-level presentation composition workflow. Wingrid reduces the need to
+manually switch display modes for different applications.
+
+Remote Desktop Tools:
+Remote desktop tools are designed for controlling or viewing another computer.
+Wingrid's remote feature is not the whole project. It supports the main
+presentation system by allowing Wingrid devices on the same network to discover
+each other and request approved screen viewing.
+
+
+Why the Project Is Suitable for a Final Year Project
+----------------------------------------------------
+Wingrid is suitable as a final year project because it combines several
+technical areas into one practical system:
+
+1. Desktop application development using Electron, React, and Vite.
+2. Native desktop integration for window enumeration and display management.
+3. Live media capture using desktop capture APIs.
+4. Multi-window layout composition.
+5. Projection display routing.
+6. Inter-process communication between Electron main and renderer processes.
+7. Local network discovery of Wingrid devices.
+8. WebSocket signaling for remote session negotiation.
+9. WebRTC peer-to-peer media streaming.
+10. Permission-based remote viewing for privacy and security.
+11. User interface design for real-time presentation workflows.
+
+This means the project is not only a user interface project. It is a complete
+desktop system that touches operating system APIs, media streaming, networking,
+security decisions, and real-time user workflows.
+
+
+Main Features to Demonstrate
+----------------------------
+1. Welcome and dashboard flow.
+2. Window detection and listing.
+3. Selecting multiple application windows.
+4. Arranging selected windows into a projection layout.
+5. Publishing the layout to a separate projection window/display.
+6. Blackout and freeze controls.
+7. Timer feature.
+8. Image projection feature.
+9. Captions or text overlay feature.
+10. Remote Screens panel.
+11. Nearby Wingrid device detection.
+12. Manual remote connection fallback.
+13. Connected devices list.
+14. Permission-based request to view another machine.
+15. Recipient screen/window selection before sharing.
+16. WebRTC session preview.
+
+
+How to Explain the Remote Features
+----------------------------------
+The remote features extend Wingrid from a single-machine presentation console
+into a network-aware presentation environment.
+
+Nearby Wingrid device detection:
+The system detects other Wingrid machines on the same local network, reducing
+the need for non-technical users to manually type IP addresses.
+
+Remote screen viewing:
+One Wingrid machine can request to view another Wingrid machine's screen or
+selected window. The receiving machine must approve the request and choose what
+to share. This protects privacy and prevents unwanted access.
+
+WebRTC:
+WebRTC is used for peer-to-peer media streaming after signaling has been
+completed. This is suitable because screen media should flow directly between
+the devices instead of constantly passing heavy video through a central server.
+
+WebSocket signaling:
+WebSocket signaling is used to exchange session negotiation messages required by
+WebRTC.
+
+
+Security and Privacy Points
+---------------------------
+Wingrid should be defended as privacy-conscious because:
+
+1. It does not automatically expose the full desktop.
+2. The operator selects specific windows for projection.
+3. Remote viewing requires explicit permission from the receiving device.
+4. The receiving user chooses what screen or window to share.
+5. Manual connection is available, but automatic LAN discovery reduces mistakes.
+6. The system is designed around controlled visibility.
+
+Important defence line:
+"Wingrid is designed around controlled visibility. The audience or remote viewer
+should only see what the operator or sharing user intentionally exposes."
+
+
+Possible Defence Questions and Answers
+--------------------------------------
+Question:
+What problem does Wingrid solve?
+
+Answer:
+Wingrid solves the problem of fragmented presentation workflows where operators
+need to use multiple applications, manage different display modes, and avoid
+exposing their entire desktop. It allows selected live windows to be composed
+into one clean projection layout.
+
+
+Question:
+Is Wingrid just another screen sharing application?
+
+Answer:
+No. Screen sharing is only one part of the wider problem. Wingrid is a
+presentation orchestration system. It focuses on selecting multiple live
+application windows, arranging them into layouts, routing them to a projection
+display, and maintaining controller/audience separation.
+
+
+Question:
+Why not just use OBS?
+
+Answer:
+OBS is a powerful broadcast production tool, but Wingrid targets a simpler and
+more specific workflow: fast multi-window presentation control for churches,
+classrooms, teaching spaces, and hybrid presentations. Wingrid focuses on
+operator efficiency, display routing, and controlled projection rather than full
+broadcast production.
+
+
+Question:
+Why not just use Zoom or Teams screen sharing?
+
+Answer:
+Zoom and Teams are meeting platforms and usually allow one screen or one window
+to be shared at a time. Wingrid allows multiple live windows to be composed into
+one curated layout before projection or sharing.
+
+
+Question:
+Why was remote viewing added?
+
+Answer:
+Remote viewing was added to extend Wingrid into a network-aware environment.
+It allows Wingrid machines on the same network to discover each other and
+request permission-based screen viewing. This is useful in environments where
+content may exist on another machine but still needs to be coordinated by an
+operator.
+
+
+Question:
+Why use WebRTC?
+
+Answer:
+WebRTC is suitable for real-time media streaming between two machines. It allows
+the screen stream to move peer-to-peer after the signaling process is complete.
+This reduces the need for continuous heavy video transfer through a central
+server.
+
+
+Question:
+What makes the project technically challenging?
+
+Answer:
+The project combines desktop application development, native window capture,
+multi-display routing, live media rendering, Electron IPC, network discovery,
+WebSocket signaling, WebRTC streaming, and a real-time user interface. These
+parts must work together reliably in a live presentation context.
+
+
+Question:
+What is the target environment?
+
+Answer:
+The target environments are churches, classrooms, teaching spaces, seminars,
+small events, and hybrid meeting rooms where one operator needs to manage
+multiple applications and present a clean audience view.
+
+
+Question:
+What is the main contribution of the project?
+
+Answer:
+The main contribution is a practical system for controlled multi-window
+presentation composition. It reduces display-mode switching, improves
+presentation speed, protects privacy, and extends the workflow with local
+network device discovery and approved remote viewing.
+
+
+Final Defence Pitch
+-------------------
+Wingrid is a network-aware multi-window presentation control system. It was
+developed to solve a real problem in live presentation environments where
+operators use several applications and must constantly manage what the audience
+sees. Existing tools either share one screen, expose the entire desktop, or
+require manual switching between display modes.
+
+Wingrid allows the operator to select multiple live application windows, arrange
+them into a clean layout, and project only the curated output. It also supports
+presentation features such as timers, images, captions, blackout, freeze, and
+overlay text. To extend the system into networked environments, Wingrid includes
+nearby device detection and permission-based WebRTC remote screen viewing.
+
+The goal is to improve speed, privacy, and control in real-time presentation
+workflows.
+
+
+Key Sentence to Remember
+------------------------
+Wingrid is about controlled presentation composition, not ordinary screen
+sharing.
+

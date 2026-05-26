@@ -42,6 +42,7 @@ import {
 import { getWindowsWithThumbnails } from "./windowMapper";
 import { detectInternalDisplay, detectExternalDisplay } from "./displayManager";
 import { registerAssemblyAiIpc, shutdownAssemblyAiIpc } from "./assemblyAiIpc";
+import { registerRemoteScreenIpc, shutdownRemoteScreenIpc } from "./remoteScreenIpc";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -367,6 +368,7 @@ async function createWindow() {
 
 app.whenReady().then(createWindow);
 registerAssemblyAiIpc();
+registerRemoteScreenIpc();
 
 app.whenReady().then(() => {
   protocol.handle("local-image", (request) => {
@@ -487,7 +489,15 @@ ipcMain.handle("window-is-minimized", (event) => {
 ipcMain.handle("get-desktop-sources", async (event, options) => {
   try {
     const sources = await desktopCapturer.getSources(options);
-    return sources;
+    return sources.map((source) => ({
+      id: source.id,
+      name: source.name,
+      display_id: source.display_id,
+      thumbnail: source.thumbnail?.isEmpty()
+        ? null
+        : source.thumbnail?.toDataURL(),
+      appIcon: source.appIcon?.isEmpty() ? null : source.appIcon?.toDataURL(),
+    }));
   } catch (error) {
     console.error("Failed to get desktop sources:", error);
     return [];
@@ -1356,6 +1366,7 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
   stopPowerSaveBlocker();
   void shutdownAssemblyAiIpc();
+  void shutdownRemoteScreenIpc();
   if (tray && !tray.isDestroyed()) {
     tray.destroy();
     tray = null;

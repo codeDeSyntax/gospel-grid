@@ -12,6 +12,19 @@ interface Window {
       options?: any,
     ) => Promise<any>;
     getAllWindowThumbnails: (options?: any) => Promise<any>;
+    getDesktopSources: (options: {
+      types: Array<"screen" | "window">;
+      thumbnailSize?: { width: number; height: number };
+      fetchWindowIcons?: boolean;
+    }) => Promise<
+      Array<{
+        id: string;
+        name: string;
+        display_id?: string;
+        thumbnail?: string | null;
+        appIcon?: string | null;
+      }>
+    >;
     getConnectedDisplays: () => Promise<{
       success: boolean;
       displays: Array<{
@@ -82,5 +95,7 @@ interface Window {
     // Tray action events
     onTrayAction: (callback: (action: string) => void) => () => void;
     onPublishedLayoutUpdated: (callback: (payload: any) => void) => () => void;
+
+    remoteScreen: import("./types/electron").RemoteScreenAPI;
   };
 }

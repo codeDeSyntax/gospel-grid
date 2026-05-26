@@ -11,6 +11,7 @@ import {
   setPublishedContrast,
   setPublishedBrightness,
   setRefreshInterval,
+  setRemoteScreensAutoStart,
   resetQualitySettings,
 } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
@@ -22,7 +23,6 @@ const THEME_COLORS: Record<ColorTheme, string> = {
   "royal-purple": "#5A4466",
   "sky-blue": "#72A8D4",
   "forest-green": "#4A6B44",
-  "vibrant-green": "#12C92B",
   "fire-red": "#EF4444",
 };
 
@@ -103,6 +103,7 @@ const SectionContent: React.FC<{
   colorTheme: ColorTheme;
   publishedQuality: PublishedQuality;
   refreshInterval: number;
+  remoteScreensAutoStart: boolean;
   apiKeyInput: string;
   setApiKeyInput: (value: string) => void;
   apiKeyStatus: ApiKeyStatus;
@@ -116,6 +117,7 @@ const SectionContent: React.FC<{
   colorTheme,
   publishedQuality,
   refreshInterval,
+  remoteScreensAutoStart,
   apiKeyInput,
   setApiKeyInput,
   apiKeyStatus,
@@ -184,6 +186,25 @@ const SectionContent: React.FC<{
                   text: o.label,
                 }))}
               />
+            </SettingRow>
+            <SettingRow
+              title="Remote Screens Auto-Ready"
+              description="Automatically make this PC available for Remote Screens when that panel opens. Screen sharing still requires approval."
+              last
+            >
+              <label className="flex h-10 cursor-pointer items-center justify-between rounded-lg border border-solid border-theme-primary-500/25 bg-theme-primary-900/30 px-3">
+                <span className="text-xs font-semibold text-theme-primary-100">
+                  {remoteScreensAutoStart ? "On" : "Off"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={remoteScreensAutoStart}
+                  onChange={(event) =>
+                    dispatch(setRemoteScreensAutoStart(event.target.checked))
+                  }
+                  className="h-4 w-4 accent-emerald-500"
+                />
+              </label>
             </SettingRow>
           </div>
         </section>
@@ -407,6 +428,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
   const colorTheme = useAppSelector((s) => s.app.colorTheme);
   const publishedQuality = useAppSelector((s) => s.app.publishedQuality);
   const refreshInterval = useAppSelector((s) => s.app.refreshInterval);
+  const remoteScreensAutoStart = useAppSelector(
+    (s) => s.app.remoteScreensAutoStart,
+  );
 
   const refreshApiKeyStatus = async () => {
     const result = await window.speechToTextAPI.getApiKeyStatus();
@@ -519,6 +543,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
             colorTheme={colorTheme}
             publishedQuality={publishedQuality}
             refreshInterval={refreshInterval}
+            remoteScreensAutoStart={remoteScreensAutoStart}
             apiKeyInput={apiKeyInput}
             setApiKeyInput={setApiKeyInput}
             apiKeyStatus={apiKeyStatus}
