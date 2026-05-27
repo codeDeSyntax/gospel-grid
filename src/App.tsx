@@ -4,6 +4,7 @@ import { ThemeManager } from "./utils/theme";
 import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
+import { AppSplash } from "./components/splash/AppSplash";
 import { ProjectionLayout } from "./components/dashboard/projection/ProjectionLayout";
 import { PublishedLayoutLoadingScreen } from "./components/dashboard/projection/PublishedLayoutLoadingScreen";
 import { type WindowInfo } from "./components/dashboard/picker/WindowPicker";
@@ -46,6 +47,7 @@ const slideVariants = {
 function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
+  const [showSplash, setShowSplash] = useState(true);
   const [navigationDirection, setNavigationDirection] = useState(1);
   const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] =
     useState(false);
@@ -189,6 +191,14 @@ function App() {
     }
   }, [dispatch]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSplash(false);
+    }, 1350);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const handleGetStarted = () => {
     systemLogger.log(
       "app",
@@ -298,6 +308,7 @@ function App() {
             {renderScreen()}
           </motion.div>
         </AnimatePresence>
+        <AnimatePresence>{showSplash && <AppSplash />}</AnimatePresence>
       </div>
     </ThemeProvider>
   );

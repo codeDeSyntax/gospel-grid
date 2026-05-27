@@ -82,6 +82,7 @@ interface AutoFitWindowLayoutProps {
 
 const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
 const IMAGE_FEATURE_WINDOW_PREFIX = "feature:image-window:";
+const isFeatureWindowId = (id: string) => id.startsWith("feature:");
 
 type TimerProjectionPreview = {
   days: string;
@@ -397,6 +398,28 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     }
   }, [dispatch, displayAssignments, windowMap]);
 
+  useEffect(() => {
+    if (displays.length === 0) return;
+    if (windows.length === 0) return;
+
+    const hasAnyAssignment = Object.values(displayAssignments).some(
+      (windowIds) => windowIds.length > 0,
+    );
+    if (hasAnyAssignment) return;
+
+    const firstWindow =
+      windows.find((windowInfo) => !isFeatureWindowId(windowInfo.id)) ??
+      windows[0];
+
+    if (!firstWindow) return;
+
+    dispatch(
+      setDisplayAssignments({
+        [displays[0].id]: [firstWindow.id],
+      }),
+    );
+  }, [dispatch, displayAssignments, displays, windows]);
+
   const handleDragOverDisplay = (displayId: number, e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -570,25 +593,77 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
   };
 
-  return (
-    <div className="relative w-full h-full min-h-0 rounded-lg overflow-hidden flex flex-col ">
-      <div className="shrink-0 px-3 py-2 flex items-center justify-between rounded-3xl mx-3 bg-theme-primary-700/10">
-        <div>
-          <p className="text-[13px] font-semibold text-theme-primary-100">
-            Unified Display Workspace
-          </p>
-        </div>
+  const routedDisplayCount = displays.filter(
+    (display) => (displayAssignments[display.id] ?? []).length > 0,
+  ).length;
+  const assignedWindowCount = Object.values(displayAssignments).reduce(
+    (total, ids) => total + ids.length,
+    0,
+  );
 
-        <button
-          onClick={() => loadDisplays(true)}
-          className="h-8 px-2.5 rounded-xl border border-theme-primary-500/25 bg-theme-primary-500/10 text-theme-primary-200/90 hover:bg-theme-primary-500/20 transition-colors"
-          title="Refresh connected displays"
-        >
-          <span className="inline-flex items-center gap-1.5 text-[11px]">
-            <RefreshCcw className="w-3.5 h-3.5" />
-            Refresh
-          </span>
-        </button>
+  return (
+    <div className="relative w-full h-full min-h-0 rounded-none overflow-hidden flex flex-col">
+      <div className="shrink-0 mt-0 overflow-hidden rounded-none border border-x-0 border-t-0 border-solid border-theme-primary-700 bg-theme-primary-900 ">
+        <div className="flex min-h-[54px] items-center justify-between gap-3 px-4 py-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-solid border-theme-primary-600 bg-theme-primary-800 text-theme-primary-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <Monitor className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-theme-primary-50">
+                Display Workspace
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-theme-primary-300">
+                Drop windows onto a screen, then project only what each audience
+                display should see.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden items-center overflow-hidden rounded-lg border-none  border-theme-primary-700 bg-theme-primary-950 md:flex">
+              <div className="border-x-0 border-y-0 border-solid border-theme-primary-700 px-3 py-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+                  Screens
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                  {displays.length}
+                </p>
+              </div>
+              <div className="border-r border-y-0 border-solid border-theme-primary-700  px-3 py-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+                  Routed
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                  {routedDisplayCount}
+                </p>
+              </div>
+              <div className="px-3 py-1.5">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+                  Windows
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                  {assignedWindowCount}
+                </p>
+              </div>
+            </div>
+
+            <DepthButton
+              onClick={() => loadDisplays(true)}
+              sizeClassName="h-8 px-3 rounded-lg"
+              inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
+              inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
+              title="Refresh connected displays"
+            >
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+                <RefreshCcw
+                  className={`h-3.5 w-3.5 ${loadingDisplays ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </span>
+            </DepthButton>
+          </div>
+        </div>
       </div>
 
       {loadingDisplays ? (
@@ -605,8 +680,12 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         </div>
       ) : (
         <div
-          className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-fr content-stretch items-stretch overflow-visible`}
+          className={`relative flex-1 min-h-0 p-3 grid grid-cols-2 gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible`}
         >
+          {/* sample three screen boxes */}
+          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
+          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
+          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
             const hiddenIds = new Set(

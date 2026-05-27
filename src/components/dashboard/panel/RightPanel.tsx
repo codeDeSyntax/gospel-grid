@@ -43,13 +43,13 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         {activePanel === "settings" ? (
           <SettingsPanel />
         ) : (
-          <div className="flex h-full w-full items-stretch px-2 py-3">
-            <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl ">
+          <div className="flex h-full w-full items-stretch px-0 py-0">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-none">
               <div className="absolute inset-x-2 top-2 z-20">
                 <FeatureImageMenu isOpen={isImageMenuOpen} />
               </div>
 
-              <div className="h-full min-h-0 overflow-hidden  p-2">
+              <div className="h-full min-h-0 overflow-hidden p-0">
                 <FeatureViewHost
                   activeView={activeFeatureView}
                   windows={windows}

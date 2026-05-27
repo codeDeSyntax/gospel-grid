@@ -30,6 +30,24 @@ function getAutoUpdater() {
 }
 
 export function update(win: Electron.BrowserWindow) {
+  if (!app.isPackaged) {
+    ipcMain.handle("check-update", async () => ({
+      message: "Updates are only checked in the installed app",
+      devMode: true,
+    }));
+    ipcMain.handle("start-download", () => ({
+      success: false,
+      devMode: true,
+      error: "Updates are only downloaded in the installed app",
+    }));
+    ipcMain.handle("quit-and-install", () => ({
+      success: false,
+      devMode: true,
+      error: "Updates are only installed in the installed app",
+    }));
+    return;
+  }
+
   const autoUpdater = getAutoUpdater();
 
   if (!autoUpdater) {
@@ -78,10 +96,6 @@ export function update(win: Electron.BrowserWindow) {
 
   // Checking for updates
   ipcMain.handle("check-update", async () => {
-    if (!app.isPackaged) {
-      return { message: "dev-mode no updates", devMode: true };
-    }
-
     try {
       return await autoUpdater.checkForUpdatesAndNotify();
     } catch (error) {

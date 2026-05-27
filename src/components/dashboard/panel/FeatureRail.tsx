@@ -31,7 +31,7 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
   onToggleImageMenu,
 }) => {
   return (
-    <div className="pointer-events-auto ml-3 mr-1 self-stretch min-h-0 w-14  shrink-0  border   backdrop-blur-md  border-theme-primary-400/35  px-2.5 py-0.5 sadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px_rgba(0,0,0,0.28)] ">
+    <div className="pointer-events-auto ml-0 mr-0 self-stretch min-h-0 w-14 shrink-0 border-r-0 border-t-0 border-y-0 border-l border-solid border-theme-primary-400/35 backdrop-blur-md px-2.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px">
       <div className="flex h-full flex-col items-center gap-4 px-2 py-4">
         {railItems.map((item) => {
           const isActive =

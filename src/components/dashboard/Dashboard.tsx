@@ -184,6 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
+  const [updateDownloaded, setUpdateDownloaded] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updateStatus, setUpdateStatus] = useState("Idle");
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
@@ -252,6 +253,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           setUpdateVersion(arg.newVersion);
         }
         setUpdateReady(true);
+        setUpdateDownloaded(false);
         setUpdateStatus(
           arg?.newVersion
             ? `Update available: v${arg.newVersion}`
@@ -260,6 +262,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       } else {
         setIsDownloadingUpdate(false);
         setUpdateReady(false);
+        setUpdateDownloaded(false);
         setUpdateProgress(0);
         setUpdateStatus("Up to date");
       }
@@ -272,6 +275,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       if (disposed) return;
       const percent = Math.max(0, Math.min(100, Number(info?.percent ?? 0)));
       setIsDownloadingUpdate(true);
+      setUpdateDownloaded(false);
       setUpdateProgress(percent);
       setUpdateStatus(`Downloading ${percent.toFixed(1)}%`);
     };
@@ -284,6 +288,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       setIsCheckingUpdate(false);
       setIsDownloadingUpdate(false);
       setUpdateReady(true);
+      setUpdateDownloaded(true);
       setUpdateProgress(100);
       if (info?.version) {
         setUpdateVersion(info.version);
@@ -299,6 +304,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       hasRequestedDownload = false;
       setIsCheckingUpdate(false);
       setIsDownloadingUpdate(false);
+      setUpdateDownloaded(false);
       setUpdateStatus(
         payload?.message ? `Error: ${payload.message}` : "Update error",
       );
@@ -325,7 +331,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         ) => {
           if (result?.devMode) {
             setIsCheckingUpdate(false);
-            setUpdateStatus("dev-mode no updates");
+            setUpdateStatus("Updates available after install");
           } else if (result?.error) {
             setIsCheckingUpdate(false);
             setUpdateStatus(
@@ -357,6 +363,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const handleCheckForUpdates = useCallback(() => {
     setIsCheckingUpdate(true);
     setUpdateReady(false);
+    setUpdateDownloaded(false);
     setUpdateProgress(0);
     setUpdateStatus("Checking...");
 
@@ -374,7 +381,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         ) => {
           setIsCheckingUpdate(false);
           if (result?.devMode) {
-            setUpdateStatus("dev-mode no updates");
+            setUpdateStatus("Updates available after install");
           } else if (result?.error) {
             setUpdateStatus(
               result.error.message
@@ -399,7 +406,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   }, []);
 
   const handleStartDownload = useCallback(() => {
+    if (isDownloadingUpdate || updateDownloaded) {
+      return;
+    }
+
     setIsDownloadingUpdate(true);
+    setUpdateDownloaded(false);
     setUpdateStatus("Downloading...");
     void window.ipcRenderer.invoke("start-download").catch((error: unknown) => {
       setIsDownloadingUpdate(false);
@@ -409,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           : "Download failed",
       );
     });
-  }, []);
+  }, [isDownloadingUpdate, updateDownloaded]);
 
   useEffect(() => {
     const syncImageFeatureWindows = () => {
@@ -1053,6 +1065,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         isCheckingUpdate={isCheckingUpdate}
         isDownloadingUpdate={isDownloadingUpdate}
         updateReady={updateReady}
+        updateDownloaded={updateDownloaded}
         updateVersion={updateVersion}
         onCheckForUpdates={handleCheckForUpdates}
         onRestartToUpdate={handleRestartToUpdate}
@@ -1061,7 +1074,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
       {/* Main Content Area */}
       <div
-        className="relative flex-1 flex overflow-hidden bg-theme-primary-950  gap-3"
+        className="relative flex-1 flex overflow-hidden bg-theme-primary-950 "
         style={
           {
             // background: mainSectionBackground,
@@ -1091,8 +1104,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
           {/* Attached resize handle (shows only on edge hover) */}
           <div
-            onMouseDown={handleMouseDown}
-            className="absolute right-0 top-0 h-full w-3 cursor-ew-resize z-20 group"
+            onMouseDown={undefined}
+            className="hidden absolute right-0 top-0 h-full w-3 cursor-ew-resize z-20 group"
             title="Resize panel"
           >
             <div

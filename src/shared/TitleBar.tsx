@@ -6,6 +6,10 @@ import {
   Eye,
   Pause,
   Play,
+  CheckCircle2,
+  Download,
+  RefreshCw,
+  RotateCcw,
   Undo2,
   Redo2,
   Trash2,
@@ -41,6 +45,7 @@ interface TitleBarProps {
   isCheckingUpdate: boolean;
   isDownloadingUpdate: boolean;
   updateReady: boolean;
+  updateDownloaded: boolean;
   updateVersion: string | null;
   onCheckForUpdates: () => void;
   onRestartToUpdate: () => void;
@@ -99,6 +104,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   isCheckingUpdate,
   isDownloadingUpdate,
   updateReady,
+  updateDownloaded,
   updateVersion,
   onCheckForUpdates,
   onRestartToUpdate,
@@ -280,7 +286,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   ];
 
   return (
-    <div className="relative z-20 flex h-16 flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden bg-theme-primary-900 ">
+    <div className="relative z-20 flex  flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden bg-theme-primary-900 ">
       <span
         className="pointer-events-none absolute inset-x-0 bottom-0 h-3 z-[1]"
         style={{
@@ -302,7 +308,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
           </button>
           <span className="text-[13px] text-theme-primary-100 font-[impact] tracking-wide">
-            Wingrid Driver Console
+            Wingrid Workspace
           </span>
         </div>
 
@@ -353,7 +359,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       {/* stylish thin line with fading endings */}
       {/* <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" /> */}
 
-      <div className="relative z-10 flex h-8 items-center justify-between bg-theme-primary-950  border-b border-solid border-x-0 border-t-0 border-white/10 px-3 text-[10px] leading-none font-[cursive]">
+      <div className="relative z-10 flex h-8 items-center justify-between border-b border-solid border-x-0 border-t-0 border-white/10 bg-theme-primary-950 px-3 text-[10px] leading-none">
         <div className="flex items-center gap-3 theme-text-soft font-bold">
           <span className="inline-flex items-center gap-1.5">
             <span
@@ -388,44 +394,83 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 theme-text-soft">
-          <span className="">Version {appVersion}</span>
-          <span>{updateStatus}</span>
-          {isDownloadingUpdate && <span>{updateProgress.toFixed(1)}%</span>}
-          {updateReady && !isDownloadingUpdate ? (
-            <button
-              type="button"
-              onClick={onStartDownload}
-              className="rounded-md border border-blue-300/65 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-200 hover:bg-blue-500/25"
-              title="Download the update"
-            >
-              Download
-            </button>
-          ) : updateReady && isDownloadingUpdate ? (
-            <span>Downloading...</span>
-          ) : (
-            <button
-              type="button"
-              onClick={onCheckForUpdates}
-              disabled={isCheckingUpdate || isDownloadingUpdate}
-              className="rounded-md border border-theme-primary-500/35 bg-theme-primary-900 px-2 py-0.5 text-[10px] font-semibold text-theme-primary-100 hover:text-theme-primary-50 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isCheckingUpdate ? "Checking..." : "Check for Updates"}
-            </button>
-          )}
-          {updateReady && !isDownloadingUpdate && (
-            <button
+        <div className="flex min-w-0 items-center gap-1.5 text-theme-primary-200">
+          <span className="rounded-full border border-solid border-theme-primary-700 bg-theme-primary-900 px-2 py-1 text-[10px] font-semibold text-theme-primary-100">
+            v{appVersion}
+          </span>
+          <span
+            className={`inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full border border-solid px-2.5 py-1 text-[10px] font-semibold ${
+              updateDownloaded
+                ? "border-emerald-300/55 bg-emerald-500/15 text-emerald-200"
+                : updateReady
+                  ? "border-blue-300/55 bg-blue-500/15 text-blue-200"
+                  : "border-theme-primary-700 bg-theme-primary-900 text-theme-primary-200"
+            }`}
+          >
+            {updateDownloaded ? (
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
+            ) : isCheckingUpdate || isDownloadingUpdate ? (
+              <RefreshCw className="h-3 w-3 shrink-0 animate-spin" />
+            ) : (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-theme-primary-400" />
+            )}
+            <span className="truncate">{updateStatus}</span>
+            {isDownloadingUpdate && (
+              <span className="shrink-0">{updateProgress.toFixed(0)}%</span>
+            )}
+          </span>
+
+          {updateDownloaded ? (
+            <DepthButton
               type="button"
               onClick={onRestartToUpdate}
-              className="rounded-md border border-emerald-300/65 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 hover:bg-emerald-500/25"
+              sizeClassName="h-6 px-2.5 rounded-md"
+              active
+              activeClassName="text-emerald-100 border-solid border-emerald-300/65"
+              activeSurfaceClassName="bg-gradient-to-br from-emerald-600/65 via-emerald-700/70 to-emerald-900/75"
               title={
                 updateVersion
                   ? `Restart to install v${updateVersion}`
                   : "Restart to install update"
               }
             >
-              Restart to Update
-            </button>
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
+                <RotateCcw className="h-3 w-3" />
+                Restart
+              </span>
+            </DepthButton>
+          ) : updateReady ? (
+            <DepthButton
+              type="button"
+              onClick={onStartDownload}
+              disabled={isDownloadingUpdate}
+              sizeClassName="h-6 px-2.5 rounded-md"
+              active
+              activeClassName="text-blue-100 border-solid border-blue-300/65"
+              activeSurfaceClassName="bg-gradient-to-br from-blue-600/55 via-blue-700/65 to-blue-900/75"
+              title="Download the update"
+            >
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
+                <Download className="h-3 w-3" />
+                {isDownloadingUpdate ? "Downloading" : "Download"}
+              </span>
+            </DepthButton>
+          ) : (
+            <DepthButton
+              type="button"
+              onClick={onCheckForUpdates}
+              disabled={isCheckingUpdate || isDownloadingUpdate}
+              sizeClassName="h-6 px-2.5 rounded-md"
+              inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35 hover:text-theme-primary-50"
+              inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
+            >
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
+                <RefreshCw
+                  className={`h-3 w-3 ${isCheckingUpdate ? "animate-spin" : ""}`}
+                />
+                {isCheckingUpdate ? "Checking" : "Check"}
+              </span>
+            </DepthButton>
           )}
         </div>
       </div>

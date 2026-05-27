@@ -27,20 +27,29 @@ const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
 const getIntelligenceBadgeClasses = (
   intel: WindowIntelligenceResult,
   tag: string,
+  isLightMode: boolean,
 ) => {
   if (intel.riskLevel === "high" || intel.recommendation === "avoid") {
-    return "border-red-300/35 bg-red-500/18 text-red-100";
+    return isLightMode
+      ? "border-red-700/35 bg-red-100/85 text-red-950"
+      : "border-red-300/35 bg-red-500/18 text-red-100";
   }
 
   if (tag === "Recommended") {
-    return "border-emerald-300/45 bg-emerald-500/18 text-emerald-100";
+    return isLightMode
+      ? "border-emerald-700/35 bg-emerald-100/85 text-emerald-950"
+      : "border-emerald-300/45 bg-emerald-500/18 text-emerald-100";
   }
 
   if (intel.riskLevel === "medium") {
-    return "border-amber-300/35 bg-amber-500/15 text-amber-100";
+    return isLightMode
+      ? "border-amber-700/35 bg-amber-100/90 text-amber-950"
+      : "border-amber-300/35 bg-amber-500/15 text-amber-100";
   }
 
-  return "border-theme-primary-400/25 bg-theme-primary-800/70 text-theme-primary-100";
+  return isLightMode
+    ? "border-theme-primary-300/60 bg-theme-primary-950/80 text-theme-primary-50"
+    : "border-theme-primary-400/25 bg-theme-primary-800/70 text-theme-primary-100";
 };
 
 export interface WindowInfo {
@@ -107,7 +116,8 @@ export const WindowList: React.FC<WindowListProps> = ({
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
   const showLoadingSkeleton = isLoading && windows.length === 0;
   const themeMode = useAppSelector((s) => s.app.theme);
-  const isLightMode = themeMode === "light";
+  const colorTheme = useAppSelector((s) => s.app.colorTheme);
+  const isLightMode = themeMode === "light" || colorTheme === "neutral-light";
   const intelligenceByWindowId = useMemo(() => {
     return new Map(
       windows.map((window) => [window.id, classifyWindow(window)]),
@@ -212,7 +222,13 @@ export const WindowList: React.FC<WindowListProps> = ({
         )}
 
         {selectedRiskWindows.length > 0 && (
-          <div className="rounded-2xl border-none  border-amber-400/25 bg-amber-500/10 px-2 py-1.5 text-amber-100">
+          <div
+            className={`rounded-2xl border-none border-amber-400/25 px-2 py-1.5 ${
+              isLightMode
+                ? "bg-amber-100/80 text-amber-950"
+                : "bg-amber-500/10 text-amber-100"
+            }`}
+          >
             <div className="flex items-start gap-1.5">
               <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <p className="text-[11px] leading-snug">
@@ -528,14 +544,18 @@ export const WindowList: React.FC<WindowListProps> = ({
 
                           {/* Text Content */}
                           <div className="flex-1 min-w-0 z-10">
-                            {/* App Name */}
-                            <div
-                              className={`text-xs font-semibold bg-gradient-to-r ${
-                                isCaptionsWindow
-                                  ? "from-theme-primary-50 via-theme-primary-100 to-theme-primary-200"
-                                  : getAppGradient(window.app)
-                              } bg-clip-text text-transparent truncate leading-tight`}
-                            >
+                          {/* App Name */}
+                          <div
+                            className={`truncate text-xs font-semibold leading-tight ${
+                              isLightMode
+                                ? "text-theme-primary-50"
+                                : `bg-gradient-to-r ${
+                                    isCaptionsWindow
+                                      ? "from-theme-primary-50 via-theme-primary-100 to-theme-primary-200"
+                                      : getAppGradient(window.app)
+                                  } bg-clip-text text-transparent`
+                            }`}
+                          >
                               {isCaptionsWindow ? "AI Speech" : window.app}
                             </div>
                             {/* Window Title */}
@@ -578,6 +598,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                           className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full border border-solid px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
                                             intelligence,
                                             tag,
+                                            isLightMode,
                                           )}`}
                                           title={
                                             hasPrivacyWarning
@@ -603,12 +624,24 @@ export const WindowList: React.FC<WindowListProps> = ({
                             {(window.isMinimized || window.isMaximized) && (
                               <div className="flex items-center gap-1 mt-0.5">
                                 {window.isMinimized && (
-                                  <span className="text-[9px] px-1 py-px bg-yellow-500/20 text-yellow-300/70 rounded border border-yellow-400/20">
+                                  <span
+                                    className={`rounded border px-1 py-px text-[9px] ${
+                                      isLightMode
+                                        ? "border-yellow-700/30 bg-yellow-100/85 text-yellow-950"
+                                        : "border-yellow-400/20 bg-yellow-500/20 text-yellow-300/70"
+                                    }`}
+                                  >
                                     MIN
                                   </span>
                                 )}
                                 {window.isMaximized && (
-                                  <span className="text-[9px] px-1 py-px bg-green-500/20 text-green-300/70 rounded border border-green-400/20">
+                                  <span
+                                    className={`rounded border px-1 py-px text-[9px] ${
+                                      isLightMode
+                                        ? "border-green-700/30 bg-green-100/85 text-green-950"
+                                        : "border-green-400/20 bg-green-500/20 text-green-300/70"
+                                    }`}
+                                  >
                                     MAX
                                   </span>
                                 )}
@@ -627,6 +660,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                     className={`inline-flex min-w-0 max-w-[110px] items-center gap-1 truncate rounded-full border border-solid px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
                                       intelligence,
                                       tag,
+                                      isLightMode,
                                     )}`}
                                     title={
                                       hasPrivacyWarning
