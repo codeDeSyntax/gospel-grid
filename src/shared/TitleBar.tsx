@@ -496,7 +496,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               updateDownloaded
                 ? "bg-primary-500/14 text-primary-200"
                 : updateReady
-                  ? "bg-blue-500/14 text-blue-200"
+                  ? "bg-primary-500/12 text-primary-200"
                   : "bg-theme-primary-900/55 text-theme-primary-200"
             }`}
           >
@@ -534,7 +534,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               type="button"
               onClick={onStartDownload}
               disabled={isDownloadingUpdate}
-              className="inline-flex h-6 items-center rounded-md border-0 bg-blue-500/14 px-2.5 text-blue-100 transition-colors hover:bg-blue-500/22 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-6 items-center rounded-md border-0 bg-primary-500/14 px-2.5 text-primary-100 transition-colors hover:bg-primary-500/22 disabled:cursor-not-allowed disabled:opacity-60"
               title="Download the update"
             >
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">

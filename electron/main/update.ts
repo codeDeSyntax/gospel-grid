@@ -1,10 +1,6 @@
 import { app, ipcMain } from "electron";
 import { createRequire } from "node:module";
-import type {
-  ProgressInfo,
-  UpdateDownloadedEvent,
-  UpdateInfo,
-} from "electron-updater";
+import type { ProgressInfo, UpdateInfo } from "electron-updater";
 
 type AutoUpdaterModule = typeof import("electron-updater");
 
@@ -75,10 +71,15 @@ export function update(win: Electron.BrowserWindow) {
   autoUpdater.disableWebInstaller = false;
   autoUpdater.allowDowngrade = false;
 
+  let downloadInProgress = false;
+  let updateDownloaded = false;
+
   // start check
   autoUpdater.on("checking-for-update", function () {});
   // update available
   autoUpdater.on("update-available", (arg: UpdateInfo) => {
+    downloadInProgress = false;
+    updateDownloaded = false;
     win.webContents.send("update-can-available", {
       update: true,
       version: app.getVersion(),
@@ -87,64 +88,70 @@ export function update(win: Electron.BrowserWindow) {
   });
   // update not available
   autoUpdater.on("update-not-available", (arg: UpdateInfo) => {
+    downloadInProgress = false;
+    updateDownloaded = false;
     win.webContents.send("update-can-available", {
       update: false,
       version: app.getVersion(),
       newVersion: arg?.version,
     });
   });
+  autoUpdater.on("download-progress", (progressInfo: ProgressInfo) => {
+    downloadInProgress = true;
+    if (!win.isDestroyed()) {
+      win.webContents.send("download-progress", progressInfo);
+    }
+  });
+  autoUpdater.on("update-downloaded", (event) => {
+    downloadInProgress = false;
+    updateDownloaded = true;
+    if (!win.isDestroyed()) {
+      win.webContents.send("update-downloaded", { version: event.version });
+    }
+  });
+  autoUpdater.on("error", (error: Error) => {
+    downloadInProgress = false;
+    if (!win.isDestroyed()) {
+      win.webContents.send("update-error", { message: error.message, error });
+    }
+  });
 
   // Checking for updates
   ipcMain.handle("check-update", async () => {
     try {
-      return await autoUpdater.checkForUpdatesAndNotify();
+      return await autoUpdater.checkForUpdates();
     } catch (error) {
       return { message: "Network error", error };
     }
   });
 
   // Start downloading and feedback on progress
-  ipcMain.handle("start-download", (event: Electron.IpcMainInvokeEvent) => {
-    startDownload(
-      (error, progressInfo) => {
-        if (error) {
-          // feedback download error message
-          event.sender.send("update-error", { message: error.message, error });
-        } else {
-          // feedback update progress message
-          event.sender.send("download-progress", progressInfo);
-        }
-      },
-      () => {
-        // feedback update downloaded message
-        event.sender.send("update-downloaded");
-      },
-    );
+  ipcMain.handle("start-download", async () => {
+    if (updateDownloaded) {
+      return { success: true, alreadyDownloaded: true };
+    }
+
+    if (downloadInProgress) {
+      return { success: true, alreadyDownloading: true };
+    }
+
+    try {
+      downloadInProgress = true;
+      await autoUpdater.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      downloadInProgress = false;
+      const message =
+        error instanceof Error ? error.message : "Download failed";
+      if (!win.isDestroyed()) {
+        win.webContents.send("update-error", { message, error });
+      }
+      return { success: false, error: message };
+    }
   });
 
   // Install now
   ipcMain.handle("quit-and-install", () => {
     autoUpdater.quitAndInstall(false, true);
   });
-}
-
-function startDownload(
-  callback: (error: Error | null, info: ProgressInfo | null) => void,
-  complete: (event: UpdateDownloadedEvent) => void,
-) {
-  const autoUpdater = getAutoUpdater();
-  if (!autoUpdater) {
-    callback(
-      autoUpdaterLoadError ?? new Error("Auto updater unavailable"),
-      null,
-    );
-    return;
-  }
-
-  autoUpdater.on("download-progress", (info: ProgressInfo) =>
-    callback(null, info),
-  );
-  autoUpdater.on("error", (error: Error) => callback(error, null));
-  autoUpdater.on("update-downloaded", complete);
-  autoUpdater.downloadUpdate();
 }

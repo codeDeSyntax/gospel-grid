@@ -235,7 +235,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   useEffect(() => {
     let disposed = false;
-    let hasRequestedDownload = false;
 
     const onUpdateCanAvailable = (
       _event: Electron.IpcRendererEvent,
@@ -252,8 +251,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         if (arg?.newVersion) {
           setUpdateVersion(arg.newVersion);
         }
+        setIsDownloadingUpdate(false);
         setUpdateReady(true);
         setUpdateDownloaded(false);
+        setUpdateProgress(0);
         setUpdateStatus(
           arg?.newVersion
             ? `Update available: v${arg.newVersion}`
@@ -276,8 +277,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       const percent = Math.max(0, Math.min(100, Number(info?.percent ?? 0)));
       setIsDownloadingUpdate(true);
       setUpdateDownloaded(false);
-      setUpdateProgress(percent);
-      setUpdateStatus(`Downloading ${percent.toFixed(1)}%`);
+      setUpdateProgress((current) => Math.max(current, percent));
+      setUpdateStatus("Downloading update");
     };
 
     const onUpdateDownloaded = (
@@ -301,7 +302,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       payload: { message?: string },
     ) => {
       if (disposed) return;
-      hasRequestedDownload = false;
       setIsCheckingUpdate(false);
       setIsDownloadingUpdate(false);
       setUpdateDownloaded(false);
@@ -361,6 +361,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   }, []);
 
   const handleCheckForUpdates = useCallback(() => {
+    if (isDownloadingUpdate) {
+      return;
+    }
+
     setIsCheckingUpdate(true);
     setUpdateReady(false);
     setUpdateDownloaded(false);
@@ -399,7 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
             : "Check failed",
         );
       });
-  }, []);
+  }, [isDownloadingUpdate]);
 
   const handleRestartToUpdate = useCallback(() => {
     void window.ipcRenderer.invoke("quit-and-install");
@@ -412,6 +416,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
     setIsDownloadingUpdate(true);
     setUpdateDownloaded(false);
+    setUpdateProgress(0);
     setUpdateStatus("Downloading...");
     void window.ipcRenderer.invoke("start-download").catch((error: unknown) => {
       setIsDownloadingUpdate(false);
