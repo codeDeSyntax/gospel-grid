@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ThemeManager } from "./utils/theme";
 import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
@@ -68,9 +67,6 @@ function App() {
   // Initialize theme on app start and check for published layout
   useEffect(() => {
     systemLogger.log("app", "info", "App", "🚀 Application starting up");
-
-    ThemeManager.initialize();
-    systemLogger.log("app", "info", "Theme", "🎨 Theme manager initialized");
 
     // Check if this is a published layout window
     const urlParams = new URLSearchParams(window.location.search);

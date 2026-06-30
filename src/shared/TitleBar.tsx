@@ -14,8 +14,9 @@ import {
   Redo2,
   Trash2,
   Settings,
+  MoreHorizontal,
+  PanelLeft,
 } from "lucide-react";
-import { DepthButton } from "./DepthButton";
 import { useWindowControls } from "../hooks/useWindowControls";
 
 type TitlePanel = "layout" | "settings" | "overlay";
@@ -60,6 +61,8 @@ interface ActionButtonItem {
   disabled?: boolean;
   active?: boolean;
   title: string;
+  label: string;
+  shortcut?: string;
   activeClassName?: string;
   inactiveClassName?: string;
 }
@@ -73,11 +76,15 @@ interface WindowControlItem {
   key: string;
   title: string;
   onClick: () => void;
-  sizeClassName: string;
-  inactiveClassName: string;
   className?: string;
   icon: React.ReactNode;
 }
+
+const toolbarButtonBase =
+  "inline-flex h-8 w-8 items-center justify-center border-0 bg-transparent p-0 transition-colors duration-150 outline-none disabled:cursor-not-allowed disabled:opacity-45";
+
+const windowButtonBase =
+  "inline-flex h-8 w-11 items-center justify-center border-0 bg-transparent p-0 text-theme-primary-100 transition-colors duration-150 outline-none";
 
 export const TitleBar: React.FC<TitleBarProps> = ({
   selectedWindowsCount,
@@ -111,6 +118,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onStartDownload,
 }) => {
   const { isMaximized, minimize, maximize, close } = useWindowControls();
+  const [isActionMenuOpen, setIsActionMenuOpen] = React.useState(false);
+  const actionMenuRef = React.useRef<HTMLDivElement>(null);
   const hasSelections = selectedWindowsCount > 0;
   const titlebarBackground =
     "radial-gradient(ellipse at 30% 50%, color-mix(in srgb, var(--select-border) 36%, transparent) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, color-mix(in srgb, var(--select-border) 32%, transparent) 0%, transparent 50%), repeating-linear-gradient(90deg, transparent, transparent 80px, color-mix(in srgb, var(--select-border) 18%, transparent) 80px, color-mix(in srgb, var(--select-border) 18%, transparent) 81px), repeating-linear-gradient(0deg, transparent, transparent 80px, color-mix(in srgb, var(--select-border) 16%, transparent) 80px, color-mix(in srgb, var(--select-border) 16%, transparent) 81px), linear-gradient(135deg, var(--card-bg) 0%, var(--card-bg-alt) 100%)";
@@ -133,6 +142,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       },
       disabled: !isProjectionOn && !hasSelections,
       active: isProjectionOn,
+      label: isProjectionOn ? "Close projection" : "Project layout",
+      shortcut: "F5",
       title: isProjectionOn
         ? "Close all projections (F5)"
         : hasSelections
@@ -154,6 +165,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       onClick: onToggleBlackout,
       disabled: !isProjectionOn,
       active: isBlackout,
+      label: isBlackout ? "End blackout" : "Blackout projection",
+      shortcut: "F6",
       title: isBlackout ? "End blackout (F6)" : "Blackout projection (F6)",
       activeClassName: "text-yellow-100 border-yellow-300/60",
       inactiveClassName:
@@ -170,6 +183,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       onClick: onToggleFrozen,
       disabled: !isProjectionOn,
       active: isFrozen,
+      label: isFrozen ? "Unfreeze projection" : "Freeze projection",
+      shortcut: "F7",
       title: isFrozen ? "Unfreeze projection (F7)" : "Freeze projection (F7)",
       activeClassName: "text-cyan-100 border-cyan-300/60",
       inactiveClassName:
@@ -182,6 +197,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       icon: <Undo2 className="w-3.5 h-3.5" strokeWidth={3} />,
       onClick: onUndo,
       disabled: !canUndo,
+      label: "Undo selection",
+      shortcut: "Ctrl+Z",
       title: "Undo selection (Ctrl+Z)",
       inactiveClassName:
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
@@ -192,6 +209,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       icon: <Redo2 className="w-3.5 h-3.5" strokeWidth={3} />,
       onClick: onRedo,
       disabled: !canRedo,
+      label: "Redo selection",
+      shortcut: "Ctrl+Y",
       title: "Redo selection (Ctrl+Y)",
       inactiveClassName:
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
@@ -202,6 +221,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       key: "clear",
       icon: <Trash2 className="w-3.5 h-3.5" strokeWidth={3} />,
       onClick: onClearAll,
+      label: "Clear selected windows",
+      shortcut: "F8",
       title: "Clear all selected windows (F8)",
       inactiveClassName:
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-red-200 hover:border-red-300/60",
@@ -218,6 +239,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       ),
       onClick: () => onTogglePanel("settings"),
       active: activePanel === "settings",
+      label: "Settings",
       title: "Settings",
       activeClassName: "text-theme-primary-50 border-theme-primary-300/65",
       inactiveClassName:
@@ -225,14 +247,44 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     },
   ];
 
+  React.useEffect(() => {
+    if (!isActionMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionMenuOpen]);
+
+  const runMenuAction = (item: ActionButtonItem) => {
+    if (item.disabled) return;
+    item.onClick();
+    setIsActionMenuOpen(false);
+  };
+
   const windowControlItems: WindowControlItem[] = [
     {
       key: "minimize",
       title: "Minimize",
       onClick: minimize,
-      sizeClassName: "w-9 h-6 rounded-md",
-      inactiveClassName:
-        "text-theme-primary-100 border-theme-primary-500/35 hover:text-white",
+      className: "hover:bg-theme-primary-700/45",
       icon: (
         <svg width="10" height="1" viewBox="0 0 10 1" className="text-current">
           <rect width="10" height="1" fill="currentColor" />
@@ -243,9 +295,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       key: "maximize",
       title: isMaximized ? "Restore" : "Maximize",
       onClick: maximize,
-      sizeClassName: "w-9 h-6 rounded-md",
-      inactiveClassName:
-        "text-theme-primary-100 border-theme-primary-500/35 hover:text-white",
+      className: "hover:bg-theme-primary-700/45",
       icon: (
         <svg
           width="10"
@@ -264,10 +314,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       key: "close",
       title: "Close",
       onClick: close,
-      sizeClassName: "w-9 h-6 rounded-md",
-      inactiveClassName:
-        "text-theme-primary-100 border-theme-primary-500/35 hover:text-white hover:border-red-300/70",
-      className: "hover:shadow-[0_0_12px_rgba(196,43,28,0.35)]",
+      className: "hover:bg-red-600 hover:text-white",
       icon: (
         <svg
           width="10"
@@ -286,7 +333,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   ];
 
   return (
-    <div className="relative z-20 flex  flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-hidden bg-theme-primary-900 ">
+    <div className="relative z-20 flex  flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-visible bg-theme-primary-900 ">
       <span
         className="pointer-events-none absolute inset-x-0 bottom-0 h-3 z-[1]"
         style={{
@@ -316,41 +363,87 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           className="relative z-10 flex items-center h-full"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
-          <div className="flex items-center gap-0.5 pr-1">
-            {actionItems.map((item) =>
-              item.kind === "divider" ? (
-                <div key={item.key} className="w-px h-4 bg-white/10 mx-0.5" />
-              ) : (
-                <DepthButton
-                  key={item.key}
-                  onClick={item.onClick}
-                  disabled={item.disabled}
-                  active={item.active}
-                  title={item.title}
-                  sizeClassName="w-6 h-6 rounded-md"
-                  activeClassName={item.activeClassName}
-                  inactiveClassName={item.inactiveClassName}
-                >
-                  {item.icon}
-                </DepthButton>
-              ),
+          <div ref={actionMenuRef} className="relative flex items-center pr-1">
+            <button
+              type="button"
+              onClick={() => setIsActionMenuOpen((current) => !current)}
+              className={`${toolbarButtonBase} text-theme-primary-100 hover:bg-theme-primary-700/45 hover:text-theme-primary-50 ${
+                isActionMenuOpen ? "bg-theme-primary-700/55" : ""
+              }`}
+              title="Workspace actions"
+              aria-haspopup="menu"
+              aria-expanded={isActionMenuOpen}
+            >
+              <MoreHorizontal className="h-4.5 w-4.5" strokeWidth={2.4} />
+            </button>
+
+            {isActionMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-8 z-50 w-64 overflow-hidden rounded-md border border-solid border-theme-primary-600/70 bg-theme-primary-900 py-1 text-[12px] shadow-xl shadow-black/35"
+              >
+                {actionItems.map((item) =>
+                  item.kind === "divider" ? (
+                    <div
+                      key={item.key}
+                      className="my-1 h-px bg-theme-primary-700/80"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      key={item.key}
+                      onClick={() => runMenuAction(item)}
+                      disabled={item.disabled}
+                      className={`flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
+                        item.active
+                          ? "bg-primary-500/12 text-primary-100"
+                          : "text-theme-primary-100 hover:bg-theme-primary-800"
+                      }`}
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center text-current">
+                        {item.icon}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {item.label}
+                      </span>
+                      {item.shortcut ? (
+                        <span className="shrink-0 text-[10px] text-theme-primary-300">
+                          {item.shortcut}
+                        </span>
+                      ) : null}
+                    </button>
+                  ),
+                )}
+              </div>
             )}
           </div>
+
+          {activePanel === "settings" && (
+            <button
+              type="button"
+              onClick={() => onTogglePanel("settings")}
+              className="mr-1 inline-flex h-8 items-center gap-1.5 border-0 bg-transparent px-2 text-[11px] font-semibold text-theme-primary-100 transition-colors hover:bg-theme-primary-700/45 hover:text-theme-primary-50"
+              title="Back to workspace"
+            >
+              <PanelLeft className="h-3.5 w-3.5" strokeWidth={2.4} />
+              Workspace
+            </button>
+          )}
 
           <div className="w-px h-5 bg-white/8 mx-1" />
 
           <div className="flex items-center gap-0.5 pr-0.5">
             {windowControlItems.map((item) => (
-              <DepthButton
+              <button
+                type="button"
                 key={item.key}
                 onClick={item.onClick}
                 title={item.title}
-                sizeClassName={item.sizeClassName}
-                inactiveClassName={item.inactiveClassName}
-                className={item.className ?? ""}
+                className={`${windowButtonBase} ${item.className ?? ""}`}
               >
                 {item.icon}
-              </DepthButton>
+              </button>
             ))}
           </div>
         </div>
@@ -359,12 +452,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       {/* stylish thin line with fading endings */}
       {/* <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" /> */}
 
-      <div className="relative z-10 flex h-8 items-center justify-between border-b border-solid border-x-0 border-t-0 border-white/10 bg-theme-primary-950 px-3 text-[10px] leading-none">
+      <div className="relative flex h-8 items-center justify-between bg-theme-primary-950 px-3 text-[10px] leading-none">
         <div className="flex items-center gap-3 theme-text-soft font-bold">
           <span className="inline-flex items-center gap-1.5">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                isProjectionOn ? "bg-green-400 animate-pulse" : "bg-gray-500"
+                isProjectionOn ? "bg-primary-500 animate-pulse" : "bg-gray-500"
               }`}
             />
             <span>Projection : {isProjectionOn ? " LIVE" : " OFF"}</span>
@@ -395,16 +488,16 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </div>
 
         <div className="flex min-w-0 items-center gap-1.5 text-theme-primary-200">
-          <span className="rounded-full border border-solid border-theme-primary-700 bg-theme-primary-900 px-2 py-1 text-[10px] font-semibold text-theme-primary-100">
+          <span className="rounded-full bg-theme-primary-900/55 px-2 py-1 text-[10px] font-semibold text-theme-primary-100">
             v{appVersion}
           </span>
           <span
-            className={`inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full border border-solid px-2.5 py-1 text-[10px] font-semibold ${
+            className={`inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-[10px] font-semibold ${
               updateDownloaded
-                ? "border-emerald-300/55 bg-emerald-500/15 text-emerald-200"
+                ? "bg-primary-500/14 text-primary-200"
                 : updateReady
-                  ? "border-blue-300/55 bg-blue-500/15 text-blue-200"
-                  : "border-theme-primary-700 bg-theme-primary-900 text-theme-primary-200"
+                  ? "bg-blue-500/14 text-blue-200"
+                  : "bg-theme-primary-900/55 text-theme-primary-200"
             }`}
           >
             {updateDownloaded ? (
@@ -421,13 +514,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           </span>
 
           {updateDownloaded ? (
-            <DepthButton
+            <button
               type="button"
               onClick={onRestartToUpdate}
-              sizeClassName="h-6 px-2.5 rounded-md"
-              active
-              activeClassName="text-emerald-100 border-solid border-emerald-300/65"
-              activeSurfaceClassName="bg-gradient-to-br from-emerald-600/65 via-emerald-700/70 to-emerald-900/75"
+              className="inline-flex h-6 items-center rounded-md border-0 bg-primary-500/16 px-2.5 text-primary-100 transition-colors hover:bg-primary-500/24"
               title={
                 updateVersion
                   ? `Restart to install v${updateVersion}`
@@ -438,31 +528,26 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                 <RotateCcw className="h-3 w-3" />
                 Restart
               </span>
-            </DepthButton>
+            </button>
           ) : updateReady ? (
-            <DepthButton
+            <button
               type="button"
               onClick={onStartDownload}
               disabled={isDownloadingUpdate}
-              sizeClassName="h-6 px-2.5 rounded-md"
-              active
-              activeClassName="text-blue-100 border-solid border-blue-300/65"
-              activeSurfaceClassName="bg-gradient-to-br from-blue-600/55 via-blue-700/65 to-blue-900/75"
+              className="inline-flex h-6 items-center rounded-md border-0 bg-blue-500/14 px-2.5 text-blue-100 transition-colors hover:bg-blue-500/22 disabled:cursor-not-allowed disabled:opacity-60"
               title="Download the update"
             >
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
                 <Download className="h-3 w-3" />
                 {isDownloadingUpdate ? "Downloading" : "Download"}
               </span>
-            </DepthButton>
+            </button>
           ) : (
-            <DepthButton
+            <button
               type="button"
               onClick={onCheckForUpdates}
               disabled={isCheckingUpdate || isDownloadingUpdate}
-              sizeClassName="h-6 px-2.5 rounded-md"
-              inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35 hover:text-theme-primary-50"
-              inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
+              className="inline-flex h-6 items-center rounded-md border-0 bg-theme-primary-900/55 px-2.5 text-theme-primary-100 transition-colors hover:bg-theme-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
                 <RefreshCw
@@ -470,7 +555,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                 />
                 {isCheckingUpdate ? "Checking" : "Check"}
               </span>
-            </DepthButton>
+            </button>
           )}
         </div>
       </div>

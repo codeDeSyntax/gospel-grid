@@ -1,12 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { ThemeType, THEMES, DEFAULT_THEME } from "./themeConfig";
+import React, { createContext, useContext, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setColorTheme } from "@/store/slices/appSlice";
+import { toggleDarkMode, setDarkMode } from "@/store/slices/appSlice";
 
 interface ThemeContextType {
-  currentTheme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
-  themeColors: (typeof THEMES)[ThemeType];
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+  setDarkMode: (isDark: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -25,57 +24,29 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
-  const currentTheme = useAppSelector(
-    (state) => state.app.colorTheme,
-  ) as ThemeType;
+  const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
 
-  const setTheme = (theme: ThemeType) => {
-    dispatch(setColorTheme(theme));
+  const handleToggleDarkMode = () => {
+    dispatch(toggleDarkMode());
   };
 
-  // Apply CSS custom properties when theme changes
+  const handleSetDarkMode = (isDark: boolean) => {
+    dispatch(setDarkMode(isDark));
+  };
+
+  // Apply dark mode class to document root when mode changes
   useEffect(() => {
-    const theme = THEMES[currentTheme] ?? THEMES[DEFAULT_THEME];
-    const root = document.documentElement;
-
-    // Set primary color variables
-    Object.entries(theme.primary).forEach(([shade, color]) => {
-      root.style.setProperty(`--color-primary-${shade}`, color);
-    });
-
-    // Set accent color variables
-    Object.entries(theme.accent).forEach(([variant, color]) => {
-      root.style.setProperty(`--color-accent-${variant}`, color);
-    });
-
-    // Set mesh color variables
-    Object.entries(theme.mesh).forEach(([variant, color]) => {
-      root.style.setProperty(`--color-mesh-${variant}`, color);
-    });
-
-    // Set gradient color variables
-    Object.entries(theme.gradient).forEach(([position, color]) => {
-      root.style.setProperty(`--color-gradient-${position}`, color);
-    });
-
-    // Set theme name for conditional styling
-    root.style.setProperty("--current-theme", currentTheme);
-
-    // Keep data attribute in sync for --theme-* variable selectors.
-    root.setAttribute("data-color-theme", currentTheme);
-
-    // Add theme class to body for CSS-based theme switching
-    document.body.className = document.body.className.replace(
-      /theme-[\w-]+/g,
-      "",
-    );
-    document.body.classList.add(`theme-${currentTheme}`);
-  }, [currentTheme]);
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
 
   const value: ThemeContextType = {
-    currentTheme,
-    setTheme,
-    themeColors: THEMES[currentTheme],
+    isDarkMode,
+    toggleDarkMode: handleToggleDarkMode,
+    setDarkMode: handleSetDarkMode,
   };
 
   return (

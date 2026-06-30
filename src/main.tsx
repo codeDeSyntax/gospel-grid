@@ -2,11 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import App from "./App";
-import { ThemeManager } from "./utils/theme";
-import { ThemeManager as ColorThemeManager } from "./utils/themeManager";
 import { store } from "./store";
 import {
-  setColorTheme,
   setPublishedQuality,
   setCaptureQuality,
 } from "./store/slices/appSlice";
@@ -18,13 +15,6 @@ import "./demos/ipc";
 import "./utils/speechRecognition"; // Initialize speech recognition on startup
 // If you want use Node.js, the`nodeIntegration` needs to be enabled in the Main process.
 // import './demos/node'
-
-// Initialize theme before rendering
-ThemeManager.initialize();
-
-// Initialize color theme system
-const savedColorTheme = ColorThemeManager.initialize();
-store.dispatch(setColorTheme(savedColorTheme));
 
 // Check if this is a published layout window and initialize quality settings
 const urlParams = new URLSearchParams(window.location.search);

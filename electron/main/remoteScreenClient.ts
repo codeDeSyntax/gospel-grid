@@ -35,6 +35,8 @@ type RemoteScreenClientEvents = {
   incomingRequest: [RemoteScreenIncomingRequest];
   requestAccepted: [RemoteScreenIncomingRequest];
   requestDenied: [RemoteScreenIncomingRequest];
+  /** Fired on PC B when PC A has successfully confirmed; sharing can now begin. */
+  requestReady: [RemoteScreenIncomingRequest];
   signal: [RemoteScreenMessage];
   sessionEnded: [RemoteScreenMessage];
 };
@@ -209,6 +211,16 @@ export class RemoteScreenClient extends EventEmitter {
     this.send(REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_DENIED, { requestId });
   }
 
+  /**
+   * PC A calls this after the user confirms they still want to proceed.
+   * The token was received in the view_request_accepted message and must be
+   * echoed back verbatim so the server can verify it.
+   */
+  confirmView(requestId: string, confirmationToken: string): void {
+    this.ensureConnected();
+    this.send(REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_CONFIRM, { requestId, confirmationToken });
+  }
+
   sendSignal(toDeviceId: string, payload: unknown): void {
     this.ensureConnected();
     this.send(REMOTE_SCREEN_MESSAGE_TYPES.SIGNAL, { toDeviceId, payload });
@@ -258,8 +270,13 @@ export class RemoteScreenClient extends EventEmitter {
 
       case REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_ACCEPTED:
         if (message.request) {
+          // Attach the one-time token so the IPC layer can pass it to the renderer
+          // and the user-confirm step can echo it back.
+          const acceptedRequest = message.confirmationToken
+            ? { ...message.request, confirmationToken: message.confirmationToken }
+            : message.request;
           this.emit("requestAccepted", {
-            request: message.request,
+            request: acceptedRequest,
             fromDevice: message.fromDevice || null,
           });
         }
@@ -269,6 +286,16 @@ export class RemoteScreenClient extends EventEmitter {
       case REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_DENIED:
         if (message.request) {
           this.emit("requestDenied", {
+            request: message.request,
+            fromDevice: message.fromDevice || null,
+          });
+        }
+        this.publishStatus();
+        break;
+
+      case REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_READY:
+        if (message.request) {
+          this.emit("requestReady", {
             request: message.request,
             fromDevice: message.fromDevice || null,
           });

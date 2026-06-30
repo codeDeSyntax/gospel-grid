@@ -108,7 +108,7 @@ const buildImageFeatureWindow = (image: FeatureImageItem): WindowInfo => {
     name: image.name,
     isSelected: false,
     isPinned: true,
-    icon: "./images.png",
+    icon: "./gallery.png",
     thumbnail: image.url,
     isVisible: true,
     isMinimized: false,

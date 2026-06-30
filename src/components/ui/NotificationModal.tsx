@@ -21,7 +21,7 @@ import {
 const NotificationModalComponent = () => {
   const dispatch = useDispatch<AppDispatch>();
   const notifications = useSelector(
-    (state: RootState) => state.notification.notifications
+    (state: RootState) => state.notification.notifications,
   );
   const [closingIds, setClosingIds] = useState<Set<string>>(new Set());
 
@@ -49,27 +49,25 @@ const NotificationModalComponent = () => {
     },
     info: {
       icon: Info,
-      bgColor:
-        "from-theme-primary-500/10 via-theme-primary-600/5 to-theme-primary-700/10",
-      borderColor: "border-theme-primary-500/30",
-      iconColor: "text-theme-primary-400",
-      titleColor: "text-theme-primary-100",
+      bgColor: "from-primary-500/10 via-primary-600/5 to-primary-700/10",
+      borderColor: "border-primary-500/30",
+      iconColor: "text-primary-400",
+      titleColor: "text-primary-100",
     },
     question: {
       icon: AlertCircle,
-      bgColor:
-        "from-theme-primary-500/10 via-theme-primary-600/5 to-theme-primary-700/10",
-      borderColor: "border-theme-primary-500/30",
-      iconColor: "text-theme-primary-400",
-      titleColor: "text-theme-primary-100",
+      bgColor: "from-primary-500/10 via-primary-600/5 to-primary-700/10",
+      borderColor: "border-primary-500/30",
+      iconColor: "text-primary-400",
+      titleColor: "text-primary-100",
     },
   };
 
   const buttonVariants = {
     primary:
-      "bg-gradient-to-r from-theme-primary-600 to-theme-primary-500 hover:from-theme-primary-500 hover:to-theme-primary-400 text-white shadow-lg shadow-theme-primary-500/25",
+      "bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white shadow-lg shadow-primary-500/25",
     secondary:
-      "bg-theme-primary-700/60 hover:bg-theme-primary-600/70 text-theme-primary-200 border border-theme-primary-600/50",
+      "bg-primary-700/60 hover:bg-primary-600/70 text-primary-200 border border-primary-600/50",
     danger:
       "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white",
   };
@@ -83,14 +81,14 @@ const NotificationModalComponent = () => {
       (action === "confirm" || action === "cancel")
     ) {
       console.log(
-        `🎬 Handling confirmation action: ${action} for ${notification.confirmationAction}`
+        `🎬 Handling confirmation action: ${action} for ${notification.confirmationAction}`,
       );
       dispatch(
         handleNotificationConfirmation({
           notificationId: id,
           userAction: action,
           confirmationAction: notification.confirmationAction,
-        })
+        }),
       );
     } else {
       // Call the onAction callback if it exists (for backward compatibility)
@@ -107,7 +105,7 @@ const NotificationModalComponent = () => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         const persistentNotifications = notifications.filter(
-          (n) => n.persistent
+          (n) => n.persistent,
         );
         if (persistentNotifications.length === 0) {
           // Close the most recent non-persistent notification
@@ -305,7 +303,7 @@ export const useNotifications = () => {
     if (config.autoClose && config.autoClose > 0) {
       setTimeout(() => {
         setNotifications((prev: NotificationConfig[]) =>
-          prev.filter((n: NotificationConfig) => n.id !== id)
+          prev.filter((n: NotificationConfig) => n.id !== id),
         );
       }, config.autoClose);
     }
@@ -315,7 +313,7 @@ export const useNotifications = () => {
 
   const closeNotification = (id: string, action?: NotificationAction) => {
     setNotifications((prev: NotificationConfig[]) =>
-      prev.filter((n: NotificationConfig) => n.id !== id)
+      prev.filter((n: NotificationConfig) => n.id !== id),
     );
   };
 

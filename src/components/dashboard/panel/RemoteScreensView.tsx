@@ -11,6 +11,7 @@ import type {
   RemoteScreenViewRequest,
 } from "@/types/electron";
 import { AccessPermissionDialog } from "./remote-screens/AccessPermissionDialog";
+import { ConfirmStartDialog } from "./remote-screens/ConfirmStartDialog";
 import { ConnectedDevicesTab } from "./remote-screens/ConnectedDevicesTab";
 import { RemoteScreenTabs } from "./remote-screens/RemoteScreenShared";
 import { RemoteScreenHeader } from "./remote-screens/RemoteScreenHeader";
@@ -54,6 +55,7 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
     refreshNearbyDevices,
     refreshDevices,
     requestView,
+    confirmView,
     denyViewRequest,
     endSession,
   } = useRemoteScreen();
@@ -64,6 +66,9 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
     () => new Set(),
   );
   const [pendingShareRequest, setPendingShareRequest] =
+    useState<RemoteScreenViewRequest | null>(null);
+  /** PC A: shown after PC B accepts, prompting PC A to echo the confirmation token. */
+  const [pendingConfirmRequest, setPendingConfirmRequest] =
     useState<RemoteScreenViewRequest | null>(null);
   const [pendingOutgoingDeviceIds, setPendingOutgoingDeviceIds] = useState<
     Set<string>
@@ -163,6 +168,52 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
     setPendingShareRequest(request);
   };
 
+  /** PC A confirms they still want to view — echo the token to the server. */
+  const handleConfirmStart = async (request: RemoteScreenViewRequest) => {
+    setPendingConfirmRequest(null);
+    setLastUiAction("Confirming session with remote PC...");
+    const result = await confirmView(
+      request.request.id,
+      request.request.confirmationToken,
+    );
+    if (result.success) {
+      if (request.fromDevice?.id) {
+        setPendingOutgoingDeviceIds((current) =>
+          new Set(current).add(request.fromDevice!.id),
+        );
+      }
+      dispatch(
+        showNotification({
+          type: "success",
+          title: "Session Confirmed",
+          message: `Waiting for ${
+            request.fromDevice?.name || "the remote device"
+          } to begin sharing.`,
+          autoClose: 4000,
+        }),
+      );
+    } else {
+      dispatch(
+        showNotification({
+          type: "error",
+          title: "Confirmation Failed",
+          message: result.error || "Could not confirm the remote screen session.",
+          autoClose: 5000,
+        }),
+      );
+    }
+  };
+
+  /** PC A cancels at the confirm step — end the session cleanly. */
+  const handleCancelConfirm = (requestId: string) => {
+    setPendingConfirmRequest(null);
+    const deviceId = pendingConfirmRequest?.fromDevice?.id;
+    if (deviceId) {
+      void endSession(deviceId, "confirm-cancelled");
+    }
+    setLastUiAction("Session confirmation cancelled");
+  };
+
   const handleCancelShareSource = (requestId: string) => {
     setLastUiAction("Screen sharing cancelled");
     setPendingShareRequest(null);
@@ -195,10 +246,33 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
   const isManualUrlActive =
     activeServerUrl === normalizeConnectionUrl(serverUrl) &&
     !isLocalConnection(serverUrl);
+  // PC B: "pending" requests need the permission dialog.
+  // "ready" requests (after PC A confirmed) skip straight to the source picker.
   const activeIncomingRequest =
     incomingRequests.find(
-      (entry) => !dismissedRequestIds.has(entry.request.id),
+      (entry) =>
+        !dismissedRequestIds.has(entry.request.id) &&
+        entry.request.status === "pending",
     ) ?? null;
+
+  const activeReadyRequest =
+    incomingRequests.find(
+      (entry) =>
+        !dismissedRequestIds.has(entry.request.id) &&
+        entry.request.status === "ready",
+    ) ?? null;
+
+  // PC B: when a request transitions to "ready" (PC A confirmed), immediately
+  // open the source picker so the sharer can choose what to share.
+  useEffect(() => {
+    if (!activeReadyRequest || pendingShareRequest) return;
+
+    setLastUiAction("Remote PC confirmed — choose what to share");
+    setDismissedRequestIds((current) =>
+      new Set(current).add(activeReadyRequest.request.id),
+    );
+    setPendingShareRequest(activeReadyRequest);
+  }, [activeReadyRequest, pendingShareRequest]);
 
   useEffect(() => {
     if (
@@ -246,24 +320,9 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
     }
 
     const offAccepted = remoteScreenApi.onRequestAccepted((request) => {
-      if (request.fromDevice?.id) {
-        setPendingOutgoingDeviceIds((current) => {
-          const next = new Set(current);
-          next.delete(request.fromDevice!.id);
-          return next;
-        });
-      }
-
-      dispatch(
-        showNotification({
-          type: "success",
-          title: "Remote Access Approved",
-          message: `${
-            request.fromDevice?.name || "The remote device"
-          } accepted your screen viewing request.`,
-          autoClose: 4500,
-        }),
-      );
+      // Do NOT clear pendingOutgoingDeviceIds yet — the session is not live
+      // until PC A confirms. Show the second-step confirmation dialog instead.
+      setPendingConfirmRequest(request);
     });
 
     const offDenied = remoteScreenApi.onRequestDenied((request) => {
@@ -274,6 +333,11 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
           return next;
         });
       }
+
+      // Clear confirm dialog if it was open for this request.
+      setPendingConfirmRequest((current) =>
+        current?.request.id === request.request.id ? null : current,
+      );
 
       dispatch(
         showNotification({
@@ -307,6 +371,18 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
         if (payload.toDeviceId) next.delete(payload.toDeviceId);
         return next;
       });
+      setPendingConfirmRequest((current) => {
+        if (
+          !current ||
+          current.request.fromDeviceId === payload.fromDeviceId ||
+          current.request.toDeviceId === payload.fromDeviceId ||
+          current.request.fromDeviceId === payload.toDeviceId ||
+          current.request.toDeviceId === payload.toDeviceId
+        ) {
+          return null;
+        }
+        return current;
+      });
       setPendingShareRequest((current) => {
         if (
           !current ||
@@ -329,6 +405,11 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
         request={activeIncomingRequest}
         onDeny={handleDenyAccessRequest}
         onAllow={handleAllowAccessRequest}
+      />
+      <ConfirmStartDialog
+        request={pendingConfirmRequest}
+        onConfirm={handleConfirmStart}
+        onCancel={handleCancelConfirm}
       />
       <ShareSourceDialog
         request={pendingShareRequest}

@@ -10,9 +10,9 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
   intensity = "strong",
 }) => {
   const intensityClasses = {
-    light: "opacity-24",
-    medium: "opacity-33",
-    strong: "opacity-42",
+    light: "opacity-10",
+    medium: "opacity-14",
+    strong: "opacity-18",
   };
 
   return (
@@ -21,20 +21,17 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "linear-gradient(160deg, rgb(var(--theme-primary-950) / 0.98) 0%, rgb(var(--theme-primary-900) / 0.9) 45%, rgb(var(--theme-primary-950) / 0.98) 100%)",
+          background: "rgb(var(--theme-primary-950))",
         }}
       />
 
-      {/* Subtle gradient accents using theme colors */}
+      {/* Subtle tonal accents using theme colors */}
       <div
         className="absolute inset-0"
         style={{
           background: `radial-gradient(ellipse 58% 42% at 15% 85%, 
-            rgb(var(--theme-primary-300) / 0.68) 0%, 
-            rgb(var(--theme-primary-400) / 0.46) 30%, 
-            rgb(var(--theme-primary-500) / 0.28) 60%, 
-            rgb(var(--theme-primary-700) / 0.12) 80%, 
+            rgb(var(--primary-300) / 0.08) 0%, 
+            rgb(var(--primary-500) / 0.04) 62%, 
                transparent 100%)`,
         }}
       />
@@ -44,8 +41,8 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
         className="absolute inset-0"
         style={{
           background: `radial-gradient(ellipse 35% 26% at 85% 20%, 
-               rgb(var(--theme-primary-300) / 0.55) 0%, 
-               rgb(var(--theme-primary-500) / 0.24) 50%, 
+               rgb(var(--theme-primary-500) / 0.08) 0%, 
+               rgb(var(--primary-500) / 0.04) 50%, 
                transparent 100%)`,
         }}
       />
@@ -55,7 +52,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 12% 20%, rgb(var(--theme-primary-200) / 0.08) 0%, transparent 36%), radial-gradient(circle at 78% 68%, rgb(var(--theme-primary-300) / 0.08) 0%, transparent 34%), radial-gradient(circle at 40% 42%, rgb(var(--theme-primary-400) / 0.06) 0%, transparent 45%)",
+            "radial-gradient(circle at 12% 20%, rgb(var(--theme-primary-500) / 0.05) 0%, transparent 36%), radial-gradient(circle at 78% 68%, rgb(var(--primary-300) / 0.035) 0%, transparent 34%), radial-gradient(circle at 40% 42%, rgb(var(--theme-primary-400) / 0.04) 0%, transparent 45%)",
         }}
       />
 
@@ -75,48 +72,13 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
               patternUnits="userSpaceOnUse"
             >
               {/* Nodes with theme-aware colors */}
-              <circle
-                cx="30"
-                cy="30"
-                r="1.5"
-                className="fill-theme-primary-400/70"
-              />
-              <circle
-                cx="90"
-                cy="30"
-                r="1.2"
-                className="fill-theme-primary-500/60"
-              />
-              <circle
-                cx="30"
-                cy="60"
-                r="1.3"
-                className="fill-theme-primary-600/65"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r="1.8"
-                className="fill-theme-primary-700/60"
-              />
-              <circle
-                cx="90"
-                cy="60"
-                r="1.1"
-                className="fill-theme-primary-400/60"
-              />
-              <circle
-                cx="30"
-                cy="90"
-                r="1"
-                className="fill-theme-primary-500/65"
-              />
-              <circle
-                cx="90"
-                cy="90"
-                r="1.4"
-                className="fill-theme-primary-600/60"
-              />
+              <circle cx="30" cy="30" r="1.5" className="fill-primary-400/35" />
+              <circle cx="90" cy="30" r="1.2" className="fill-primary-500/30" />
+              <circle cx="30" cy="60" r="1.3" className="fill-primary-600/30" />
+              <circle cx="60" cy="60" r="1.8" className="fill-primary-700/28" />
+              <circle cx="90" cy="60" r="1.1" className="fill-primary-400/28" />
+              <circle cx="30" cy="90" r="1" className="fill-primary-500/30" />
+              <circle cx="90" cy="90" r="1.4" className="fill-primary-600/28" />
 
               {/* Horizontal connection lines */}
               <line
@@ -124,7 +86,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="30"
                 x2="90"
                 y2="30"
-                className="stroke-theme-primary-400/40"
+                className="stroke-primary-400/18"
                 strokeWidth="0.6"
               />
               <line
@@ -132,7 +94,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="60"
                 x2="90"
                 y2="60"
-                className="stroke-theme-primary-500/35"
+                className="stroke-primary-500/16"
                 strokeWidth="0.6"
               />
               <line
@@ -140,7 +102,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="90"
                 x2="90"
                 y2="90"
-                className="stroke-theme-primary-600/35"
+                className="stroke-theme-primary-600/18"
                 strokeWidth="0.6"
               />
 
@@ -150,7 +112,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="30"
                 x2="60"
                 y2="60"
-                className="stroke-theme-primary-300/45"
+                className="stroke-primary-300/18"
                 strokeWidth="0.55"
               />
               <line
@@ -158,7 +120,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="60"
                 x2="90"
                 y2="90"
-                className="stroke-theme-primary-400/42"
+                className="stroke-primary-400/16"
                 strokeWidth="0.55"
               />
               <line
@@ -166,7 +128,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="30"
                 x2="60"
                 y2="60"
-                className="stroke-theme-primary-500/38"
+                className="stroke-primary-500/16"
                 strokeWidth="0.55"
               />
               <line
@@ -174,7 +136,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="60"
                 x2="30"
                 y2="90"
-                className="stroke-theme-primary-600/35"
+                className="stroke-primary-600/14"
                 strokeWidth="0.55"
               />
 
@@ -184,7 +146,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="30"
                 x2="90"
                 y2="60"
-                className="stroke-theme-primary-400/28"
+                className="stroke-primary-400/12"
                 strokeWidth="0.45"
               />
               <line
@@ -192,7 +154,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
                 y1="60"
                 x2="90"
                 y2="90"
-                className="stroke-theme-primary-500/24"
+                className="stroke-primary-500/12"
                 strokeWidth="0.45"
               />
             </pattern>
@@ -207,36 +169,11 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
               patternUnits="userSpaceOnUse"
             >
               {/* Dense node network */}
-              <circle
-                cx="20"
-                cy="20"
-                r="0.8"
-                className="fill-theme-primary-400/50"
-              />
-              <circle
-                cx="60"
-                cy="20"
-                r="0.6"
-                className="fill-theme-primary-500/45"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="1"
-                className="fill-theme-primary-600/50"
-              />
-              <circle
-                cx="20"
-                cy="60"
-                r="0.7"
-                className="fill-theme-primary-700/45"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r="0.9"
-                className="fill-theme-primary-400/50"
-              />
+              <circle cx="20" cy="20" r="0.8" className="fill-primary-400/20" />
+              <circle cx="60" cy="20" r="0.6" className="fill-primary-500/18" />
+              <circle cx="40" cy="40" r="1" className="fill-primary-600/20" />
+              <circle cx="20" cy="60" r="0.7" className="fill-primary-700/18" />
+              <circle cx="60" cy="60" r="0.9" className="fill-primary-400/20" />
 
               {/* Dense connection lines */}
               <line
@@ -280,7 +217,7 @@ export const MeshBackground: React.FC<MeshBackgroundProps> = ({
       </div>
 
       {/* Additional dense mesh layer */}
-      <div className={`absolute inset-0 opacity-16 pointer-events-none`}>
+      <div className={`absolute inset-0 opacity-[0.06] pointer-events-none`}>
         <svg width="100%" height="100%" className="absolute inset-0">
           <rect width="100%" height="100%" fill="url(#welcomeDenseMesh)" />
         </svg>

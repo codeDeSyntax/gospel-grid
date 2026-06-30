@@ -294,14 +294,10 @@ export function useRemoteWebRtc(): RemoteWebRtcController {
           };
         });
 
-        const acceptResult = await remoteScreenApi.acceptViewRequest(request.request.id);
-        if (!acceptResult.success) {
-          closePeer(request.fromDevice.id, false);
-          localStream.getTracks().forEach((track) => track.stop());
-          setLastError(acceptResult.error || "Failed to accept remote request.");
-          return acceptResult;
-        }
-
+        // acceptViewRequest is no longer called here. The new two-step protocol
+        // means PC B receives view_request_ready only after the server has
+        // verified PC A's confirmation token, so by the time startSharingForRequest
+        // is invoked the request is already fully confirmed on the server side.
         const offer = await entry.peer.createOffer();
         await entry.peer.setLocalDescription(offer);
         await remoteScreenApi.sendSignal(request.fromDevice.id, {

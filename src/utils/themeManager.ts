@@ -1,64 +1,41 @@
-import { ColorTheme, normalizeColorTheme } from "@/store/slices/appSlice";
+export type ColorThemeMode = "light" | "dark";
 
 export class ThemeManager {
-  private static readonly STORAGE_KEY = "wingrid-color-theme";
-
-  /**
-   * Initialize theme on app startup
-   */
-  static initialize() {
-    // Load saved theme from localStorage
-    const savedTheme = this.getSavedTheme();
-
-    // Apply theme to document
-    this.applyTheme(savedTheme);
-
-    return savedTheme;
+  static initialize(): ColorThemeMode {
+    return document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
   }
 
-  /**
-   * Apply theme to document root
-   */
-  static applyTheme(theme: ColorTheme) {
-    document.documentElement.setAttribute("data-color-theme", theme);
+  static applyTheme(theme: ColorThemeMode) {
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }
 
-  /**
-   * Save theme to localStorage
-   */
-  static saveTheme(theme: ColorTheme) {
+  static saveTheme(theme: ColorThemeMode) {
     try {
-      localStorage.setItem(this.STORAGE_KEY, theme);
+      localStorage.setItem("wingrid-theme-mode", theme);
     } catch (error) {
-      console.warn("Failed to save theme to localStorage:", error);
+      console.warn("Failed to save theme mode:", error);
     }
   }
 
-  /**
-   * Get saved theme from localStorage
-   */
-  static getSavedTheme(): ColorTheme {
+  static getSavedTheme(): ColorThemeMode {
     try {
-      const saved = localStorage.getItem(this.STORAGE_KEY);
-      return normalizeColorTheme(saved);
+      return localStorage.getItem("wingrid-theme-mode") === "light"
+        ? "light"
+        : "dark";
     } catch (error) {
-      console.warn("Failed to load theme from localStorage:", error);
-      return "grayscale"; // Default fallback
+      console.warn("Failed to load theme mode:", error);
+      return "dark";
     }
   }
 
-  /**
-   * Get CSS custom property value for current theme
-   */
   static getThemeVariable(variableName: string): string {
     return getComputedStyle(document.documentElement)
       .getPropertyValue(`--theme-${variableName}`)
       .trim();
   }
 
-  /**
-   * Convert RGB values to rgba string with alpha
-   */
   static rgba(rgbValues: string, alpha: number = 1): string {
     return `rgba(${rgbValues}, ${alpha})`;
   }

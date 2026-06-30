@@ -6,6 +6,8 @@ export type RemoteScreenMessageType =
   | 'view_request'
   | 'view_request_accepted'
   | 'view_request_denied'
+  | 'view_request_confirm'
+  | 'view_request_ready'
   | 'signal'
   | 'session_ended'
   | 'error';
@@ -28,13 +30,15 @@ export interface DeviceProfile {
   appVersion?: string;
 }
 
-export type ViewRequestStatus = 'pending' | 'accepted' | 'denied' | 'expired';
+export type ViewRequestStatus = 'pending' | 'accepted' | 'denied' | 'expired' | 'confirmed' | 'ready';
 
 export interface ViewRequest {
   id: string;
   fromDeviceId: string;
   toDeviceId: string;
   status: ViewRequestStatus;
+  /** One-time token sent to PC A with view_request_accepted; PC A must echo it back in view_request_confirm. */
+  confirmationToken: string;
   createdAt: string;
   expiresAt: string;
   resolvedAt?: string;
@@ -66,6 +70,20 @@ export type RemoteScreenMessage =
       version: number;
       type: 'view_request_accepted' | 'view_request_denied';
       requestId?: string;
+      request?: ViewRequest;
+      fromDevice?: PublicDevice | null;
+      /** Confirmation token included in view_request_accepted so PC A can echo it back. */
+      confirmationToken?: string;
+    }
+  | {
+      version: number;
+      type: 'view_request_confirm';
+      requestId?: string;
+      confirmationToken?: string;
+    }
+  | {
+      version: number;
+      type: 'view_request_ready';
       request?: ViewRequest;
       fromDevice?: PublicDevice | null;
     }

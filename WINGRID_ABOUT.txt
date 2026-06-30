@@ -1,0 +1,160 @@
+Here is a structured overview of Wingrid based on the codebase, git history, and FYP documentation.
+
+What Wingrid Is
+Wingrid (v2.2.32) is a Windows desktop multi-window presentation orchestration system — your Final Year Project at the University of Ghana. It is not just screen sharing or remote desktop; the core idea is controlled presentation composition:
+
+Pick specific live application windows (not the whole desktop)
+Arrange them into clean layouts
+Project that curated view to secondary displays
+Manage it live (blackout, freeze, overlays, captions, timers, etc.)
+The problem it targets: operators in churches, classrooms, streams, and hybrid meetings need multiple apps visible at once, but Windows display modes, meeting platforms, and full-desktop sharing all get in the way.
+
+Tech Stack
+Layer	Technology
+Desktop
+Electron 33 + Vite
+UI
+React 18, TypeScript, Tailwind, Framer Motion
+State
+Redux Toolkit (5 active slices)
+Packaging
+electron-builder (NSIS), auto-updates via GitHub releases
+Speech
+AssemblyAI streaming (main process) + optional local Whisper server
+Remote
+WebRTC + LAN signaling
+Platform focus is Windows x64 — window enumeration, thumbnails, and display routing are native.
+
+Architecture: Two Windows, One Operator
+Control Window (laptop display)
+Published Window(s) (external display)
+Publish per display
+IPC sync
+Window Picker
+AutoFit Preview
+Title Bar / Controls
+LiveWindowGrid
+Overlay / Blackout / Freeze
+Control window — maximized on the internal/laptop display. This is the Dashboard.
+Published window(s) — fullscreen on target monitor(s), opened via ?layoutId=... in a separate BrowserWindow.
+Navigation is a simple screen state machine in App.tsx (no React Router):
+
+welcome → onboarding
+dashboard → main workspace
+published → audience-facing projection output
+Main Dashboard Layout
+TitleBar (publish, blackout/freeze, undo/redo, settings, updates)
+├── Left: WindowPicker (resizable 300–600px sidebar)
+└── Right: InspectorPanel
+    ├── Settings (appearance, window mgmt, projection quality, AssemblyAI key)
+    └── Feature rail + views:
+        ├── AutoFit layout (multi-display preview + publish)
+        ├── Text overlay
+        ├── Timer
+        ├── Live captions
+        ├── Remote screens
+        └── Image tiles
+FloatingCaptionsOrb (global)
+Features You've Built
+Core window management
+Enumerates capturable Windows app windows with icons and live thumbnails
+Drag-and-drop selection, pin/focus windows
+Smart refresh intervals (30s–5min)
+Undo/redo for selection and display assignments
+Layout engine
+Auto modes from window count: single, dual, triple, quad
+Preview pipeline (AutoFitWindowLayoutOptimized) — debounced static thumbnails
+Live projection pipeline (LiveWindowGrid) — GPU getUserMedia video at 30–60 FPS (migrated away from IPC/base64 capture)
+Multi-display routing
+Assign windows per monitor (gridSlice.displayAssignments)
+Per-display publish/close (publishDisplayLayout thunk)
+Hide/show windows per display
+Live sync to published windows via updatePublishedLayout
+Projection controls
+F5 toggle projection, F6 blackout, F7 freeze
+Text overlay with history
+Contrast/brightness filters on output
+System tray controls
+Power-save blocker while projecting
+Confidence monitor (projection page snapshots)
+Feature tiles (virtual windows in the grid)
+Feature	Purpose
+Text Overlay
+Audience-facing messages
+Timer
+Countdown/clock tiles
+Live Captions
+Mic → AssemblyAI → caption tile
+Remote Screens
+LAN discovery, permission-based WebRTC viewing
+Images
+Image directory as layout tiles
+Remote collaboration
+LAN signaling embedded in the Electron main process
+Tabs: Nearby Devices, Connected Devices, WebRTC Sessions
+Permission flow: request → accept/deny → share via WebRTC
+Recent commit df561b1 improved readiness and connection states
+Speech & captions
+AssemblyAI streaming in main process with secure API key storage
+Optional local Whisper server (npm run start:audio, port 3001)
+Web Speech API bridge in preload
+Polish & distribution
+6 color themes, persisted settings (wingrid-settings)
+Auto-update via electron-updater
+Toast/modal notification system
+Frequent release cadence (currently v2.2.32)
+CI hardening (semver pins, updater dependency verification)
+Electron Main Process
+The main process (electron/main/index.ts) handles:
+
+Single-instance lock
+~30+ IPC handlers (windows, thumbnails, publish, displays, quality, projection state)
+Global shortcuts and system tray
+Native Windows integration (HWND focus/minimize/move, thumbnail capture, display detection)
+registerAssemblyAiIpc() and registerRemoteScreenIpc() at startup
+Preload exposes windowControls, electronAPI, speechToTextAPI, and speechAPI via contextBridge with contextIsolation: true.
+
+Redux Store
+Slice	Role
+app
+Theme, projection state, overlay, quality, refresh interval
+grid
+Display assignments, hidden windows, thumbnails, presets
+notification
+Toasts/modals + handlePublishLayout / publishDisplayLayout thunks
+captions
+Live captions state
+window
+Defined but dashboard mostly uses local state + hooks
+Recent Work (from git history)
+Multi-display UI polish — 65b36a6 update with ui changes and ongoing work in AutoFitWindowLayoutOptimized.tsx
+Remote screens maturity — connection states and readiness improvements
+GPU projection pipeline — LiveWindowGrid uses in-renderer MediaStreams instead of main-process capture loops
+Release infrastructure — supply-chain fixes, updater runtime deps, package verification
+Folder refactor in progress — canonical UI lives under panel/; RightPanel/ and inspector/ are mostly re-export shims
+Current Uncommitted Change
+You have one local modification in AutoFitWindowLayoutOptimized.tsx:
+
+Removed 3 hardcoded placeholder display boxes (black 16:9 rectangles used for layout prototyping)
+Simplified the grid CSS (grid-cols-2 removed; layout now driven fully by getGridClasses(displays.length))
+That is a cleanup step — the multi-display preview now renders only real detected displays, not dummy placeholders.
+
+FYP Positioning
+WINGRID_DEFENCE_NOTES.txt frames the project as:
+
+"Wingrid: A Network-Aware Multi-Window Presentation Control System"
+
+Key differentiators for defense:
+
+Curated multi-window composition (not full desktop share)
+Multi-monitor routing without constantly switching Windows display modes
+Permission-based LAN remote viewing
+Live presentation controls (blackout, freeze, overlay, captions)
+Mental Model
+Operator workflow:
+
+Open Wingrid on laptop → pick windows from the sidebar
+Assign them to displays in the AutoFit preview
+Publish → fullscreen window(s) open on target monitor(s)
+Control live via TitleBar, shortcuts, or system tray
+Optionally: stream captions, show timers/images, or let a remote peer view via WebRTC

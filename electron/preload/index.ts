@@ -179,6 +179,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.invoke("remote-screen:accept-view-request", { requestId }),
     denyViewRequest: (requestId: string) =>
       ipcRenderer.invoke("remote-screen:deny-view-request", { requestId }),
+    confirmView: (requestId: string, confirmationToken: string) =>
+      ipcRenderer.invoke("remote-screen:confirm-view", { requestId, confirmationToken }),
     sendSignal: (deviceId: string, signal: unknown) =>
       ipcRenderer.invoke("remote-screen:send-signal", { deviceId, signal }),
     endSession: (deviceId: string, reason?: string) =>
@@ -217,6 +219,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       const listener = (_: any, request: any) => callback(request);
       ipcRenderer.on("remote-screen:request-denied", listener);
       return () => ipcRenderer.off("remote-screen:request-denied", listener);
+    },
+    onRequestReady: (callback: (request: any) => void) => {
+      const listener = (_: any, request: any) => callback(request);
+      ipcRenderer.on("remote-screen:request-ready", listener);
+      return () => ipcRenderer.off("remote-screen:request-ready", listener);
     },
     onSignal: (callback: (signal: any) => void) => {
       const listener = (_: any, signal: any) => callback(signal);

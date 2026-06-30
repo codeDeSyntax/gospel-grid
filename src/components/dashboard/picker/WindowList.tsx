@@ -2,15 +2,13 @@ import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MdMonitor,
-  MdSearch,
   MdError,
   MdCheck,
   MdPushPin,
   MdDragIndicator,
 } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { getWindowFallbackIcon, getAppGradient } from "@/utils/appIconMapping";
-import { CircularCountdown } from "@/components/ui/CircularCountdown";
+import { getWindowFallbackIcon } from "@/utils/appIconMapping";
 import { DepthButton } from "@/shared/DepthButton";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { RefreshCcwDot, ShieldAlert, Sparkles } from "lucide-react";
@@ -31,25 +29,25 @@ const getIntelligenceBadgeClasses = (
 ) => {
   if (intel.riskLevel === "high" || intel.recommendation === "avoid") {
     return isLightMode
-      ? "border-red-700/35 bg-red-100/85 text-red-950"
-      : "border-red-300/35 bg-red-500/18 text-red-100";
+      ? "border-primary-700/45 bg-primary-100/90 text-primary-950"
+      : "border-primary-300/35 bg-primary-500/18 text-primary-100";
   }
 
   if (tag === "Recommended") {
     return isLightMode
-      ? "border-emerald-700/35 bg-emerald-100/85 text-emerald-950"
-      : "border-emerald-300/45 bg-emerald-500/18 text-emerald-100";
+      ? "border-primary-700/45 bg-primary-200/90 text-primary-950"
+      : "border-primary-300/45 bg-primary-500/24 text-primary-50";
   }
 
   if (intel.riskLevel === "medium") {
     return isLightMode
-      ? "border-amber-700/35 bg-amber-100/90 text-amber-950"
-      : "border-amber-300/35 bg-amber-500/15 text-amber-100";
+      ? "border-primary-700/35 bg-primary-50 text-primary-900"
+      : "border-primary-400/30 bg-primary-700/18 text-primary-100";
   }
 
   return isLightMode
-    ? "border-theme-primary-300/60 bg-theme-primary-950/80 text-theme-primary-50"
-    : "border-theme-primary-400/25 bg-theme-primary-800/70 text-theme-primary-100";
+    ? "border-primary-700/25 bg-primary-50/85 text-primary-900"
+    : "border-primary-400/25 bg-primary-900/28 text-primary-100";
 };
 
 export interface WindowInfo {
@@ -115,9 +113,8 @@ export const WindowList: React.FC<WindowListProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
   const showLoadingSkeleton = isLoading && windows.length === 0;
-  const themeMode = useAppSelector((s) => s.app.theme);
-  const colorTheme = useAppSelector((s) => s.app.colorTheme);
-  const isLightMode = themeMode === "light" || colorTheme === "neutral-light";
+  const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
+  const isLightMode = !isDarkMode;
   const intelligenceByWindowId = useMemo(() => {
     return new Map(
       windows.map((window) => [window.id, classifyWindow(window)]),
@@ -178,37 +175,61 @@ export const WindowList: React.FC<WindowListProps> = ({
           {/* Timer + Refresh — gamified */}
           <div className="flex items-center gap-2">
             {countdownTime > 0 && (
-              <div className="relative overflow-hidden rounded-xl border border-theme-primary-400/35 depth-active-surface p-0.5 px-2 ">
-                <span className="pointer-events-none absolute inset-x-2 top-[2px] h-1.5 rounded-full blur-[1px] bg-theme-primary-50/20" />
-                <span className="pointer-events-none absolute inset-[1px] rounded-[10px] border border-theme-primary-50/10" />
-                <div className="relative z-10 flex items-center gap-2">
-                  <div className="rounded-full border border-theme-primary-300/30 bg-theme-primary-100 p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
-                    <CircularCountdown
-                      remainingTime={countdownTime}
-                      totalTime={totalRefreshTime}
-                      size={26}
-                      isLoading={isLoading}
+              <div className="flex h-8 items-center gap-1.5 rounded-full bg-theme-primary-900 px-1.5 text-theme-primary-200">
+                <span className="relative flex h-6 w-6 items-center justify-center">
+                  <svg className="h-6 w-6 -rotate-90" viewBox="0 0 24 24">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      fill="none"
+                      stroke="rgb(var(--theme-primary-700) / 0.72)"
+                      strokeWidth="2"
                     />
-                  </div>
-                  <span className="font-[impact] text-[13px] tabular-nums text-theme-primary-100 leading-none tracking-wide drop-shadow-[0_1px_1px_rgba(var(--theme-primary-900),0.45)]">
-                    {Math.ceil(countdownTime)}s
-                  </span>
-                  {onManualRefresh && (
-                    <DepthButton
-                      onClick={onManualRefresh}
-                      sizeClassName="w-8 h-8 py-1 px-1 rounded-xl"
-                      title="Refresh now"
-                      inactiveClassName="text-theme-primary-100 border-theme-primary-300/45"
-                      inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-600/40 via-theme-primary-700/75 to-theme-primary-900/80"
-                      className="active:scale-95 shadow-[inset_0_1px_0_rgba(var(--theme-primary-50),0.24),inset_0_-1px_0_rgba(var(--theme-primary-900),0.5),0_10px_20px_rgba(var(--theme-primary-900),0.3)] p-1 rounded-full"
-                    >
-                      <RefreshCcwDot
-                        size={20}
-                        className="transition-transform duration-500 group-hover:rotate-180 drop-shadow-[0_1px_1px_rgba(var(--theme-primary-900),0.45)]"
-                      />
-                    </DepthButton>
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      fill="none"
+                      stroke="rgb(var(--primary-500))"
+                      strokeLinecap="round"
+                      strokeWidth="2"
+                      strokeDasharray={`${2 * Math.PI * 9}`}
+                      strokeDashoffset={`${
+                        2 *
+                        Math.PI *
+                        9 *
+                        (1 -
+                          Math.max(
+                            0,
+                            Math.min(1, countdownTime / totalRefreshTime),
+                          ))
+                      }`}
+                    />
+                  </svg>
+                  {isLoading && (
+                    <AiOutlineLoading3Quarters
+                      size={11}
+                      className="absolute animate-spin text-primary-500"
+                    />
                   )}
-                </div>
+                </span>
+                <span className="w-7 text-right text-[11px] font-semibold tabular-nums leading-none text-theme-primary-100">
+                  {Math.ceil(countdownTime)}s
+                </span>
+                {onManualRefresh && (
+                  <button
+                    type="button"
+                    onClick={onManualRefresh}
+                    title="Refresh now"
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-theme-primary-200 transition-colors hover:bg-theme-primary-800 hover:text-primary-400"
+                  >
+                    <RefreshCcwDot
+                      size={15}
+                      className="transition-transform duration-300 hover:rotate-180"
+                    />
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -223,10 +244,10 @@ export const WindowList: React.FC<WindowListProps> = ({
 
         {selectedRiskWindows.length > 0 && (
           <div
-            className={`rounded-2xl border-none border-amber-400/25 px-2 py-1.5 ${
+            className={`rounded-2xl border border-solid px-2 py-1.5 ${
               isLightMode
-                ? "bg-amber-100/80 text-amber-950"
-                : "bg-amber-500/10 text-amber-100"
+                ? "border-primary-700/25 bg-primary-50/85 text-primary-950"
+                : "border-primary-400/20 bg-primary-900/20 text-primary-100"
             }`}
           >
             <div className="flex items-start gap-1.5">
@@ -374,23 +395,23 @@ export const WindowList: React.FC<WindowListProps> = ({
                       }
                     }}
                     className={`
-                    relative overflow-hidden border border-solid transition-all duration-200
-                    flex items-center gap-2.5 pl-5 pr-8 py-1.5 rounded-xl group
+                    relative overflow-hidden border-1  border-solid transition-all duration-200
+                    flex items-center gap-2.5 pl-5 pr-8  py-0.5 rounded-full group
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
                       isCaptionsWindow
-                        ? "border-theme-primary-300/35 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--theme-primary-300),0.26),transparent_55%),radial-gradient(ellipse_at_80%_100%,rgba(var(--theme-primary-500),0.22),transparent_55%),linear-gradient(130deg,rgba(var(--theme-primary-900),0.95),rgba(var(--theme-primary-800),0.9))] shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.25),0_0_22px_rgba(var(--theme-primary-400),0.2),inset_0_0_40px_rgba(var(--theme-primary-500),0.18)] hover:shadow-[0_0_0_1px_rgba(var(--theme-primary-300),0.38),0_0_30px_rgba(var(--theme-primary-400),0.3),inset_0_0_55px_rgba(var(--theme-primary-500),0.24)]"
+                        ? "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18"
                         : window.isSelected
-                          ? "border-theme-primary-300/35 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                          ? "border-theme-primary-300/35 border-dotted bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
                           : "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
                     }
                   `}
                   >
                     {(isCaptionsWindow || isTimerWindow) && (
                       <DepthSurface
-                        className="pointer-events-none absolute inset-0 rounded-xl"
-                        surfaceClassName="depth-active-surface opacity-20 shadow-none"
+                        className="pointer-events-none absolute rounded-xl"
+                        surfaceClassName="depth-active-surface opacity-10 shadow-none"
                       >
                         <span className="sr-only">
                           {isCaptionsWindow
@@ -490,38 +511,38 @@ export const WindowList: React.FC<WindowListProps> = ({
 
                           {/* App Icon */}
                           <DepthButton
-                            sizeClassName="relative flex-shrink-0 w-8 h-8 rounded-lg z-10 pointer-events-none"
+                            sizeClassName="relative flex-shrink-0 w-10 h-10 rounded-full z-10 pointer-events-none"
                             className="!cursor-default"
                             active={window.isSelected}
                             inactiveClassName={
                               isCaptionsWindow
-                                ? "text-theme-primary-50 border-theme-primary-300/45"
-                                : "text-theme-primary-200/85 border-theme-primary-500/25"
+                                ? "text-primary-50 border-primary-300/45"
+                                : "text-primary-200/90 border-primary-500/30"
                             }
                             activeClassName={
                               isCaptionsWindow
-                                ? "text-theme-primary-50 border-theme-primary-200/75"
-                                : "text-theme-primary-50 border-theme-primary-300/70"
+                                ? "text-primary-50 border-primary-200/75"
+                                : "text-primary-50 border-primary-300/70"
                             }
                             inactiveSurfaceClassName={
                               isCaptionsWindow
-                                ? "bg-gradient-to-br from-theme-primary-500/40 via-theme-primary-400/30 to-theme-primary-700/45"
-                                : "bg-gradient-to-br from-theme-primary-900/45 via-theme-primary-800/30 to-theme-primary-900/45"
+                                ? "bg-gradient-to-br from-primary-500/45 via-primary-400/28 to-primary-700/45"
+                                : "bg-gradient-to-br from-primary-900/45 via-primary-700/25 to-primary-900/45"
                             }
                             activeSurfaceClassName={
                               isCaptionsWindow
-                                ? "bg-gradient-to-br from-theme-primary-300/90 via-theme-primary-400/95 to-theme-primary-600/92"
-                                : "bg-gradient-to-br from-theme-primary-400/90 via-theme-primary-500/95 to-theme-primary-600/90"
+                                ? "bg-gradient-to-br from-primary-300/90 via-primary-400/95 to-primary-600/92"
+                                : "bg-gradient-to-br from-primary-400/90 via-primary-500/95 to-primary-600/90"
                             }
                             aria-hidden
                             tabIndex={-1}
                           >
-                            <div className="relative w-8 h-8 flex items-center justify-center pointer-events-none">
+                            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full pointer-events-none">
                               {window.icon ? (
                                 <img
                                   src={window.icon}
                                   alt={`${window.app} icon`}
-                                  className="w-6 h-6 object-contain"
+                                  className="h-9 w-9 object-contain"
                                   onError={(e) => {
                                     e.currentTarget.style.display = "none";
                                     const fallback = e.currentTarget
@@ -537,38 +558,42 @@ export const WindowList: React.FC<WindowListProps> = ({
                                 }}
                                 className="w-full h-full items-center justify-center"
                               >
-                                {getWindowFallbackIcon(window, 20)}
+                                {getWindowFallbackIcon(window, 24)}
                               </div>
                             </div>
                           </DepthButton>
 
                           {/* Text Content */}
                           <div className="flex-1 min-w-0 z-10">
-                          {/* App Name */}
-                          <div
-                            className={`truncate text-xs font-semibold leading-tight ${
-                              isLightMode
-                                ? "text-theme-primary-50"
-                                : `bg-gradient-to-r ${
-                                    isCaptionsWindow
-                                      ? "from-theme-primary-50 via-theme-primary-100 to-theme-primary-200"
-                                      : getAppGradient(window.app)
-                                  } bg-clip-text text-transparent`
-                            }`}
-                          >
+                            {/* App Name */}
+                            <div
+                              className={`truncate text-xs font-normal leading-tight ${
+                                isLightMode
+                                  ? "text-primary-900"
+                                  : isCaptionsWindow
+                                    ? "text-primary-100"
+                                    : "text-primary-100"
+                              }`}
+                            >
                               {isCaptionsWindow ? "AI Speech" : window.app}
                             </div>
                             {/* Window Title */}
                             {isCaptionsWindow ? (
-                              <div className="text-[14px] font-[impact] tracking-[0.11em] uppercase text-theme-primary-50 drop-shadow-[0_0_8px_rgba(var(--theme-primary-300),0.5)] truncate leading-tight transition-colors duration-200 mt-0.5">
+                              <div
+                                className={`text-[14px] font-[impact] tracking-[0.11em] uppercase truncate leading-tight transition-colors duration-200 mt-0.5 ${
+                                  isLightMode
+                                    ? "text-primary-950"
+                                    : "text-primary-50 drop-shadow-[0_0_8px_rgba(var(--primary-300),0.35)]"
+                                }`}
+                              >
                                 {window.name}
                               </div>
                             ) : isTimerWindow ? (
                               <div
-                                className={`text-[26px] tabular-nums truncate leading-none text-theme-primary-50 transition-colors duration-200 mt-0.5 ${
+                                className={`text-[26px] tabular-nums truncate leading-none transition-colors duration-200 mt-0.5 ${
                                   isLightMode
-                                    ? "font-semibold tracking-[0.03em] text-theme-primary-50 group-hover:opacity-80"
-                                    : "font-[impact] tracking-[0.08em]  group-hover:opacity-100"
+                                    ? "font-thin tracking-[0.03em] text-primary-950 group-hover:text-primary-900"
+                                    : "font-[impact] tracking-[0.08em] text-primary-400 group-hover:text-primary-100"
                                 }`}
                                 style={{ opacity: isLightMode ? 0.96 : 0.9 }}
                               >
@@ -577,10 +602,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                             ) : (
                               <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
                                 <span
-                                  className={`min-w-0 truncate text-[11px] leading-tight transition-colors duration-200 ${
+                                  className={`min-w-0 truncate font-thin text-[11px] leading-tight transition-colors duration-200 ${
                                     isLightMode
-                                      ? "theme-text-soft group-hover:opacity-100"
-                                      : "theme-text-soft group-hover:opacity-95"
+                                      ? "text-primary-950 group-hover:text-primary-900"
+                                      : "text-white group-hover:text-primary-100"
                                   }`}
                                   style={{
                                     opacity: isLightMode ? 0.82 : 0.72,
@@ -627,8 +652,8 @@ export const WindowList: React.FC<WindowListProps> = ({
                                   <span
                                     className={`rounded border px-1 py-px text-[9px] ${
                                       isLightMode
-                                        ? "border-yellow-700/30 bg-yellow-100/85 text-yellow-950"
-                                        : "border-yellow-400/20 bg-yellow-500/20 text-yellow-300/70"
+                                        ? "border-primary-700/25 bg-primary-50/85 text-primary-900"
+                                        : "border-primary-400/20 bg-primary-900/24 text-primary-100/80"
                                     }`}
                                   >
                                     MIN
@@ -638,8 +663,8 @@ export const WindowList: React.FC<WindowListProps> = ({
                                   <span
                                     className={`rounded border px-1 py-px text-[9px] ${
                                       isLightMode
-                                        ? "border-green-700/30 bg-green-100/85 text-green-950"
-                                        : "border-green-400/20 bg-green-500/20 text-green-300/70"
+                                        ? "border-primary-700/25 bg-primary-100/85 text-primary-950"
+                                        : "border-primary-400/25 bg-primary-700/20 text-primary-100"
                                     }`}
                                   >
                                     MAX
@@ -706,7 +731,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                               }
                             >
                               {window.isSelected ? (
-                                <MdCheck size={16} />
+                                <img
+                                  src="./checkmark.png"
+                                  className="h-6 w-6"
+                                />
                               ) : (
                                 <MdDragIndicator size={17} />
                               )}

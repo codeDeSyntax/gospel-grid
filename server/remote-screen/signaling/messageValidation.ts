@@ -67,6 +67,11 @@ function validateMessageShape(message: Record<string, unknown>): void {
       }
       break;
 
+    case REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_CONFIRM:
+      requireString(message.requestId, 'requestId');
+      requireString(message.confirmationToken, 'confirmationToken');
+      break;
+
     case REMOTE_SCREEN_MESSAGE_TYPES.SIGNAL:
     case REMOTE_SCREEN_MESSAGE_TYPES.SESSION_ENDED:
       requireString(message.toDeviceId, 'toDeviceId');

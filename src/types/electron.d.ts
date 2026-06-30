@@ -64,7 +64,9 @@ export interface RemoteScreenViewRequest {
     id: string;
     fromDeviceId: string;
     toDeviceId: string;
-    status: "pending" | "accepted" | "denied" | "expired";
+    status: "pending" | "accepted" | "denied" | "expired" | "confirmed" | "ready";
+    /** One-time token included when status === 'accepted'; PC A must echo it back to confirm. */
+    confirmationToken: string;
     createdAt: string;
     expiresAt: string;
     resolvedAt?: string;
@@ -94,6 +96,7 @@ export interface RemoteScreenAPI {
   requestView: (deviceId: string) => Promise<RemoteScreenResult>;
   acceptViewRequest: (requestId: string) => Promise<RemoteScreenResult>;
   denyViewRequest: (requestId: string) => Promise<RemoteScreenResult>;
+  confirmView: (requestId: string, confirmationToken: string) => Promise<RemoteScreenResult>;
   sendSignal: (deviceId: string, signal: unknown) => Promise<RemoteScreenResult>;
   endSession: (deviceId: string, reason?: string) => Promise<RemoteScreenResult>;
   onStatusChanged: (callback: (status: RemoteScreenStatus) => void) => () => void;
@@ -103,6 +106,7 @@ export interface RemoteScreenAPI {
   onIncomingRequest: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
   onRequestAccepted: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
   onRequestDenied: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
+  onRequestReady: (callback: (request: RemoteScreenViewRequest) => void) => () => void;
   onSignal: (callback: (signal: unknown) => void) => () => void;
   onSessionEnded: (callback: (event: unknown) => void) => () => void;
 }

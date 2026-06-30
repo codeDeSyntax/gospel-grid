@@ -5,26 +5,14 @@ import { RotateCcw } from "lucide-react";
 import { DepthButton } from "@/shared/DepthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  setColorTheme,
-  ColorTheme,
-  THEME_NAMES,
+  setDarkMode,
   setPublishedContrast,
   setPublishedBrightness,
   setRefreshInterval,
   setRemoteScreensAutoStart,
   resetQualitySettings,
 } from "@/store/slices/appSlice";
-import { ThemeManager } from "@/utils/themeManager";
 import type { SettingsPanelProps } from "../RightPanel/types";
-
-const THEME_COLORS: Record<ColorTheme, string> = {
-  "neutral-light": "#D6DDE5",
-  grayscale: "#A89F93",
-  "royal-purple": "#5A4466",
-  "sky-blue": "#72A8D4",
-  "forest-green": "#4A6B44",
-  "fire-red": "#EF4444",
-};
 
 const REFRESH_OPTIONS = [
   { value: 30000, label: "30 seconds" },
@@ -100,7 +88,7 @@ const SettingRow: React.FC<{
 
 const SectionContent: React.FC<{
   tab: SettingsTab;
-  colorTheme: ColorTheme;
+  isDarkMode: boolean;
   publishedQuality: PublishedQuality;
   refreshInterval: number;
   remoteScreensAutoStart: boolean;
@@ -114,7 +102,7 @@ const SectionContent: React.FC<{
   dispatch: ReturnType<typeof useAppDispatch>;
 }> = ({
   tab,
-  colorTheme,
+  isDarkMode,
   publishedQuality,
   refreshInterval,
   remoteScreensAutoStart,
@@ -141,22 +129,23 @@ const SectionContent: React.FC<{
           </div>
           <div className="rounded-[24px] border border-theme-primary-500/10 bg-theme-primary-950/20 px-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] backdrop-blur-sm">
             <SettingRow
-              title="Color Theme"
-              description="Choose the accent color used throughout the interface."
+              title="Interface Mode"
+              description="Switch between the lighter workspace and the focused dark workspace."
               last
             >
-              <CustomSelect
-                value={colorTheme}
-                onChange={(v) => {
-                  dispatch(setColorTheme(v as ColorTheme));
-                  ThemeManager.saveTheme(v as ColorTheme);
-                }}
-                options={Object.entries(THEME_NAMES).map(([val, name]) => ({
-                  value: val,
-                  text: name,
-                  swatch: THEME_COLORS[val as ColorTheme],
-                }))}
-              />
+              <label className="flex h-10 cursor-pointer items-center justify-between rounded-lg border border-solid border-theme-primary-500/25 bg-theme-primary-900/30 px-3">
+                <span className="text-xs font-semibold text-theme-primary-100">
+                  {isDarkMode ? "Dark" : "Light"}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={isDarkMode}
+                  onChange={(event) =>
+                    dispatch(setDarkMode(event.target.checked))
+                  }
+                  className="h-4 w-4 accent-emerald-500"
+                />
+              </label>
             </SettingRow>
           </div>
         </section>
@@ -397,12 +386,12 @@ const SectionContent: React.FC<{
             </SettingRow>
 
             <SettingRow
-              title="Active Theme"
-              description="Current theme selected"
+              title="Interface Mode"
+              description="Current light or dark display mode."
               last
             >
               <span className="block text-right text-sm font-medium text-theme-primary-200/70">
-                {THEME_NAMES[colorTheme]}
+                {isDarkMode ? "Dark" : "Light"}
               </span>
             </SettingRow>
           </div>
@@ -425,7 +414,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
     safeStorageAvailable: false,
   });
   const dispatch = useAppDispatch();
-  const colorTheme = useAppSelector((s) => s.app.colorTheme);
+  const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
   const publishedQuality = useAppSelector((s) => s.app.publishedQuality);
   const refreshInterval = useAppSelector((s) => s.app.refreshInterval);
   const remoteScreensAutoStart = useAppSelector(
@@ -540,7 +529,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
         <div className="flex min-h-full flex-1 flex-col p-8 lg:p-10">
           <SectionContent
             tab={activeTab}
-            colorTheme={colorTheme}
+            isDarkMode={isDarkMode}
             publishedQuality={publishedQuality}
             refreshInterval={refreshInterval}
             remoteScreensAutoStart={remoteScreensAutoStart}

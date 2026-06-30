@@ -8,6 +8,10 @@ export const REMOTE_SCREEN_MESSAGE_TYPES = {
   VIEW_REQUEST: 'view_request',
   VIEW_REQUEST_ACCEPTED: 'view_request_accepted',
   VIEW_REQUEST_DENIED: 'view_request_denied',
+  /** Sent by PC A (the requester) after receiving view_request_accepted, echoing the confirmation token. */
+  VIEW_REQUEST_CONFIRM: 'view_request_confirm',
+  /** Sent by the server to PC B (the sharer) after PC A's confirmation token is verified. */
+  VIEW_REQUEST_READY: 'view_request_ready',
   SIGNAL: 'signal',
   SESSION_ENDED: 'session_ended',
   ERROR: 'error',

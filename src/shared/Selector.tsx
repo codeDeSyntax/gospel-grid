@@ -48,7 +48,7 @@ export const CustomSelect = ({
     <div ref={selectRef} className={`relative w-full ${className ?? ""}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 bg-theme-primary-900 border border-white/[0.07] rounded-full pl-3.5 pr-3 py-2.5 text-[13px] text-white/90 hover:bg-white/[0.06] hover:border-white/[0.12] focus:border-theme-primary-400/50 focus:ring-1 focus:ring-theme-primary-400/20 focus:outline-none transition-all duration-150 cursor-pointer"
+        className="w-full flex items-center justify-between gap-2 bg-theme-primary-900 border border-solid border-theme-primary-600/45 rounded-full pl-3.5 pr-3 py-2.5 text-[13px] text-theme-primary-50 hover:bg-theme-primary-800 hover:border-theme-primary-500/70 focus:border-primary-400/50 focus:ring-1 focus:ring-primary-400/20 focus:outline-none transition-all duration-150 cursor-pointer"
       >
         <span className="flex items-center gap-2 truncate text-theme-primary-50">
           {selectedOption?.swatch && (
@@ -63,12 +63,12 @@ export const CustomSelect = ({
           size={16}
           className={`shrink-0 transition-transform duration-150 ${
             isOpen ? "rotate-180" : ""
-          } text-theme-primary-50`}
+          } text-theme-primary-100`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1.5 bg-theme-primary-900 border border-white/[0.08] rounded-xl shadow-2xl shadow-black/60 overflow-hidden">
+        <div className="absolute z-50 w-full mt-1.5 bg-theme-primary-900 border border-solid border-theme-primary-600/45 rounded-xl shadow-2xl shadow-black/45 overflow-hidden">
           <div className="max-h-80 p-2 overflow-y-auto no-scrollbar py-1">
             {options.map((option) => {
               const isActive = option.value === value;
@@ -81,8 +81,8 @@ export const CustomSelect = ({
                   }}
                   className={`w-full rounded-2xl flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] transition-colors duration-100 cursor-pointer ${
                     isActive
-                      ? "bg-theme-primary-500/10 text-theme-primary-300"
-                      : "text-white/70 hover:bg-white/[0.05] hover:text-white/90"
+                      ? "bg-primary-500/10 text-primary-300"
+                      : "text-theme-primary-200 hover:bg-theme-primary-800 hover:text-theme-primary-50"
                   }`}
                 >
                   {option.swatch && (
@@ -97,7 +97,7 @@ export const CustomSelect = ({
                   {isActive && (
                     <Check
                       size={14}
-                      className="text-theme-primary-400 ml-2 flex-shrink-0"
+                      className="text-primary-400 ml-2 flex-shrink-0"
                     />
                   )}
                 </div>

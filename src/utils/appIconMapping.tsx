@@ -670,7 +670,7 @@ export const APP_ICON_MAP: Record<string, AppIconData> = {
 const DEFAULT_ICON_FALLBACK: AppIconData = {
   icon: <AppWindowMacIcon />,
   gradient: "from-gray-500 to-gray-300",
-  color: "text-theme-primary-200",
+  color: "text-primary-200",
 };
 
 const normalizeToken = (value: string) => value.toLowerCase().trim();

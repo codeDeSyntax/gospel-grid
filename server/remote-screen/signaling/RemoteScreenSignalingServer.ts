@@ -127,6 +127,10 @@ export class RemoteScreenSignalingServer {
         this.handleViewRequestResolution(fromDeviceId, message);
         break;
 
+      case REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_CONFIRM:
+        this.handleViewRequestConfirm(fromDeviceId, message);
+        break;
+
       case REMOTE_SCREEN_MESSAGE_TYPES.SIGNAL:
         this.forwardToDevice(fromDeviceId, message.toDeviceId, message);
         break;
@@ -183,7 +187,46 @@ export class RemoteScreenSignalingServer {
       throw new Error('Requesting device is no longer available');
     }
 
+    // When accepted, send the one-time confirmation token so PC A can echo it
+    // back in a view_request_confirm message to prove it is still the same
+    // session before screen sharing actually begins.
+    const extra = status === 'accepted'
+      ? { confirmationToken: request.confirmationToken }
+      : {};
+
     this.send(requester.connection, message.type, {
+      request,
+      fromDevice: this.publicDevice(fromDeviceId),
+      ...extra,
+    });
+  }
+
+  /**
+   * PC A echoes the confirmation token back. The server verifies it and, if
+   * valid, notifies PC B that sharing can now begin (view_request_ready).
+   */
+  private handleViewRequestConfirm(
+    fromDeviceId: string,
+    message: Extract<RemoteScreenMessage, { type: 'view_request_confirm' }>,
+  ): void {
+    if (!message.requestId || !message.confirmationToken) {
+      throw new Error('requestId and confirmationToken are required');
+    }
+
+    const request = this.requests.confirm(message.requestId, message.confirmationToken);
+    if (!request || request.fromDeviceId !== fromDeviceId) {
+      throw new Error('Confirmation token is invalid or has expired');
+    }
+
+    const sharer = this.devices.get(request.toDeviceId);
+    if (!sharer) {
+      throw new Error('Sharing device is no longer available');
+    }
+
+    // Advance to ready so it cannot be replayed.
+    this.requests.markReady(request.id);
+
+    this.send(sharer.connection, REMOTE_SCREEN_MESSAGE_TYPES.VIEW_REQUEST_READY, {
       request,
       fromDevice: this.publicDevice(fromDeviceId),
     });

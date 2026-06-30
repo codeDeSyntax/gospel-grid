@@ -28,7 +28,7 @@ const saveHistory = (msgs: string[]) => {
 
 export const OverlayTextPanel: React.FC = () => {
   const dispatch = useAppDispatch();
-  const appTheme = useAppSelector((s: RootState) => s.app.theme);
+  const isDarkMode = useAppSelector((s: RootState) => s.app.isDarkMode);
   const overlayText = useAppSelector((s: RootState) => s.app.overlayText);
   const overlayVisible = useAppSelector((s: RootState) => s.app.overlayVisible);
   const overlayTargetDisplayId = useAppSelector(
@@ -80,8 +80,6 @@ export const OverlayTextPanel: React.FC = () => {
   }, [overlayText]);
 
   const isLive = overlayVisible && !!overlayText;
-  const isDarkMode = appTheme === "dark";
-
   const commitMessage = useCallback(
     (text: string) => {
       const trimmed = text.trim();

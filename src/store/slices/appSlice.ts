@@ -5,7 +5,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 const STORAGE_KEY = "wingrid-settings";
 
 interface PersistedSettings {
-  colorTheme: ColorTheme;
+  isDarkMode: boolean;
   publishedQuality: { contrast: number; brightness: number };
   refreshInterval: number;
   remoteScreensAutoStart: boolean;
@@ -32,63 +32,11 @@ function persistSettings(settings: PersistedSettings) {
   }
 }
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-export type ColorTheme =
-  | "neutral-light"
-  | "grayscale"
-  | "royal-purple"
-  | "sky-blue"
-  | "forest-green"
-  | "fire-red";
-
-export const THEME_NAMES: Record<ColorTheme, string> = {
-  "neutral-light": "Neutral Light",
-  "grayscale": "Grayscale",
-  "royal-purple": "Royal Purple",
-  "sky-blue": "Sky Blue",
-  "forest-green": "Forest Green",
-  "fire-red": "Fire Red",
-};
-
-const COLOR_THEME_VALUES = new Set<ColorTheme>(
-  Object.keys(THEME_NAMES) as ColorTheme[],
-);
-
-const LEGACY_THEME_ALIASES: Record<string, ColorTheme> = {
-  "neutral-light": "neutral-light",
-  "light-mode": "neutral-light",
-  "light-gray": "neutral-light",
-  stone: "grayscale",
-  "warm-earth": "grayscale",
-  "lavender-purple": "royal-purple",
-  "ocean-blue": "sky-blue",
-  "matrix-green": "forest-green",
-  "vibrant-green": "forest-green",
-  "cosmic-blue": "sky-blue",
-  "earth-brown": "grayscale",
-  "steel-gray": "grayscale",
-  "violet-purple": "royal-purple",
-  "sunset-orange": "fire-red",
-  "midnight-black": "grayscale",
-  "pro-slate": "sky-blue",
-};
-
-export function normalizeColorTheme(value: unknown): ColorTheme {
-  const normalized =
-    typeof value === "string" ? (LEGACY_THEME_ALIASES[value] ?? value) : value;
-
-  return COLOR_THEME_VALUES.has(normalized as ColorTheme)
-    ? (normalized as ColorTheme)
-    : "grayscale";
-}
-
 // ─── State ──────────────────────────────────────────────────────────────────
 
 interface AppState {
   currentScreen: "welcome" | "dashboard" | "settings";
-  theme: "light" | "dark";
-  colorTheme: ColorTheme;
+  isDarkMode: boolean;
   isLoading: boolean;
   error: string | null;
   publishedQuality: {
@@ -119,8 +67,7 @@ const persisted = loadPersistedSettings();
 
 const initialState: AppState = {
   currentScreen: "welcome",
-  theme: "dark",
-  colorTheme: normalizeColorTheme(persisted.colorTheme),
+  isDarkMode: persisted.isDarkMode ?? true,
   isLoading: false,
   error: null,
   publishedQuality: persisted.publishedQuality ?? {
@@ -142,7 +89,7 @@ const initialState: AppState = {
 
 function autoPersist(state: AppState) {
   persistSettings({
-    colorTheme: state.colorTheme,
+    isDarkMode: state.isDarkMode,
     publishedQuality: state.publishedQuality,
     refreshInterval: state.refreshInterval,
     remoteScreensAutoStart: state.remoteScreensAutoStart,
@@ -164,12 +111,22 @@ const appSlice = createSlice({
     ) => {
       state.currentScreen = action.payload;
     },
-    setTheme: (state, action: PayloadAction<AppState["theme"]>) => {
-      state.theme = action.payload;
+    setDarkMode: (state, action: PayloadAction<boolean>) => {
+      state.isDarkMode = action.payload;
+      if (action.payload) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      autoPersist(state);
     },
-    setColorTheme: (state, action: PayloadAction<AppState["colorTheme"]>) => {
-      state.colorTheme = action.payload;
-      document.documentElement.setAttribute("data-color-theme", action.payload);
+    toggleDarkMode: (state) => {
+      state.isDarkMode = !state.isDarkMode;
+      if (state.isDarkMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
       autoPersist(state);
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -267,8 +224,8 @@ const appSlice = createSlice({
 
 export const {
   setCurrentScreen,
-  setTheme,
-  setColorTheme,
+  setDarkMode,
+  toggleDarkMode,
   setLoading,
   setError,
   clearError,

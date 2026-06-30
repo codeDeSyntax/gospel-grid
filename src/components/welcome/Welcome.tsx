@@ -12,16 +12,16 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
   const { minimize, maximize, close } = useWindowControls();
 
   return (
-    <div className="h-screen text-white relative overflow-hidden">
+    <div className="h-screen theme-text-main relative overflow-hidden bg-theme-primary-950">
       {/* Mesh background */}
-      <MeshBackground intensity="medium" />
+      <MeshBackground intensity="light" />
 
       {/* macOS-style Window Controls */}
       <div className="absolute top-4 left-4 z-50 flex items-center gap-2">
         {/* Close button */}
         <div
           onClick={close}
-          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-red-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-700 hover:bg-red-600 transition-colors duration-200 flex items-center justify-center group"
           title="Close"
         >
           <X
@@ -34,7 +34,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Minimize button */}
         <div
           onClick={minimize}
-          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-yellow-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-700 hover:bg-theme-primary-500 transition-colors duration-200 flex items-center justify-center group"
           title="Minimize"
         >
           <Minus
@@ -47,7 +47,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         {/* Maximize button */}
         <div
           onClick={maximize}
-          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-500 hover:bg-green-600 transition-colors duration-200 flex items-center justify-center group shadow-sm"
+          className="w-4 h-4 cursor-pointer rounded-full bg-theme-primary-700 hover:bg-primary-600 transition-colors duration-200 flex items-center justify-center group"
           title="Maximize"
         >
           <Maximize2
@@ -67,9 +67,9 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <ScreenAggregationMockup />
 
               {/* Decorative elements with theme colors */}
-              <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-br from-theme-primary-500/20 to-theme-primary-700/20 rounded-full blur-xl animate-pulse"></div>
+              <div className="absolute top-1/4 -left-8 w-16 h-16 bg-gradient-to-br from-theme-primary-500/18 to-primary-500/10 rounded-full blur-xl animate-pulse"></div>
               <div
-                className="absolute bottom-1/4 -right-8 w-20 h-20 bg-gradient-to-br from-theme-primary-400/20 to-theme-primary-500/20 rounded-full blur-xl animate-pulse"
+                className="absolute bottom-1/4 -right-8 w-20 h-20 bg-gradient-to-br from-theme-primary-400/16 to-primary-500/10 rounded-full blur-xl animate-pulse"
                 style={{ animationDelay: "1s" }}
               ></div>
             </div>
@@ -78,14 +78,14 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
             <div className="max-w-3xl space-y-4">
               {/* Main headline - now themed */}
               <div className="space-y-2">
-                <p className="text-lg lg:text-xl text-white leading-relaxed">
+                <p className="text-lg lg:text-xl theme-text-main leading-relaxed">
                   A tool for{" "}
-                  <span className="bg-gradient-to-r from-theme-primary-500 to-theme-primary-700 bg-clip-text text-theme-primary-200 font-semibold">
+                  <span className="text-primary-500 font-semibold">
                     aggregating multiple windows
                   </span>{" "}
                   in one place
                 </p>
-                <p className="text-sm lg:text-base text-theme-primary-200 leading-relaxed">
+                <p className="text-sm lg:text-base theme-text-soft leading-relaxed">
                   Unleash the unlimited potential of multi-window aggregation.
                   Input live applications and watch our dashboard turn them into
                   unified streaming visuals.
@@ -94,23 +94,21 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
 
               {/* Feature badges with theme styling */}
               <div className="flex flex-wrap justify-center gap-2">
-                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-100">
+                <div className="inline-flex items-center gap-2 bg-theme-primary-900/65 backdrop-blur border border-solid border-theme-primary-700 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                  <span className="text-xs theme-text-soft">
                     Real-time Capture
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-theme-primary-400 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-100">
+                <div className="inline-flex items-center gap-2 bg-theme-primary-900/65 backdrop-blur border border-solid border-theme-primary-700 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-primary-400 rounded-full"></div>
+                  <span className="text-xs theme-text-soft">
                     Smart Grid Layout
                   </span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-black/50 backdrop-blur border border-theme-primary-600/30 rounded-full px-2.5 py-1">
-                  <div className="w-1.5 h-1.5 bg-theme-primary-500 rounded-full"></div>
-                  <span className="text-xs text-theme-primary-100">
-                    Ease of use
-                  </span>
+                <div className="inline-flex items-center gap-2 bg-theme-primary-900/65 backdrop-blur border border-solid border-theme-primary-700 rounded-full px-2.5 py-1">
+                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                  <span className="text-xs theme-text-soft">Ease of use</span>
                 </div>
               </div>
 
@@ -118,9 +116,11 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
               <div className="space-y-2">
                 <button
                   onClick={onGetStarted}
-                  className="group relative cursor-pointer inline-flex items-center gap-2 bg-theme-primary-400 hover:from-theme-primary-700 hover:to-theme-primary-800 text-theme-primary-50 font-medium py-2.5 px-5 rounded-full  transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl overflow-hidden"
+                  className="group relative cursor-pointer inline-flex items-center gap-2 border border-solid border-primary-400/60 bg-primary-500 text-primary-50 font-medium py-2.5 px-5 rounded-full transition-all duration-300 transform hover:scale-[1.02] hover:bg-primary-600 overflow-hidden"
                 >
-                  <span className="relative z-10 text-sm ">Get started</span>
+                  <span className="relative z-10 text-sm ">
+                    Go to workspace
+                  </span>
                   <svg
                     className="relative z-10 w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform duration-300"
                     fill="none"
@@ -134,9 +134,6 @@ export const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                       d="M13 7l5 5m0 0l-5 5m5-5H6"
                     />
                   </svg>
-
-                  {/* Animated gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out"></div>
                 </button>
               </div>
             </div>

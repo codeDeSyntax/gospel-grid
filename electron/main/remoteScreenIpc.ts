@@ -135,6 +135,9 @@ function getRemoteClient() {
   remoteClient.on("requestDenied", (request) => {
     sendToRenderer("remote-screen:request-denied", request);
   });
+  remoteClient.on("requestReady", (request) => {
+    sendToRenderer("remote-screen:request-ready", request);
+  });
   remoteClient.on("signal", (signal) => {
     sendToRenderer("remote-screen:signal", signal);
   });
@@ -369,6 +372,28 @@ export function registerRemoteScreenIpc() {
             error instanceof Error
               ? error.message
               : "Failed to deny remote screen request.",
+        };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "remote-screen:confirm-view",
+    async (_event, payload?: { requestId?: string; confirmationToken?: string }) => {
+      try {
+        if (!payload?.requestId || !payload?.confirmationToken) {
+          return { success: false, error: "requestId and confirmationToken are required." };
+        }
+
+        getRemoteClient().confirmView(payload.requestId, payload.confirmationToken);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to confirm remote screen request.",
         };
       }
     },

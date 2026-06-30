@@ -241,6 +241,27 @@ export function useRemoteScreen() {
     [remoteScreenApi],
   );
 
+  const confirmView = useCallback(
+    async (requestId: string, confirmationToken: string): Promise<RemoteScreenActionResult> => {
+      if (!remoteScreenApi) {
+        const message = "Remote screen API is not available.";
+        setError(message);
+        return { success: false, error: message };
+      }
+
+      const result = await remoteScreenApi.confirmView(requestId, confirmationToken);
+      if (!result.success) {
+        const message = result.error || "Failed to confirm remote screen session.";
+        setError(message);
+        return { success: false, error: message };
+      }
+
+      setError(null);
+      return { success: true };
+    },
+    [remoteScreenApi],
+  );
+
   const acceptViewRequest = useCallback(
     async (requestId: string): Promise<RemoteScreenActionResult> => {
       if (!remoteScreenApi) {
@@ -387,6 +408,23 @@ export function useRemoteScreen() {
   }, [remoteScreenApi]);
 
   useEffect(() => {
+    if (!remoteScreenApi?.onRequestReady) {
+      return;
+    }
+
+    return remoteScreenApi.onRequestReady((request) => {
+      // PC B receives this when PC A's confirmation token has been verified.
+      // Surface it as an incoming request so the share-source flow can proceed.
+      setIncomingRequests((current) => {
+        const withoutDuplicate = current.filter(
+          (entry) => entry.request.id !== request.request.id,
+        );
+        return [request, ...withoutDuplicate].slice(0, 5);
+      });
+    });
+  }, [remoteScreenApi]);
+
+  useEffect(() => {
     if (!remoteScreenApi?.onSessionEnded) {
       return;
     }
@@ -425,6 +463,7 @@ export function useRemoteScreen() {
       refreshNearbyDevices,
       refreshDevices,
       requestView,
+      confirmView,
       acceptViewRequest,
       denyViewRequest,
       endSession,
@@ -444,6 +483,7 @@ export function useRemoteScreen() {
       refreshNearbyDevices,
       refreshDevices,
       requestView,
+      confirmView,
       acceptViewRequest,
       denyViewRequest,
       endSession,

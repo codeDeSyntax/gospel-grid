@@ -1,12 +1,13 @@
 import { useAppSelector } from "@/store/hooks";
-import { ColorTheme } from "@/store/slices/appSlice";
 import { ThemeManager } from "@/utils/themeManager";
+import type { ColorThemeMode } from "@/utils/themeManager";
 
 /**
  * Hook for accessing current theme and theme utilities
  */
 export const useColorTheme = () => {
-  const colorTheme = useAppSelector((state) => state.app.colorTheme);
+  const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
+  const colorTheme: ColorThemeMode = isDarkMode ? "dark" : "light";
 
   const getThemeVariable = (variableName: string): string => {
     return ThemeManager.getThemeVariable(variableName);
@@ -16,7 +17,7 @@ export const useColorTheme = () => {
     return ThemeManager.rgba(rgbValues, alpha);
   };
 
-  const getCurrentTheme = (): ColorTheme => {
+  const getCurrentTheme = (): ColorThemeMode => {
     return colorTheme;
   };
 

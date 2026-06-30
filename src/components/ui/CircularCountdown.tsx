@@ -57,11 +57,8 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({
                   x2="100%"
                   y2="100%"
                 >
-                  <stop offset="0%" stopColor="rgb(var(--theme-primary-500))" />
-                  <stop
-                    offset="50%"
-                    stopColor="rgb(var(--theme-primary-700))"
-                  />
+                  <stop offset="0%" stopColor="rgb(var(--primary-500))" />
+                  <stop offset="50%" stopColor="rgb(var(--primary-700))" />
                   <stop
                     offset="100%"
                     stopColor="rgb(var(--theme-primary-900))"
@@ -110,7 +107,7 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({
                   x2="100%"
                   y2="100%"
                 >
-                  <stop offset="0%" stopColor="rgb(var(--theme-primary-600))" />
+                  <stop offset="0%" stopColor="rgb(var(--primary-600))" />
                   <stop
                     offset="100%"
                     stopColor="rgb(var(--theme-primary-900))"
@@ -130,7 +127,7 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
-                stroke="rgb(var(--theme-primary-300))"
+                stroke="rgb(var(--primary-300))"
                 strokeWidth={strokeWidth}
                 fill="transparent"
                 opacity={0.4}
@@ -192,10 +189,10 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({
                 }}
                 className={`text-xs font-bold ${
                   remainingTime <= 5
-                    ? "text-theme-primary-900"
+                    ? "text-primary-900"
                     : remainingTime <= 10
-                      ? "text-theme-primary-800"
-                      : "text-theme-primary-700"
+                      ? "text-primary-800"
+                      : "text-primary-700"
                 }`}
               >
                 {Math.max(0, Math.ceil(remainingTime))}

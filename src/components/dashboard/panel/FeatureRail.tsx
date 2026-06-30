@@ -17,11 +17,11 @@ interface RailItem {
 
 const railItems: RailItem[] = [
   { id: "autofit", title: "Main Layout", iconSrc: "./wingrid.png" },
-  { id: "overlay", title: "Text Overlay", iconSrc: "./messages.png" },
+  { id: "overlay", title: "Text Overlay", iconSrc: "./sendmessage.png" },
   { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
   { id: "captions", title: "Live Captions", iconSrc: "./caption.png" },
-  { id: "remote", title: "Remote Screens", iconSrc: "./extend.svg" },
-  { id: "image", title: "Images", iconSrc: "./images.png" },
+  { id: "remote", title: "Remote Screens", iconSrc: "./smart-tv.png" },
+  { id: "image", title: "Images", iconSrc: "./gallery.png" },
 ];
 
 export const FeatureRail: React.FC<FeatureRailProps> = ({
@@ -62,7 +62,7 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
                 className={`h-7 w-7 object-contain transition-opacity duration-200 ${
                   isActive ? "opacity-100" : "opacity-80"
                 }`}
-                style={{ filter: "grayscale(1) contrast(1.2)" }}
+                // style={{ filter: "grayscale(1) contrast(1.2)" }}
               />
             </DepthButton>
           );

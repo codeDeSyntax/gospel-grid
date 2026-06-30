@@ -217,7 +217,7 @@ export function LiveWindowGrid({
         className={`${className} flex items-center justify-center h-full text-white bg-black`}
       >
         <div className="text-center">
-          <div className="text-6xl mb-4">📺</div>
+          <img src="./emptymonitors.svg" className="h-1/2 w-1/2"/>
           <div className="text-2xl font-bold text-theme-primary-200">
             No Windows Selected
           </div>

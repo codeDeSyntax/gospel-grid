@@ -25,7 +25,6 @@ import {
   type FeatureTimerItem,
   type FeatureTimerState,
 } from "../RightPanel/featureTimerState";
-import { FaThemeco } from "react-icons/fa";
 import { FaThemeisle } from "react-icons/fa6";
 
 const QUICK_MINUTES = [1, 3, 5, 10, 15, 30, 45, 60];
@@ -83,7 +82,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
         className={`relative h-28 w-28 overflow-hidden rounded-2xl border shadow-[0_14px_30px_rgba(0,0,0,0.30)] ${
           isDarkMode
             ? "border-theme-primary-200/22 bg-theme-primary-950 theme-text-on-overlay"
-            : "border-theme-primary-400/35 bg-gradient-to-b from-theme-primary-50 via-theme-primary-100 to-theme-primary-200/85 theme-text-main"
+            : "border-theme-primary-600/70 bg-gradient-to-b from-theme-primary-950 via-theme-primary-900 to-theme-primary-800 theme-text-main"
         } ${editable ? "cursor-text" : ""}`}
       >
         <div
@@ -120,20 +119,20 @@ const FlipCard: React.FC<FlipCardProps> = ({
                   onCancelEdit?.();
                 }
               }}
-              className={`h-16 w-full text-theme-primary-50 bg-transparent text-center font-[impact] text-[56px] leading-none tracking-wide outline-none ${
+              className={`h-16 w-full bg-transparent text-center font-[impact] text-[56px] leading-none tracking-wide outline-none ${
                 isDarkMode
-                  ? ""
-                  : "font-semibold tracking-[0.02em] [font-variant-numeric:tabular-nums]"
+                  ? "text-theme-primary-50"
+                  : "text-theme-primary-50 font-semibold tracking-[0.02em] [font-variant-numeric:tabular-nums]"
               }`}
               inputMode="numeric"
             />
           </div>
         ) : (
           <div
-            className={`flex h-full text-theme-primary-50 items-center justify-center leading-none  [font-variant-numeric:tabular-nums] ${
+            className={`flex h-full items-center justify-center leading-none  [font-variant-numeric:tabular-nums] ${
               isDarkMode
-                ? "font-[impact] text-[74px] tracking-wide"
-                : "font-semibold text-[64px] tracking-[0.03em]"
+                ? "font-[impact] text-[74px] tracking-wide text-theme-primary-50"
+                : "font-semibold text-[64px] tracking-[0.03em] text-theme-primary-50"
             }`}
           >
             {value}
@@ -150,9 +149,8 @@ const FlipCard: React.FC<FlipCardProps> = ({
 const MemoizedFlipCard = memo(FlipCard);
 
 export const FeatureTimerView: React.FC = () => {
-  const appTheme = useAppSelector((s) => s.app.theme);
+  const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
   const displayAssignments = useAppSelector((s) => s.grid.displayAssignments);
-  const isDarkMode = appTheme === "dark";
   const [timerCollection, setTimerCollection] =
     useState<FeatureTimerCollection>(() => loadFeatureTimerCollection());
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -347,7 +345,7 @@ export const FeatureTimerView: React.FC = () => {
         className={`h-full w-full rounded-2xl px-6 py-6 overflow-auto no-scrollbar ${
           isDarkMode
             ? "bg-theme-primary-950 theme-text-on-overlay"
-            : "bg-theme-primary-50 theme-text-main"
+            : "bg-theme-primary-950 theme-text-main"
         }`}
       >
         <div className="h-full flex items-center justify-center theme-text-muted">
@@ -362,7 +360,7 @@ export const FeatureTimerView: React.FC = () => {
       className={`h-full w-full rounded-2xl px-6 py-6 overflow-auto no-scrollbar ${
         isDarkMode
           ? "bg-theme-primary-950 theme-text-on-overlay"
-          : "bg-theme-primary-50 theme-text-main"
+          : "bg-theme-primary-950 theme-text-main"
       }`}
     >
       <div className="mx-auto flex w-full max-w-7xl gap-4 h-full min-h-0">
@@ -404,7 +402,7 @@ export const FeatureTimerView: React.FC = () => {
                     <span
                       className={`h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-bold leading-none ${
                         isActive
-                          ? "bg-emerald-400 text-black ring-2 ring-emerald-200/60"
+                          ? "bg-primary-500 text-primary-50 ring-2 ring-primary-300/60"
                           : "bg-theme-primary-600/40 text-theme-primary-100"
                       }`}
                     >

@@ -606,8 +606,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       <div className="shrink-0 mt-0 overflow-hidden rounded-none border border-x-0 border-t-0 border-solid border-theme-primary-700 bg-theme-primary-900 ">
         <div className="flex min-h-[54px] items-center justify-between gap-3 px-4 py-2">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-solid border-theme-primary-600 bg-theme-primary-800 text-theme-primary-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <Monitor className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-solid border-theme-primary-600 bg-theme-primary-800 text-theme-primary-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <img src="./screen.png" className="h-full w-full" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-theme-primary-50">
@@ -680,12 +680,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         </div>
       ) : (
         <div
-          className={`relative flex-1 min-h-0 p-3 grid grid-cols-2 gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible`}
+          className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible`}
         >
-          {/* sample three screen boxes */}
-          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
-          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
-          <div className="relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 bg-black" />
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
             const hiddenIds = new Set(
@@ -698,11 +694,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
+                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-theme-primary`}
               >
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
-
-                <div className="absolute right-3 top-3 z-20 flex flex-col items-end gap-1 pointer-events-none">
+                <div className="absolute right-6 top-6 z-20 flex flex-col items-end gap-1 pointer-events-none">
                   <DepthButton
                     sizeClassName="h-4 px-2 p-1 rounded-xl shrink-0 pointer-events-auto"
                     inactiveClassName="text-theme-primary-50 border-theme-primary-400/50"
@@ -766,7 +760,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                     <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                       <div className="flex items-center gap-3 text-left">
                         <img
-                          src="./extend.svg"
+                          src="./smart-tv.png"
                           alt="Drag from left panel"
                           className="h-14 w-14 shrink-0 object-contain opacity-95"
                           draggable={false}
@@ -824,10 +818,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           {isCaptionsFeature ? (
                             <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_45%)]">
                               <div className="max-w-[90%]">
-                                <p className="text-[9px] uppercase tracking-[0.16em] text-theme-primary-300/80 mb-2">
+                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-white mb-2">
                                   Live Captions
                                 </p>
-                                <p className="text-sm leading-snug text-theme-primary-50 break-words">
+                                <p className="text-sm leading-snug font-thin text-primary-400 break-words">
                                   {captionsText || "Waiting for speech..."}
                                 </p>
                               </div>

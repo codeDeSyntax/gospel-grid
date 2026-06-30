@@ -1,49 +1,37 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Semantic colors that work with both light and dark themes
-        background: {
-          primary: "rgb(var(--color-bg-primary) / <alpha-value>)",
-          secondary: "rgb(var(--color-bg-secondary) / <alpha-value>)",
-          tertiary: "rgb(var(--color-bg-tertiary) / <alpha-value>)",
-          elevated: "rgb(var(--color-bg-elevated) / <alpha-value>)",
-        },
-        surface: {
-          primary: "rgb(var(--color-surface-primary) / <alpha-value>)",
-          secondary: "rgb(var(--color-surface-secondary) / <alpha-value>)",
-          tertiary: "rgb(var(--color-surface-tertiary) / <alpha-value>)",
-          hover: "rgb(var(--color-surface-hover) / <alpha-value>)",
-          active: "rgb(var(--color-surface-active) / <alpha-value>)",
-        },
-        border: {
-          primary: "rgb(var(--color-border-primary) / <alpha-value>)",
-          secondary: "rgb(var(--color-border-secondary) / <alpha-value>)",
-          accent: "rgb(var(--color-border-accent) / <alpha-value>)",
-        },
-        text: {
-          primary: "rgb(var(--color-text-primary) / <alpha-value>)",
-          secondary: "rgb(var(--color-text-secondary) / <alpha-value>)",
-          tertiary: "rgb(var(--color-text-tertiary) / <alpha-value>)",
-          accent: "rgb(var(--color-text-accent) / <alpha-value>)",
-          inverse: "rgb(var(--color-text-inverse) / <alpha-value>)",
-        },
-
-        // Purple/Violet primary colors (theme-independent)
+        // Lime accent for actions, success states, and selected highlights.
         primary: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "rgb(59, 130, 246)",
-          600: "#2563eb", // Main primary color
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
-          950: "#172554",
+          50: "#f4fbea",
+          100: "#e6f5d0",
+          200: "#cfeea7",
+          300: "#abe070",
+          400: "#85ca3e",
+          500: "#5eac24",
+          600: "#4a8c1a",
+          700: "#3b6b19",
+          800: "#33551a",
+          900: "#2d481a",
+          950: "#14270a",
+        },
+        // Neutral workspace scale. Most app chrome uses this, not the green accent.
+        "theme-primary": {
+          50: "rgb(var(--theme-primary-50) / <alpha-value>)",
+          100: "rgb(var(--theme-primary-100) / <alpha-value>)",
+          200: "rgb(var(--theme-primary-200) / <alpha-value>)",
+          300: "rgb(var(--theme-primary-300) / <alpha-value>)",
+          400: "rgb(var(--theme-primary-400) / <alpha-value>)",
+          500: "rgb(var(--theme-primary-500) / <alpha-value>)",
+          600: "rgb(var(--theme-primary-600) / <alpha-value>)",
+          700: "rgb(var(--theme-primary-700) / <alpha-value>)",
+          800: "rgb(var(--theme-primary-800) / <alpha-value>)",
+          900: "rgb(var(--theme-primary-900) / <alpha-value>)",
+          950: "rgb(var(--theme-primary-950) / <alpha-value>)",
         },
 
         // Status colors (theme-independent)
@@ -54,7 +42,7 @@ export default {
           300: "#86efac",
           400: "#4ade80",
           500: "#22c55e",
-          600: "#27ae60", // From prototype
+          600: "#16a34a",
           700: "#15803d",
           800: "#166534",
           900: "#14532d",
@@ -66,10 +54,10 @@ export default {
           300: "#fca5a5",
           400: "#f87171",
           500: "#ef4444",
-          600: "#e74c3c", // From prototype
-          700: "#dc2626",
-          800: "#b91c1c",
-          900: "#991b1b",
+          600: "#dc2626",
+          700: "#b91c1c",
+          800: "#991b1b",
+          900: "#7f1d1d",
         },
         warning: {
           50: "#fffbeb",
@@ -90,46 +78,39 @@ export default {
           300: "#93c5fd",
           400: "#60a5fa",
           500: "#3b82f6",
-          600: "#4a9eff", // From prototype
+          600: "#2563eb",
           700: "#1d4ed8",
           800: "#1e40af",
           900: "#1e3a8a",
         },
 
-        // Legacy colors (keeping for backward compatibility)
-        dark: {
-          primary: "#1a1a1a",
-          secondary: "#2d2d2d",
-          tertiary: "#333333",
-          border: "#444444",
-          hover: "#404040",
+        // Semantic colors for light/dark mode
+        background: {
+          light: "#ffffff",
+          DEFAULT: "#f5f5f5", // light mode bg
+          secondary: "#eeeeee",
+          tertiary: "#e0e0e0",
         },
-        accent: {
-          blue: "#4a9eff",
-          green: "#27ae60",
-          red: "#e74c3c",
-          orange: "#f39c12",
-          purple: "#9b59b6",
+        surface: {
+          light: "#ffffff",
+          DEFAULT: "#f9f9f9", // light mode
+          secondary: "#f0f0f0",
+          tertiary: "#e8e8e8",
+          hover: "#e0e0e0",
+          active: "#d0d0d0",
         },
-
-        // Dynamic theme colors using CSS custom properties
-        "theme-primary": {
-          50: "rgb(var(--theme-primary-50) / <alpha-value>)",
-          100: "rgb(var(--theme-primary-100) / <alpha-value>)",
-          200: "rgb(var(--theme-primary-200) / <alpha-value>)",
-          300: "rgb(var(--theme-primary-300) / <alpha-value>)",
-          400: "rgb(var(--theme-primary-400) / <alpha-value>)",
-          500: "rgb(var(--theme-primary-500) / <alpha-value>)",
-          600: "rgb(var(--theme-primary-600) / <alpha-value>)",
-          700: "rgb(var(--theme-primary-700) / <alpha-value>)",
-          800: "rgb(var(--theme-primary-800) / <alpha-value>)",
-          900: "rgb(var(--theme-primary-900) / <alpha-value>)",
-          950: "rgb(var(--theme-primary-950) / <alpha-value>)",
+        text: {
+          light: "#ffffff",
+          DEFAULT: "#1a1a1a", // light mode text
+          secondary: "#666666",
+          tertiary: "#999999",
+          muted: "#cccccc",
         },
-        "theme-accent": {
-          light: "rgb(var(--theme-accent-light) / <alpha-value>)",
-          medium: "rgb(var(--theme-accent-medium) / <alpha-value>)",
-          dark: "rgb(var(--theme-accent-dark) / <alpha-value>)",
+        border: {
+          light: "#e0e0e0",
+          DEFAULT: "#d0d0d0", // light mode
+          secondary: "#cccccc",
+          dark: "#333333",
         },
       },
       // Animation for smooth transitions
@@ -181,7 +162,6 @@ export default {
       },
     },
   },
-  darkMode: "class", // Enable class-based dark mode
   corePlugins: {
     preflight: false,
   },
@@ -306,5 +286,4 @@ export default {
       });
     },
   ],
-  plugins: [],
 };

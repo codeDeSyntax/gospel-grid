@@ -843,7 +843,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                     <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                       <div className="flex items-center gap-3 text-left">
                         <img
-                          src="./extend.svg"
+                          src="./smart-tv.png"
                           alt="Drag from left panel"
                           className="h-14 w-14 shrink-0 object-contain opacity-95"
                           draggable={false}
