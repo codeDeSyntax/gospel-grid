@@ -176,7 +176,7 @@ export const FloatingCaptionsOrb: React.FC = () => {
   };
 
   return (
-    <div className="pointer-events-none absolute bottom-12 right-6 z-[70] flex items-end justify-end">
+    <div className="pointer-events-none absolute bottom-6 right-12 z-[70] flex items-end justify-end">
       <div className="pointer-events-auto">
         {isExpanded && (
           <DepthSurface

@@ -43,6 +43,8 @@ import {
   loadFeatureCaptionsState,
 } from "./RightPanel/featureCaptionsState";
 import { ManageDisplayMenu } from "./ManageDisplayMenu";
+import { MdDeleteSweep } from "react-icons/md";
+import { FiRefreshCcw } from "react-icons/fi";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -646,22 +648,21 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   {assignedWindowCount}
                 </p>
               </div>
+              <DepthButton
+                onClick={() => loadDisplays(true)}
+                sizeClassName="h-8 px-3 rounded-lg mr-2"
+                inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
+                inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
+                title="Refresh connected displays"
+              >
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+                  <FiRefreshCcw
+                    className={`h-3.5 w-3.5 ${loadingDisplays ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </span>
+              </DepthButton>
             </div>
-
-            <DepthButton
-              onClick={() => loadDisplays(true)}
-              sizeClassName="h-8 px-3 rounded-lg"
-              inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
-              inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
-              title="Refresh connected displays"
-            >
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
-                <RefreshCcw
-                  className={`h-3.5 w-3.5 ${loadingDisplays ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </span>
-            </DepthButton>
           </div>
         </div>
       </div>
@@ -694,7 +695,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-white dark:bg-black/50 `}
+                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-y-[6px] border-x-2 border-neutral-200 dark:border-neutral-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-white dark:bg-black `}
               >
                 <div className="absolute right-6 top-6 z-20 flex flex-col items-end gap-1 pointer-events-none">
                   <DepthButton
@@ -816,9 +817,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           title={`${win.app} • ${win.name}`}
                         >
                           {isCaptionsFeature ? (
-                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-stone-100 dark:bg-black">
+                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-primary-950">
                               <div className="max-w-[90%]">
-                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-black dark:text-white  mb-2">
+                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-white   mb-2">
                                   Live Captions
                                 </p>
                                 <p className="text-sm leading-snug font-thin text-primary-400 break-words">
@@ -922,10 +923,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                               e.stopPropagation();
                               handleRemoveFromDisplay(display.id, windowId);
                             }}
-                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
+                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-primary-500  group-hover:opacity-100 transition-opacity flex bg-theme-primary-500 items-center justify-center z-10"
                             title="Remove window"
                           >
-                            <FcDeleteRow className="w-6 h-6" />
+                            <MdDeleteSweep className="w-6 h-6 " />
                           </DepthButton>
                         </button>
                       );

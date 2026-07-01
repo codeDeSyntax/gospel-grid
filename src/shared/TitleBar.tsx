@@ -407,13 +407,13 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                       className={`flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                         item.active
                           ? "bg-primary-500/12 text-primary-500"
-                          : "text-theme-primary-500 hover:bg-theme-primary-800"
+                          : "text-black dark:text-white/50 hover:bg-theme-primary-800"
                       }`}
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-current">
                         {item.icon}
                       </span>
-                      <span className="min-w-0 flex-1 truncate">
+                      <span className="min-w-0 flex-1 font-thin truncate">
                         {item.label}
                       </span>
                       {item.shortcut ? (

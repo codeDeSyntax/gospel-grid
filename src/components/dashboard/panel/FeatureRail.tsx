@@ -31,7 +31,7 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
   onToggleImageMenu,
 }) => {
   return (
-    <div className="pointer-events-auto ml-0 mr-0 self-stretch min-h-0 w-14 shrink-0 border-r-0 border-t-0 border-y-0 border-l border-solid border-theme-primary-400/35 backdrop-blur-md px-2.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px">
+    <div className="pointer-events-auto ml-0 mr-0 self-stretch min-h-0 w-14  shrink-0 border-r-0 border-t-0 border-y-0 border-l border-solid border-theme-primary-400/35 backdrop-blur-md px-2.5 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),inset_0_-1px_0_rgba(0,0,0,0.45),0_8px_18px">
       <div className="flex h-full flex-col items-center gap-4 px-2 py-4">
         {railItems.map((item) => {
           const isActive =
@@ -53,7 +53,7 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
               inactiveClassName="text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100"
               activeSurfaceClassName="depth-active-surface"
               inactiveSurfaceClassName="depth-inactive-surface "
-              className="transition-all duration-200 hover:scale-105 active:scale-95 rounded-xl"
+              className="transition-all duration-200 hover:scale-105 active:scale-95 rounded-full"
             >
               <img
                 src={item.iconSrc}

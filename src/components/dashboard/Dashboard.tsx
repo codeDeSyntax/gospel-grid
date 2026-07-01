@@ -8,6 +8,7 @@ import { TitleBar } from "@/shared/TitleBar";
 import { DepthSurface } from "@/shared/DepthSurface";
 import { useWindowEnumeration } from "@/hooks/useWindowEnumeration";
 import { NotifierContainer } from "@/components/ui/NotifierContainer";
+import { WindowLimitModal } from "./modals/WindowLimitModal";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   handlePublishLayout as reduxHandlePublishLayout,
@@ -63,8 +64,12 @@ const SIDEBAR_MAX_WIDTH = 600;
 const SIDEBAR_DEFAULT_WIDTH = 380;
 const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
 const IMAGE_FEATURE_WINDOW_PREFIX = "feature:image-window:";
+const MAX_WINDOWS_PER_SCREEN = 4;
 
 const isFeatureWindowId = (id: string) => id.startsWith("feature:");
+const getSelectedContentWindowCount = (windows: WindowInfo[]) =>
+  windows.filter((window) => window.isSelected && !isFeatureWindowId(window.id))
+    .length;
 const getTimerFeatureWindowId = (timerId: string) =>
   `${TIMER_FEATURE_WINDOW_PREFIX}${timerId}`;
 
@@ -189,6 +194,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const [updateStatus, setUpdateStatus] = useState("Idle");
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [appVersion, setAppVersion] = useState<string>("1.0.0");
+  const [windowLimitModal, setWindowLimitModal] = useState<{
+    windowName: string | null;
+  } | null>(null);
   const captionsFeatureWindow = useMemo(() => buildCaptionsFeatureWindow(), []);
 
   useEffect(() => {
@@ -743,10 +751,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     setActivePanel((prev) => (prev === panel ? "layout" : panel));
   }, []);
 
+  const showWindowLimitModal = useCallback((windowName?: string | null) => {
+    setWindowLimitModal({ windowName: windowName ?? null });
+  }, []);
+
   // Window handlers
   const handleWindowSelect = useCallback(
     (windowId: string) => {
       if (isFeatureWindowId(windowId)) return;
+
+      const targetWindow = state.windows.find((w) => w.id === windowId);
+      if (!targetWindow) return;
+
+      if (
+        !targetWindow.isSelected &&
+        getSelectedContentWindowCount(state.windows) >= MAX_WINDOWS_PER_SCREEN
+      ) {
+        showWindowLimitModal(targetWindow.name);
+        return;
+      }
 
       const newWindows = state.windows.map((w) =>
         w.id === windowId ? { ...w, isSelected: !w.isSelected } : w,
@@ -764,7 +787,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       }));
       pushHistory(newWindows);
     },
-    [state.windows, state.focusedWindowId, pushHistory],
+    [
+      state.windows,
+      state.focusedWindowId,
+      pushHistory,
+      showWindowLimitModal,
+    ],
   );
 
   const handleWindowAdd = useCallback(
@@ -773,7 +801,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         return;
       }
 
-      const windowExists = state.windows.some((w) => w.id === windowInfo.id);
+      const existingWindow = state.windows.find((w) => w.id === windowInfo.id);
+      if (
+        !existingWindow?.isSelected &&
+        getSelectedContentWindowCount(state.windows) >= MAX_WINDOWS_PER_SCREEN
+      ) {
+        showWindowLimitModal(windowInfo.name);
+        return;
+      }
+
+      const windowExists = !!existingWindow;
       const newWindows = windowExists
         ? state.windows.map((w) =>
             w.id === windowInfo.id ? { ...w, isSelected: true } : w,
@@ -782,7 +819,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       setState((prev) => ({ ...prev, windows: newWindows }));
       pushHistory(newWindows);
     },
-    [state.windows, pushHistory],
+    [state.windows, pushHistory, showWindowLimitModal],
   );
 
   const mainSectionBackground =
@@ -1146,6 +1183,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
       {/* Toast Notifications */}
       <NotifierContainer />
+
+      <WindowLimitModal
+        isOpen={windowLimitModal !== null}
+        maxWindows={MAX_WINDOWS_PER_SCREEN}
+        windowName={windowLimitModal?.windowName}
+        onClose={() => setWindowLimitModal(null)}
+      />
 
       {/* Global floating captions control */}
       <FloatingCaptionsOrb />

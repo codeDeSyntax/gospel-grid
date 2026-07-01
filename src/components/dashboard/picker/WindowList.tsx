@@ -219,13 +219,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                     type="button"
                     onClick={onManualRefresh}
                     title="Refresh now"
-                    className="flex h-6 w-8 items-center justify-center rounded-full text-theme-primary-200 transition-colors hover:bg-theme-primary-800 hover:text-primary-400"
+                    className="flex  items-center justify-center rounded-full text-theme-primary-200 transition-colors hover:bg-theme-primary-800 hover:text-primary-400"
                   >
                     <img
                       src="./refresh.png"
                       alt="Refresh"
                       // size={20}
-                      className="transition-transform h-full w-full duration-300 hover:rotate-180"
+                      className="transition-transform h-6 w-6  duration-300 hover:rotate-180"
                     />
                   </button>
                 )}
