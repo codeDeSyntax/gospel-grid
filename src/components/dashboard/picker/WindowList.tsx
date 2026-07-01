@@ -154,29 +154,26 @@ export const WindowList: React.FC<WindowListProps> = ({
   }, [windows, searchTerm, intelligenceByWindowId]);
 
   return (
-    <div className="h-full flex flex-col p-2 py-4">
+    <div className="h-full flex flex-col p-2 py-4 bg-theme-primary-900">
       {/* Fixed Header Section */}
-      <div className="flex-shrink-0 mb-2 px-1 space-y-2">
+      <div className="flex-shrink-0 mb-2 px-1 space-y-2 ">
         {/* Title row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MdMonitor size={16} className="text-theme-primary-400/80" />
+            <img
+              src="./screen.png"
+              className="text-theme-primary-400/80 h-6 w-6"
+            />
             <span className="font-[impact] text-sm tracking-wide text-theme-primary-200">
               Available Windows
             </span>
-            {isLoading && (
-              <AiOutlineLoading3Quarters
-                size={12}
-                className="animate-spin text-theme-primary-400/60"
-              />
-            )}
           </div>
 
           {/* Timer + Refresh — gamified */}
           <div className="flex items-center gap-2">
             {countdownTime > 0 && (
-              <div className="flex h-8 items-center gap-1.5 rounded-full bg-theme-primary-900 px-1.5 text-theme-primary-200">
-                <span className="relative flex h-6 w-6 items-center justify-center">
+              <div className="flex h-8 items-center gap-1.5 rounded-full bg-theme-primary-800 px-1.5 text-theme-primary-200">
+                <span className="relative flex h-8 w-8 items-center justify-center">
                   <svg className="h-6 w-6 -rotate-90" viewBox="0 0 24 24">
                     <circle
                       cx="12"
@@ -209,7 +206,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                   </svg>
                   {isLoading && (
                     <AiOutlineLoading3Quarters
-                      size={11}
+                      size={14}
                       className="absolute animate-spin text-primary-500"
                     />
                   )}
@@ -222,11 +219,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                     type="button"
                     onClick={onManualRefresh}
                     title="Refresh now"
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-theme-primary-200 transition-colors hover:bg-theme-primary-800 hover:text-primary-400"
+                    className="flex h-6 w-8 items-center justify-center rounded-full text-theme-primary-200 transition-colors hover:bg-theme-primary-800 hover:text-primary-400"
                   >
-                    <RefreshCcwDot
-                      size={15}
-                      className="transition-transform duration-300 hover:rotate-180"
+                    <img
+                      src="./refresh.png"
+                      alt="Refresh"
+                      // size={20}
+                      className="transition-transform h-full w-full duration-300 hover:rotate-180"
                     />
                   </button>
                 )}
@@ -244,7 +243,7 @@ export const WindowList: React.FC<WindowListProps> = ({
 
         {selectedRiskWindows.length > 0 && (
           <div
-            className={`rounded-2xl border border-solid px-2 py-1.5 ${
+            className={`rounded-2xl  border-none px-2 py-1.5 ${
               isLightMode
                 ? "border-primary-700/25 bg-primary-50/85 text-primary-950"
                 : "border-primary-400/20 bg-primary-900/20 text-primary-100"
@@ -400,10 +399,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
-                      isCaptionsWindow
-                        ? "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18"
+                      isCaptionsWindow || isTimerWindow
+                        ? "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18"
                         : window.isSelected
-                          ? "border-theme-primary-300/35 border-dotted bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
+                          ? "border-theme-primary-300/35 border-hidden bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
                           : "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
                     }
                   `}
@@ -411,7 +410,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                     {(isCaptionsWindow || isTimerWindow) && (
                       <DepthSurface
                         className="pointer-events-none absolute rounded-xl"
-                        surfaceClassName="depth-active-surface opacity-10 shadow-none"
+                        surfaceClassName="depth-active-surface opacity-20 shadow-none"
                       >
                         <span className="sr-only">
                           {isCaptionsWindow
@@ -527,12 +526,12 @@ export const WindowList: React.FC<WindowListProps> = ({
                             inactiveSurfaceClassName={
                               isCaptionsWindow
                                 ? "bg-gradient-to-br from-primary-500/45 via-primary-400/28 to-primary-700/45"
-                                : "bg-gradient-to-br from-primary-900/45 via-primary-700/25 to-primary-900/45"
+                                : "bg-theme-primary-900"
                             }
                             activeSurfaceClassName={
                               isCaptionsWindow
                                 ? "bg-gradient-to-br from-primary-300/90 via-primary-400/95 to-primary-600/92"
-                                : "bg-gradient-to-br from-primary-400/90 via-primary-500/95 to-primary-600/90"
+                                : "bg-theme-primary-400/90"
                             }
                             aria-hidden
                             tabIndex={-1}
@@ -542,7 +541,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                 <img
                                   src={window.icon}
                                   alt={`${window.app} icon`}
-                                  className="h-9 w-9 object-contain"
+                                  className="h-8 w-8 object-contain"
                                   onError={(e) => {
                                     e.currentTarget.style.display = "none";
                                     const fallback = e.currentTarget
@@ -620,7 +619,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                       .map((tag) => (
                                         <span
                                           key={`${window.id}-${tag}`}
-                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full border border-solid px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
+                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full bg-primary-800/50  border-none px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
                                             intelligence,
                                             tag,
                                             isLightMode,

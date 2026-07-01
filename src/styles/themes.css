@@ -99,7 +99,7 @@
 }
 
 /* ============================================
-   DARK MODE (Grayscale)
+   DARK MODE (WhatsApp-inspired charcoal)
    ============================================ */
 .dark {
   color-scheme: dark;
@@ -124,45 +124,45 @@
 
   /* Workspace / chrome neutral scale */
   --theme-primary-50: 250 250 250;
-  --theme-primary-100: 232 232 232;
-  --theme-primary-200: 212 212 212;
-  --theme-primary-300: 176 176 176;
-  --theme-primary-400: 140 140 140;
-  --theme-primary-500: 104 104 104;
-  --theme-primary-600: 82 82 82;
-  --theme-primary-700: 64 64 64;
-  --theme-primary-800: 53 53 53;
-  --theme-primary-900: 45 45 45;
-  --theme-primary-950: 40 40 40;
+  --theme-primary-100: 238 238 238;
+  --theme-primary-200: 214 214 214;
+  --theme-primary-300: 178 178 178;
+  --theme-primary-400: 138 138 138;
+  --theme-primary-500: 98 98 98;
+  --theme-primary-600: 74 74 74;
+  --theme-primary-700: 58 58 58;
+  --theme-primary-800: 50 50 50;
+  --theme-primary-900: 40 40 40;
+  --theme-primary-950: 29 29 29;
 
   /* Background Colors */
-  --bg-primary: #282828;
-  --bg-secondary: #2d2d2d;
-  --bg-tertiary: #353535;
-  --bg-elevated: #303030;
+  --bg-primary: #1d1d1d;
+  --bg-secondary: #252525;
+  --bg-tertiary: #2c2c2c;
+  --bg-elevated: #323232;
 
   /* Surface Colors */
-  --surface-primary: #161616;
-  --surface-secondary: #1f1f1f;
-  --surface-tertiary: #2a2a2a;
-  --surface-hover: #303030;
-  --surface-active: #383838;
+  --surface-primary: #242424;
+  --surface-secondary: #2a2a2a;
+  --surface-tertiary: #323232;
+  --surface-hover: #3a3a3a;
+  --surface-active: #424242;
 
   /* Text Colors */
-  --text-primary: #ffffff;
-  --text-secondary: #b0b0b0;
-  --text-tertiary: #808080;
-  --text-muted: #505050;
+  --text-primary: #f2f2f2;
+  --text-secondary: #c8c8c8;
+  --text-tertiary: #9b9b9b;
+  --text-muted: #6f6f6f;
   --text-inverse: #1a1a1a;
 
   /* Border Colors */
-  --border-primary: #333333;
-  --border-secondary: #404040;
+  --border-primary: #383838;
+  --border-secondary: #464646;
   --border-accent: #5eac24;
 
-  --studio-bg: #282828;
-  --card-bg: #2d2d2d;
-  --card-bg-alt: #353535;
+  --studio-bg: #1d1d1d;
+  --card-bg: #252525;
+  --card-bg-alt: #323232;
   --select-bg: rgb(var(--theme-primary-900));
   --select-bg-alt: rgb(var(--theme-primary-800));
   --select-hover: rgb(var(--theme-primary-700));
@@ -170,9 +170,9 @@
   --select-border-hover: rgb(var(--theme-primary-500));
   --focus-border: var(--primary-color);
   --kbd-bg: rgb(var(--theme-primary-800));
-  --theme-text-main: #f5f5f5;
-  --theme-text-soft: #d4d4d4;
-  --theme-text-muted: #a3a3a3;
+  --theme-text-main: #f2f2f2;
+  --theme-text-soft: #cfcfcf;
+  --theme-text-muted: #9f9f9f;
   --theme-text-on-overlay: #ffffff;
 
   /* Status Colors */

@@ -35,7 +35,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-tl-[0px] bg-theme-primary-950 border border-theme-primary-500/20 "
+      className="relative flex h-full flex-col overflow-hidden flex-1 rounded-tl-[0px] bg-theme-primary-900 border border-theme-primary-500/20 "
       // surfaceClassName="depth-surface-shell"
     >
       {/* Main Content Area - Scrollable */}

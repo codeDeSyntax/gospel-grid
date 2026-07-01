@@ -53,7 +53,7 @@ const SidebarMenuItem: React.FC<{
 }> = ({ item, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-all ${
+    className={`w-full rounded-xl px-4 py-3 text-left text-sm font-thin transition-all ${
       isActive
         ? "bg-theme-primary-500/15 text-theme-primary-50 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
         : "text-theme-primary-200/70 hover:bg-theme-primary-500/5 hover:text-theme-primary-50"
@@ -525,7 +525,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = () => {
         </div>
       </aside>
 
-      <main className="flex h-full min-h-0 flex-1 overflow-y-auto no-scrollbar bg-theme-primary-100/5">
+      <main className="flex h-full min-h-0 flex-1 overflow-y-auto no-scrollbar ">
         <div className="flex min-h-full flex-1 flex-col p-8 lg:p-10">
           <SectionContent
             tab={activeTab}

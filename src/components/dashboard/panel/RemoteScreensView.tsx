@@ -400,7 +400,7 @@ export const RemoteScreensView: React.FC<RemoteScreensViewProps> = ({
   }, []);
 
   return (
-    <div className="h-full w-full overflow-auto no-scrollbar px-5 py-5 text-theme-primary-50">
+    <div className="h-full w-full overflow-auto no-scrollbar bg-theme-primary-900 px-5 py-5 text-theme-primary-50">
       <AccessPermissionDialog
         request={activeIncomingRequest}
         onDeny={handleDenyAccessRequest}

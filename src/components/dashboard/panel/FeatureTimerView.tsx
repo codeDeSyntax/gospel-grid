@@ -359,8 +359,8 @@ export const FeatureTimerView: React.FC = () => {
     <div
       className={`h-full w-full rounded-2xl px-6 py-6 overflow-auto no-scrollbar ${
         isDarkMode
-          ? "bg-theme-primary-950 theme-text-on-overlay"
-          : "bg-theme-primary-950 theme-text-main"
+          ? "bg-theme-primary-900 theme-text-on-overlay"
+          : "bg-theme-primary-900 theme-text-main"
       }`}
     >
       <div className="mx-auto flex w-full max-w-7xl gap-4 h-full min-h-0">

@@ -580,7 +580,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
   const getWindowTileClasses = (assignedCount: number, isFocused: boolean) => {
     const base =
-      "group relative min-w-0 max-h-full overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-black border-0 aspect-[16/9] w-full h-auto";
+      "group relative min-w-0 max-h-full overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-stone-100 dark:bg-black border-0 aspect-[16/9] w-full h-auto";
 
     if (assignedCount === 1) {
       return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
@@ -603,7 +603,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
   return (
     <div className="relative w-full h-full min-h-0 rounded-none overflow-hidden flex flex-col">
-      <div className="shrink-0 mt-0 overflow-hidden rounded-none border border-x-0 border-t-0 border-solid border-theme-primary-700 bg-theme-primary-900 ">
+      <div className="shrink-0 mt-0 overflow-hidden rounded-none border border-theme-primary-700 bg-theme-primary-900 ">
         <div className="flex min-h-[54px] items-center justify-between gap-3 px-4 py-2">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-solid border-theme-primary-600 bg-theme-primary-800 text-theme-primary-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
@@ -680,7 +680,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         </div>
       ) : (
         <div
-          className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible`}
+          className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible bg-theme-primary-900`}
         >
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
@@ -694,7 +694,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-theme-primary`}
+                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-4 border-theme-primary-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-white dark:bg-black/50 `}
               >
                 <div className="absolute right-6 top-6 z-20 flex flex-col items-end gap-1 pointer-events-none">
                   <DepthButton
@@ -816,9 +816,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           title={`${win.app} • ${win.name}`}
                         >
                           {isCaptionsFeature ? (
-                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_45%)]">
+                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-stone-100 dark:bg-black">
                               <div className="max-w-[90%]">
-                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-white mb-2">
+                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-black dark:text-white  mb-2">
                                   Live Captions
                                 </p>
                                 <p className="text-sm leading-snug font-thin text-primary-400 break-words">

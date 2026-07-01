@@ -176,9 +176,9 @@ export const FeatureCaptionsView: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full overflow-auto no-scrollbar px-5 py-5 text-theme-primary-50">
+    <div className="h-full w-full overflow-auto no-scrollbar bg-theme-primary-900 px-5 py-5 text-theme-primary-50">
       <div className="mx-auto max-w-5xl space-y-4">
-        <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-900/35 p-4">
+        <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-900 p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-theme-primary-300/80">
             Live Captions
           </p>

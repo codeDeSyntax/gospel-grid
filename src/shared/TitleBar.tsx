@@ -86,6 +86,14 @@ const toolbarButtonBase =
 const windowButtonBase =
   "inline-flex h-8 w-11 items-center justify-center border-0 bg-transparent p-0 text-theme-primary-100 transition-colors duration-150 outline-none";
 
+const dragRegionStyle = {
+  WebkitAppRegion: "drag",
+} as React.CSSProperties;
+
+const noDragRegionStyle = {
+  WebkitAppRegion: "no-drag",
+} as React.CSSProperties;
+
 export const TitleBar: React.FC<TitleBarProps> = ({
   selectedWindowsCount,
   windowsCount,
@@ -336,21 +344,22 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     <div className="relative z-20 flex  flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-visible bg-theme-primary-900 ">
       <span
         className="pointer-events-none absolute inset-x-0 bottom-0 h-3 z-[1]"
-        style={{
-          background:
-            "linear-gradient(to bottom, transparent, rgb(var(--theme-primary-800) / 0.72))",
-        }}
+        // style={{
+        //   background:
+        //     "linear-gradient(to bottom, transparent, rgb(var(--theme-primary-800) / 0.72))",
+        // }}
       />
-      <div className="relative z-10 flex h-8 items-center justify-between px-2">
-        <div
-          className="relative z-10 flex items-center gap-2 px-2"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-        >
+      <div
+        className="relative z-10 flex h-8 items-center justify-between px-2"
+        style={dragRegionStyle}
+      >
+        <div className="relative z-10 flex items-center gap-2 px-2">
           <button
             type="button"
             onClick={onHomeClick}
             title="Go to home"
             className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-400/20 bg-gradient-to-br from-theme-primary-500/30 via-theme-primary-600/20 to-theme-primary-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors hover:border-theme-primary-300/45"
+            style={noDragRegionStyle}
           >
             <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
           </button>
@@ -361,7 +370,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
 
         <div
           className="relative z-10 flex items-center h-full"
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          style={noDragRegionStyle}
         >
           <div ref={actionMenuRef} className="relative flex items-center pr-1">
             <button
@@ -397,8 +406,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                       disabled={item.disabled}
                       className={`flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                         item.active
-                          ? "bg-primary-500/12 text-primary-100"
-                          : "text-theme-primary-100 hover:bg-theme-primary-800"
+                          ? "bg-primary-500/12 text-primary-500"
+                          : "text-theme-primary-500 hover:bg-theme-primary-800"
                       }`}
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-current">
@@ -452,11 +461,14 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       {/* stylish thin line with fading endings */}
       {/* <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" /> */}
 
-      <div className="relative flex h-8 items-center justify-between bg-theme-primary-950 px-3 text-[10px] leading-none">
+      <div
+        className="relative flex h-8 items-center justify-between bg-theme-primary-950 px-3 text-[10px] leading-none border-b border-solid border-x-0 border-t-0 border-theme-primary-600"
+        style={dragRegionStyle}
+      >
         <div className="flex items-center gap-3 theme-text-soft font-bold">
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 font-thin">
             <span
-              className={`h-1.5 w-1.5 rounded-full ${
+              className={`h-1.5 w-1.5 rounded-full font-thin ${
                 isProjectionOn ? "bg-primary-500 animate-pulse" : "bg-gray-500"
               }`}
             />
@@ -474,12 +486,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               Frozen
             </span>
           )}
-          <span className="h-3 w-px bg-white/10" />
+          <span className="h-3 font-thin w-px bg-white/10" />
           {windowsCount > 0 ? (
-            <>
+            <span className="inline-flex items-center gap-1.5 font-thin">
               <span>Windows: {windowsCount}</span>
               <span>Selected: {selectedWindowsCount}</span>
-            </>
+            </span>
           ) : isLoadingWindows ? (
             <span>Scanning...</span>
           ) : (
@@ -487,12 +499,15 @@ export const TitleBar: React.FC<TitleBarProps> = ({
           )}
         </div>
 
-        <div className="flex min-w-0 items-center gap-1.5 text-theme-primary-200">
-          <span className="rounded-full bg-theme-primary-900/55 px-2 py-1 text-[10px] font-semibold text-theme-primary-100">
+        <div
+          className="flex min-w-0 items-center gap-1.5 text-theme-primary-200"
+          style={noDragRegionStyle}
+        >
+          <span className="rounded-full bg-theme-primary-900/55 px-2 py-1 text-[10px] font-thin text-theme-primary-100">
             v{appVersion}
           </span>
           <span
-            className={`inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+            className={`inline-flex max-w-[220px] items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-[10px] font-thin ${
               updateDownloaded
                 ? "bg-primary-500/14 text-primary-200"
                 : updateReady
@@ -503,7 +518,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             {updateDownloaded ? (
               <CheckCircle2 className="h-3 w-3 shrink-0" />
             ) : isCheckingUpdate || isDownloadingUpdate ? (
-              <RefreshCw className="h-3 w-3 shrink-0 animate-spin" />
+              <img
+                src="./update.png"
+                className="h-3 w-3 shrink-0 animate-spin"
+              />
             ) : (
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-theme-primary-400" />
             )}
@@ -525,7 +543,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               }
             >
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
-                <RotateCcw className="h-3 w-3" />
+                <img src="./update.png" className="h-3 w-3" />
                 Restart
               </span>
             </button>
@@ -550,7 +568,8 @@ export const TitleBar: React.FC<TitleBarProps> = ({
               className="inline-flex h-6 items-center rounded-md border-0 bg-theme-primary-900/55 px-2.5 text-theme-primary-100 transition-colors hover:bg-theme-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold">
-                <RefreshCw
+                <img
+                  src="./update.png"
                   className={`h-3 w-3 ${isCheckingUpdate ? "animate-spin" : ""}`}
                 />
                 {isCheckingUpdate ? "Checking" : "Check"}

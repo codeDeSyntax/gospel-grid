@@ -8,7 +8,7 @@ export const StatusPill: React.FC<{
   <span
     className={`inline-flex h-7 items-center gap-2 rounded-full border-1 border-t border-solid px-5 text-[11px] font-semibold uppercase tracking-[0.14em] ${
       isRunning
-        ? "border-emerald-300/35 bg-emerald-400/10 text-emerald-100"
+        ? "border-primary-300/35 bg-primary-400 text-emerald-100"
         : "border-theme-primary-600 bg-theme-primary-900 text-theme-primary-200"
     }`}
   >
@@ -47,9 +47,9 @@ export const Panel: React.FC<{
   action?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, description, action, children }) => (
-  <section className="overflow-hidden rounded-lg -theme-primary-700 bg-theme-primary-900">
+  <section className="overflow-hidden rounded-lg -theme-primary-700 bg-theme-primary-800">
     <div className="flex min-h-[64px] items-center justify-between gap-3 bg-theme-primary-800 px-4 py-3">
-      <div className="min-w-0">
+      <div className="min-w-0 ">
         <p className="text-sm font-semibold text-theme-primary-50">{title}</p>
         {description ? (
           <p className="mt-1 text-xs text-theme-primary-300">{description}</p>
@@ -104,7 +104,7 @@ export const RemoteScreenTabs: React.FC<{
   const tabs: RemoteScreenTab[] = ["nearby", "connected", "sessions"];
 
   return (
-    <div className="grid grid-cols-3 gap-1 rounded-lg bg-theme-primary-900 p-1">
+    <div className="grid grid-cols-3 gap-1 rounded-lg bg-theme-primary-950 p-1">
       {tabs.map((tab) => {
         const active = activeTab === tab;
         return (

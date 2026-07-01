@@ -131,13 +131,13 @@ export const OverlayTextPanel: React.FC = () => {
   }, [commitMessage, draftText]);
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center p-6 theme-text-main">
+    <div className="h-full w-full flex flex-col items-center justify-center p-6 theme-text-main bg-theme-primary-900">
       <div className="w-full max-w-2xl flex flex-col gap-3">
         {/* Quick guide (outside card) */}
         <div
           className={`rounded-3xl border px-4 py-3 ${
             isDarkMode
-              ? "bg-theme-primary-800/60 border-theme-primary-600/35"
+              ? "bg-theme-primary-800 border-theme-primary-600/35"
               : "bg-theme-primary-900/90 border-theme-primary-700/70"
           }`}
         >
@@ -170,7 +170,7 @@ export const OverlayTextPanel: React.FC = () => {
         <div
           className={`rounded-3xl overflow-hidden border ${
             isDarkMode
-              ? "bg-theme-primary-900 border-theme-primary-700/45"
+              ? "bg-theme-primary-800 border-theme-primary-700/45"
               : "bg-theme-primary-950 border-theme-primary-700/70"
           }`}
         >
@@ -178,7 +178,7 @@ export const OverlayTextPanel: React.FC = () => {
           <div
             className={`flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b ${
               isDarkMode
-                ? "from-theme-primary-900 to-theme-primary-900"
+                ? "bg-theme-primary-800"
                 : "from-theme-primary-900/75 to-theme-primary-900/45"
             }`}
           >

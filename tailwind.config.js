@@ -170,49 +170,49 @@ export default {
       // Add CSS custom properties for theme colors
       addBase({
         ":root": {
-          // Light theme colors
-          "--color-bg-primary": "96 165 250", // white
-          "--color-bg-secondary": "96 165 250", // slate-50
-          "--color-bg-tertiary": "241 245 249", // slate-100
-          "--color-bg-elevated": "255 255 255", // white with shadow
+          // Light theme colors: soft green-white, not pure white.
+          "--color-bg-primary": "245 251 236", // #f5fbec
+          "--color-bg-secondary": "236 245 223", // #ecf5df
+          "--color-bg-tertiary": "225 236 208", // #e1ecd0
+          "--color-bg-elevated": "249 253 243", // #f9fdf3
 
-          "--color-surface-primary": "255 255 255", // white
-          "--color-surface-secondary": "248 250 252", // slate-50
-          "--color-surface-tertiary": "241 245 249", // slate-100
-          "--color-surface-hover": "226 232 240", // slate-200
-          "--color-surface-active": "203 213 225", // slate-300
+          "--color-surface-primary": "249 253 243", // #f9fdf3
+          "--color-surface-secondary": "245 251 236", // #f5fbec
+          "--color-surface-tertiary": "236 245 223", // #ecf5df
+          "--color-surface-hover": "227 239 212", // #e3efd4
+          "--color-surface-active": "216 231 197", // #d8e7c5
 
-          "--color-border-primary": "226 232 240", // slate-200
-          "--color-border-secondary": "203 213 225", // slate-300
-          "--color-border-accent": "124 58 237", // primary-600
+          "--color-border-primary": "219 232 201", // #dbe8c9
+          "--color-border-secondary": "204 220 184", // #ccdcb8
+          "--color-border-accent": "94 172 36", // primary-500
 
           "--color-text-primary": "15 23 42", // slate-900
           "--color-text-secondary": "71 85 105", // slate-600
           "--color-text-tertiary": "148 163 184", // slate-400
-          "--color-text-accent": "124 58 237", // primary-600
+          "--color-text-accent": "94 172 36", // primary-500
           "--color-text-inverse": "255 255 255", // white
         },
         ".dark": {
-          // Dark theme colors (from your prototype)
-          "--color-bg-primary": "26 26 26", // #0c0c0c
-          "--color-bg-secondary": "45 45 45", // #2d2d2d
-          "--color-bg-tertiary": "51 51 51", // #333333
-          "--color-bg-elevated": "45 45 45", // #2d2d2d with shadow
+          // Dark theme colors: WhatsApp-inspired charcoal surfaces.
+          "--color-bg-primary": "29 29 29", // #1d1d1d
+          "--color-bg-secondary": "37 37 37", // #252525
+          "--color-bg-tertiary": "44 44 44", // #2c2c2c
+          "--color-bg-elevated": "50 50 50", // #323232
 
-          "--color-surface-primary": "45 45 45", // #2d2d2d
-          "--color-surface-secondary": "51 51 51", // #333333
-          "--color-surface-tertiary": "64 64 64", // #404040
-          "--color-surface-hover": "64 64 64", // #404040
-          "--color-surface-active": "82 82 82", // #525252
+          "--color-surface-primary": "36 36 36", // #242424
+          "--color-surface-secondary": "42 42 42", // #2a2a2a
+          "--color-surface-tertiary": "50 50 50", // #323232
+          "--color-surface-hover": "58 58 58", // #3a3a3a
+          "--color-surface-active": "66 66 66", // #424242
 
-          "--color-border-primary": "68 68 68", // #444444
-          "--color-border-secondary": "82 82 82", // #525252
-          "--color-border-accent": "124 58 237", // primary-600
+          "--color-border-primary": "56 56 56", // #383838
+          "--color-border-secondary": "70 70 70", // #464646
+          "--color-border-accent": "94 172 36", // primary-500
 
-          "--color-text-primary": "255 255 255", // white
-          "--color-text-secondary": "170 170 170", // #aaaaaa
-          "--color-text-tertiary": "102 102 102", // #666666
-          "--color-text-accent": "74 158 255", // #4a9eff (blue from prototype)
+          "--color-text-primary": "242 242 242", // #f2f2f2
+          "--color-text-secondary": "200 200 200", // #c8c8c8
+          "--color-text-tertiary": "155 155 155", // #9b9b9b
+          "--color-text-accent": "94 172 36", // primary-500
           "--color-text-inverse": "15 23 42", // slate-900
         },
       });
