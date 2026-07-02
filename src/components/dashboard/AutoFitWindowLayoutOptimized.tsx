@@ -817,9 +817,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           title={`${win.app} • ${win.name}`}
                         >
                           {isCaptionsFeature ? (
-                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-primary-950">
+                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-primary-50 dark:bg-primary-950/50 hover:border-none">
                               <div className="max-w-[90%]">
-                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-white   mb-2">
+                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-primary-950 dark:text-white   mb-2">
                                   Live Captions
                                 </p>
                                 <p className="text-sm leading-snug font-thin text-primary-400 break-words">
@@ -842,7 +842,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             <img
                               src={thumbnail}
                               alt={`${win.app} thumbnail`}
-                              className="absolute inset-0 h-full w-full object-contain bg-black z-0"
+                              className="absolute inset-0 h-full w-full object-fit bg-primary-50 dark:bg-primary-950/50 z-0"
                               draggable={false}
                             />
                           ) : (
@@ -859,10 +859,6 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
 
                           {!isTimerFeature && !isCaptionsFeature && (
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/12 to-transparent pointer-events-none z-[1]" />
-                          )}
-
-                          {!isTimerFeature && !isCaptionsFeature && (
                             <div className="absolute top-1.5 left-1.5 z-20 max-w-[82%] rounded bg-black/70 px-1.5 py-0.5 backdrop-blur-sm">
                               <span className="block text-[8px] leading-none theme-text-on-overlay truncate max-w-full">
                                 {win.name}
@@ -871,7 +867,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
 
                           {!isTimerFeature && !isCaptionsFeature && (
-                            <div className="absolute bottom-1.5 right-1.5 z-10 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
+                            <div className="absolute bottom-1.5 right-1.5 z-10 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md ">
                               {win.icon ? (
                                 <>
                                   <img

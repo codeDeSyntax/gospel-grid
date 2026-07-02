@@ -619,7 +619,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                       .map((tag) => (
                                         <span
                                           key={`${window.id}-${tag}`}
-                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full bg-primary-800/50  border-none px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
+                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full bg-theme-primary-700 text-white/50   border-none px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
                                             intelligence,
                                             tag,
                                             isLightMode,
@@ -635,7 +635,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                           ) : hasPrivacyWarning ? (
                                             <ShieldAlert className="h-2.5 w-2.5 shrink-0" />
                                           ) : null}
-                                          <span className="truncate">
+                                          <span className="truncate text-black/50 dark:text-white/70">
                                             {tag}
                                           </span>
                                         </span>
