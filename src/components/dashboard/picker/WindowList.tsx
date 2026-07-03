@@ -19,6 +19,7 @@ import {
   sortWindowsByIntelligence,
   type WindowIntelligenceResult,
 } from "@/utils/windowIntelligence";
+import { WindowListSkeleton } from "./WindowListSkeleton";
 
 const CAPTIONS_FEATURE_WINDOW_ID = "feature:captions-window";
 
@@ -83,6 +84,8 @@ export interface WindowInfo {
   zOrder?: number; // Window z-order for layering
 }
 
+const isFeatureWindowId = (id: string) => id.startsWith("feature:");
+
 interface WindowListProps {
   windows: WindowInfo[];
   onWindowSelect: (windowId: string) => void;
@@ -91,6 +94,8 @@ interface WindowListProps {
   onWindowDragStart?: (window: WindowInfo) => void;
   onWindowDragEnd?: () => void;
   isLoading?: boolean;
+  hasCompletedInitialLoad?: boolean;
+  enumeratedWindowCount?: number;
   error?: string | null;
   countdownTime?: number;
   totalRefreshTime?: number;
@@ -105,6 +110,8 @@ export const WindowList: React.FC<WindowListProps> = ({
   onWindowDragStart,
   onWindowDragEnd,
   isLoading = false,
+  hasCompletedInitialLoad = true,
+  enumeratedWindowCount = 0,
   error = null,
   countdownTime = 0,
   totalRefreshTime = 60,
@@ -112,7 +119,11 @@ export const WindowList: React.FC<WindowListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [draggedWindow, setDraggedWindow] = useState<WindowInfo | null>(null);
-  const showLoadingSkeleton = isLoading && windows.length === 0;
+  const hasEnumeratedWindows =
+    windows.some((window) => !isFeatureWindowId(window.id)) ||
+    enumeratedWindowCount > 0;
+  const showLoadingSkeleton =
+    !hasEnumeratedWindows && (isLoading || !hasCompletedInitialLoad);
   const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
   const isLightMode = !isDarkMode;
   const intelligenceByWindowId = useMemo(() => {
@@ -264,23 +275,7 @@ export const WindowList: React.FC<WindowListProps> = ({
       {/* Scrollable Window List */}
       <div className="flex-1 overflow-y-scroll no-scrollbar px-1">
         {showLoadingSkeleton ? (
-          <div className="space-y-1 pb-2">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={`window-skeleton-${index}`}
-                className="relative overflow-hidden rounded-xl ring-1 ring-theme-primary-600/12 bg-theme-primary-900/12 px-2 py-1.5"
-              >
-                <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-theme-primary-300/10 to-transparent" />
-                <div className="relative z-10 flex items-center gap-2.5 pl-3 pr-5">
-                  <div className="h-8 w-8 rounded-lg border border-theme-primary-500/20 bg-theme-primary-500/18 animate-pulse" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-2.5 w-28 rounded bg-theme-primary-300/25 animate-pulse" />
-                    <div className="h-2 w-40 max-w-[90%] rounded bg-theme-primary-500/20 animate-pulse" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <WindowListSkeleton />
         ) : filteredWindows.length === 0 && !isLoading ? (
           <div className="text-center py-6 text-theme-primary-300/80">
             <MdMonitor size={40} className="mx-auto mb-2 opacity-50" />

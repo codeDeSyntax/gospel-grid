@@ -149,6 +149,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const {
     windows: enumeratedWindows,
     isLoading: isLoadingWindows,
+    hasCompletedInitialLoad: hasCompletedInitialWindowLoad,
     error: windowError,
     refreshWindows,
     focusWindow: focusWindowNative,
@@ -796,9 +797,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   );
 
   const handleWindowAdd = useCallback(
-    (windowInfo: WindowInfo) => {
+    (windowInfo: WindowInfo): boolean => {
       if (isFeatureWindowId(windowInfo.id)) {
-        return;
+        return false;
       }
 
       const existingWindow = state.windows.find((w) => w.id === windowInfo.id);
@@ -807,7 +808,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         getSelectedContentWindowCount(state.windows) >= MAX_WINDOWS_PER_SCREEN
       ) {
         showWindowLimitModal(windowInfo.name);
-        return;
+        return false;
       }
 
       const windowExists = !!existingWindow;
@@ -818,6 +819,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
         : [...state.windows, { ...windowInfo, isSelected: true }];
       setState((prev) => ({ ...prev, windows: newWindows }));
       pushHistory(newWindows);
+      return true;
     },
     [state.windows, pushHistory, showWindowLimitModal],
   );
@@ -1138,6 +1140,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
             onWindowDragStart={(window) => {}}
             onWindowDragEnd={() => {}}
             isLoading={isLoadingWindows}
+            hasCompletedInitialLoad={hasCompletedInitialWindowLoad}
+            enumeratedWindowCount={enumeratedWindows.length}
             error={windowError}
             countdownTime={countdownTime}
             totalRefreshTime={totalRefreshTime}

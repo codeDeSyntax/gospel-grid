@@ -407,7 +407,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                       className={`flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                         item.active
                           ? "bg-primary-500/12 text-primary-500"
-                          : "text-black dark:text-white/50 hover:bg-theme-primary-800"
+                          : "text-black dark:text-white/80 hover:bg-theme-primary-800"
                       }`}
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-current">
@@ -535,7 +535,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             <button
               type="button"
               onClick={onRestartToUpdate}
-              className="inline-flex h-6 items-center rounded-md border-0 bg-primary-500/16 px-2.5 text-primary-100 transition-colors hover:bg-primary-500/24"
+              className="inline-flex h-6 items-center rounded-md border-0 bg-primary-500/16 px-2.5 text-primary-500 transition-colors hover:bg-primary-500/24"
               title={
                 updateVersion
                   ? `Restart to install v${updateVersion}`

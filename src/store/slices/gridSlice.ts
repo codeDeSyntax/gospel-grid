@@ -1,5 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+/** Maximum windows assignable to a single display in the autofit layout. */
+export const MAX_WINDOWS_PER_DISPLAY = 4;
+
 interface GridTile {
   id: string;
   windowId: string | null;
@@ -179,12 +182,16 @@ const gridSlice = createSlice({
       action: PayloadAction<{ displayId: number; windowId: string }>,
     ) => {
       const current = state.displayAssignments[action.payload.displayId] ?? [];
-      if (!current.includes(action.payload.windowId)) {
-        state.displayAssignments[action.payload.displayId] = [
-          ...current,
-          action.payload.windowId,
-        ];
+      if (current.includes(action.payload.windowId)) {
+        return;
       }
+      if (current.length >= MAX_WINDOWS_PER_DISPLAY) {
+        return;
+      }
+      state.displayAssignments[action.payload.displayId] = [
+        ...current,
+        action.payload.windowId,
+      ];
     },
     removeWindowFromDisplay: (
       state,

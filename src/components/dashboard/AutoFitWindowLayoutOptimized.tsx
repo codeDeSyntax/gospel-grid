@@ -23,12 +23,14 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   assignWindowToDisplay,
   hideWindowOnDisplay,
+  MAX_WINDOWS_PER_DISPLAY,
   removeWindowFromDisplay,
   setDisplayAssignments,
   setDisplayHiddenAssignments,
   setWindowThumbnails,
   showWindowOnDisplay,
 } from "@/store/slices/gridSlice";
+import { WindowLimitModal } from "./modals/WindowLimitModal";
 import { publishDisplayLayout } from "@/store/slices/notificationSlice";
 import { setProjectionOn } from "@/store/slices/appSlice";
 import { TimerProjectionScreen } from "./projection/TimerProjectionScreen";
@@ -78,7 +80,8 @@ interface AutoFitWindowLayoutProps {
   currentLayout: string;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
-  onWindowAdd?: (window: WindowInfo) => void;
+  /** Return false to block adding (e.g. global selection limit). */
+  onWindowAdd?: (window: WindowInfo) => boolean | void;
   isProjectionOn?: boolean;
 }
 
@@ -110,6 +113,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const [openManageDisplayId, setOpenManageDisplayId] = useState<number | null>(
     null,
   );
+  const [windowLimitModal, setWindowLimitModal] = useState<{
+    windowName?: string | null;
+  } | null>(null);
   const [captionsText, setCaptionsText] = useState(
     () => loadFeatureCaptionsState().text,
   );
@@ -440,8 +446,27 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
       if (dragData.windowId && dragData.windowInfo) {
         const windowInfo: WindowInfo = JSON.parse(dragData.windowInfo);
-        onWindowAdd?.(windowInfo);
-        dispatch(assignWindowToDisplay({ displayId, windowId: windowInfo.id }));
+        const assignedIds = displayAssignments[displayId] ?? [];
+        const alreadyOnDisplay = assignedIds.includes(windowInfo.id);
+
+        if (
+          !alreadyOnDisplay &&
+          assignedIds.length >= MAX_WINDOWS_PER_DISPLAY
+        ) {
+          setWindowLimitModal({ windowName: windowInfo.name });
+          return;
+        }
+
+        const added = onWindowAdd?.(windowInfo);
+        if (added === false) {
+          return;
+        }
+
+        if (!alreadyOnDisplay) {
+          dispatch(
+            assignWindowToDisplay({ displayId, windowId: windowInfo.id }),
+          );
+        }
       }
     } catch (error) {
       console.error("Error parsing display drop data:", error);
@@ -784,7 +809,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`absolute inset-0 p-3 grid gap-2 ${getGridClasses(assignedIds.length)} auto-rows-fr content-stretch items-stretch overflow-hidden`}
+                    className={`absolute inset-0 p-3 grid gap-2 ${getGridClasses(assignedIds.length)} auto-rows-fr content-stretch  overflow-hidden`}
                   >
                     {assignedIds.map((windowId) => {
                       const win = windowMap.get(windowId);
@@ -956,6 +981,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
           setup.
         </div>
       )}
+
+      <WindowLimitModal
+        isOpen={windowLimitModal !== null}
+        maxWindows={MAX_WINDOWS_PER_DISPLAY}
+        windowName={windowLimitModal?.windowName}
+        onClose={() => setWindowLimitModal(null)}
+      />
     </div>
   );
 };

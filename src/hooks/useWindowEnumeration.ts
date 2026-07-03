@@ -14,7 +14,8 @@ export const useWindowEnumeration = (
   options: WindowEnumerationOptions = {},
 ) => {
   const [windows, setWindows] = useState<WindowInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [countdownTime, setCountdownTime] = useState<number>(0);
 
@@ -150,6 +151,7 @@ export const useWindowEnumeration = (
       console.error("Window enumeration error:", err);
     } finally {
       setIsLoading(false);
+      setHasCompletedInitialLoad(true);
     }
   }, [includeMinimized, includeSystemWindows, smartRefresh, refreshInterval]);
 
@@ -328,6 +330,7 @@ export const useWindowEnumeration = (
   return {
     windows,
     isLoading,
+    hasCompletedInitialLoad,
     error,
     refreshWindows,
     countdownTime,

@@ -10,7 +10,7 @@ export interface RightPanelProps {
   onWindowSelect: (windowId: string) => void;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
-  onWindowAdd: (window: WindowInfo) => void;
+  onWindowAdd: (window: WindowInfo) => boolean | void;
   activePanel: PanelView;
 }
 
@@ -20,7 +20,7 @@ export interface WindowLayoutCardProps {
   focusedWindowId: string | null;
   onWindowFocus: (windowId: string) => void;
   onWindowRemove: (windowId: string) => void;
-  onWindowAdd: (window: WindowInfo) => void;
+  onWindowAdd: (window: WindowInfo) => boolean | void;
   isProjectionOn?: boolean;
 }
 

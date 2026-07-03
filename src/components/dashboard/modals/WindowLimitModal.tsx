@@ -30,7 +30,7 @@ export const WindowLimitModal: React.FC<WindowLimitModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-white/45 dark:bg-black/45 px-4 backdrop-blur-md">
       <button
         type="button"
         className="absolute inset-0 cursor-default border-0 bg-transparent"
@@ -38,9 +38,7 @@ export const WindowLimitModal: React.FC<WindowLimitModalProps> = ({
         aria-label="Close window limit message"
       />
 
-      <section className="relative w-full max-w-md overflow-hidden rounded-2xl border border-solid border-theme-primary-700 bg-theme-primary-950 shadow-2xl shadow-black/30">
-        <div className="absolute inset-x-0 top-0 h-1 bg-primary-500" />
-
+      <section className="relative w-full max-w-md overflow-hidden rounded-2xl border border-solid border-theme-primary-700 bg-theme-primary-900 shadow-2xl shadow-black/30">
         <div className="flex items-start gap-4 px-5 pb-4 pt-5">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-500/14 text-primary-200">
             <Layers3 className="h-5 w-5" strokeWidth={2.4} />
