@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld("windowControls", {
   close: () => ipcRenderer.invoke("window-close"),
   isMaximized: () => ipcRenderer.invoke("window-is-maximized"),
   isMinimized: () => ipcRenderer.invoke("window-is-minimized"),
+  splashReady: () => ipcRenderer.invoke("splash-ready"),
 });
 
 // --------- Window Enumeration APIs ---------
@@ -161,6 +162,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Wrapper for compatibility
   captureWindowThumbnail: (windowId: string, options?: any) =>
     ipcRenderer.invoke("get-window-thumbnail", windowId, options),
+
+  // Signal the main process that the splash screen is done → expand window
+  splashReady: () => ipcRenderer.invoke("splash-ready"),
 
   remoteScreen: {
     getStatus: () => ipcRenderer.invoke("remote-screen:get-status"),

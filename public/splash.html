@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Wingrid</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+
+    /* ── Center card entrance ── */
+    .card {
+      position: relative;
+      width: 560px;
+      height: 360px;
+      background: #ffffff;
+      border-radius: 28px;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(.93);
+      animation: cardIn .48s cubic-bezier(.22,1,.36,1) .06s forwards;
+    }
+    @keyframes cardIn {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Halftone corner dots ── */
+    .corner { position: absolute; width: 96px; height: 96px; pointer-events: none; }
+    .corner-tl { top: 18px; left: 18px; }
+    .corner-br { bottom: 18px; right: 18px; }
+
+    /* ── Brand row ── */
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .logo-svg { width: 44px; height: 60px; flex-shrink: 0; }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .brand-name {
+      font-size: 36px;
+      font-weight: 300;
+      letter-spacing: -.01em;
+      color: #111;
+      line-height: 1;
+    }
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 600;
+      color: #7bb94d;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .brand-by {
+      font-size: 8px;
+      font-weight: 700;
+      color: rgba(0,0,0,.32);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* ── Version ── */
+    .version {
+      font-size: 20px;
+      font-weight: 300;
+      color: rgba(0,0,0,.38);
+      letter-spacing: .06em;
+      margin-top: 22px;
+      margin-bottom: 26px;
+    }
+
+    /* ── Loading bar ── */
+    .bar-wrap {
+      display: flex;
+      gap: 3px;
+      width: 196px;
+      height: 14px;
+      border: 1px solid rgba(123,185,77,.5);
+      border-radius: 4px;
+      padding: 2px;
+      background: white;
+    }
+    .bar-seg {
+      flex: 1;
+      height: 100%;
+      background: #7bb94d;
+      border-radius: 1px;
+      opacity: .15;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: .15; }
+      50%      { opacity: 1;   }
+    }
+
+    /* ── Status text ── */
+    .status {
+      font-size: 9px;
+      font-weight: 500;
+      color: rgba(0,0,0,.32);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-top: 10px;
+      animation: blink 1.6s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: .4; }
+      50%      { opacity: 1;  }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Center card -->
+  <div class="card">
+
+    <!-- Halftone corner SVGs (filled by JS) -->
+    <svg class="corner corner-tl" id="dots-tl" viewBox="0 0 100 100"></svg>
+    <svg class="corner corner-br" id="dots-br" viewBox="0 0 100 100"></svg>
+
+    <!-- Brand row -->
+    <div class="brand-row">
+      <svg class="logo-svg" id="logo-dots" viewBox="0 0 45 72"></svg>
+      <div class="brand-text">
+        <span class="brand-name">WINGRID</span>
+       
+      </div>
+    </div>
+
+    <div class="version">v. 2.2.39</div>
+
+    <div class="bar-wrap" id="bar"></div>
+
+    <div class="status">Loading...</div>
+
+  </div>
+
+  <script>
+    const ns = 'http://www.w3.org/2000/svg';
+
+    // ── Halftone corner dots ──────────────────────────────────
+    function makeCornerDots(svgEl, corner) {
+      const size = 8;
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size - r; c++) {
+          const t = (size - r - c) / size;
+          const x = corner === 'tl' ? c * 9 : 80 - c * 9;
+          const y = corner === 'tl' ? r * 9 : 80 - r * 9;
+          const el = document.createElementNS(ns, 'circle');
+          el.setAttribute('cx',  x + 6);
+          el.setAttribute('cy',  y + 6);
+          el.setAttribute('r',   2.4 * t);
+          el.setAttribute('fill', '#7bb94d');
+          el.setAttribute('opacity', t * 0.7);
+          svgEl.appendChild(el);
+        }
+      }
+    }
+
+    // ── Arrow / play-button logo dots ────────────────────────
+    function makeLogoDots(svgEl) {
+      const rows = 9;
+      for (let r = 0; r < rows; r++) {
+        const cols = r < 5 ? r + 1 : 9 - r;
+        for (let c = 0; c < cols; c++) {
+          const el = document.createElementNS(ns, 'circle');
+          el.setAttribute('cx',  c * 7.5 + 6);
+          el.setAttribute('cy',  r * 7.5 + 6);
+          el.setAttribute('r',   2.2);
+          el.setAttribute('fill', '#7bb94d');
+          el.setAttribute('opacity', 0.5 + (c / 5) * 0.5);
+          svgEl.appendChild(el);
+        }
+      }
+    }
+
+    // ── Loading bar segments ──────────────────────────────────
+    function makeBar(container, count) {
+      for (let i = 0; i < count; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'bar-seg';
+        seg.style.animationDelay = (i * 0.09) + 's';
+        container.appendChild(seg);
+      }
+    }
+
+    makeCornerDots(document.getElementById('dots-tl'), 'tl');
+    makeCornerDots(document.getElementById('dots-br'), 'br');
+    makeLogoDots(document.getElementById('logo-dots'));
+    makeBar(document.getElementById('bar'), 14);
+  </script>
+</body>
+</html>

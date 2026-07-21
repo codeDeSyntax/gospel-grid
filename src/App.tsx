@@ -45,7 +45,7 @@ const slideVariants = {
 
 function App() {
   const dispatch = useAppDispatch();
-  const [currentScreen, setCurrentScreen] = useState<AppScreen>("welcome");
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>("dashboard");
   const [showSplash, setShowSplash] = useState(true);
   const [navigationDirection, setNavigationDirection] = useState(1);
   const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] =
@@ -189,8 +189,10 @@ function App() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      // Signal main process: native splash window can close now
+      (window as any).windowControls?.splashReady?.();
       setShowSplash(false);
-    }, 1350);
+    }, 1000);
 
     return () => window.clearTimeout(timer);
   }, []);

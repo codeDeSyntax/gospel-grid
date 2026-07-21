@@ -104,6 +104,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 let win: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
 
 let publishedWindows: BrowserWindow[] = []; // Track published layout windows
 const publishedLayoutData = new Map<string, any>(); // Store layout data temporarily
@@ -314,7 +315,6 @@ const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
 async function createWindow() {
-  // Detect internal (laptop) display for main controller window
   const controllerDisplay = detectInternalDisplay();
 
   console.log("🖥️ Main Window Display Selection:", {
@@ -323,48 +323,97 @@ async function createWindow() {
     bounds: controllerDisplay.bounds,
   });
 
+  const db = controllerDisplay.bounds;
+
+  // ── 1. Splash window — centered, transparent, pure HTML, appears instantly ─
+  const SPLASH_W = 600; // 560px card + shadow space
+  const SPLASH_H = 400; // 360px card + shadow space
+  const splashX = Math.round(db.x + (db.width  - SPLASH_W) / 2);
+  const splashY = Math.round(db.y + (db.height - SPLASH_H) / 2);
+
+  splashWindow = new BrowserWindow({
+    title: "Wingrid",
+    icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
+    x: splashX,
+    y: splashY,
+    width: SPLASH_W,
+    height: SPLASH_H,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    show: false,
+    hasShadow: false,
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
+  });
+
+  splashWindow.setMenuBarVisibility(false);
+
+  const splashHtml = VITE_DEV_SERVER_URL
+    ? path.join(process.env.APP_ROOT || "", "public", "splash.html")
+    : path.join(RENDERER_DIST, "splash.html");
+
+  splashWindow.loadFile(splashHtml);
+  splashWindow.webContents.on("did-finish-load", () => {
+    splashWindow?.show();
+    console.log("🪟 Splash shown");
+  });
+
+  // ── 2. Main window — hidden, loads React in background ────────────────────
   win = new BrowserWindow({
     title: "Wingrid",
     icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
-    frame: false, // Remove default title bar
-    titleBarStyle: "hidden", // Hide title bar while keeping window controls
-    // Position on internal display (controller screen)
-    x: controllerDisplay.bounds.x,
-    y: controllerDisplay.bounds.y,
-    width: controllerDisplay.bounds.width,
-    height: controllerDisplay.bounds.height,
-    webPreferences: {
-      preload,
-    },
+    frame: false,
+    titleBarStyle: "hidden",
+    x: db.x,
+    y: db.y,
+    width: db.width,
+    height: db.height,
+    show: false,
+    webPreferences: { preload },
   });
 
-  // Remove the menu bar
   win.setMenuBarVisibility(false);
-  win.maximize();
 
   if (VITE_DEV_SERVER_URL) {
-    // #298
     win.loadURL(VITE_DEV_SERVER_URL);
-    // Open devTool if the app is not packaged
-    win.webContents.openDevTools();
   } else {
     win.loadFile(indexHtml);
   }
 
-  // Test actively push message to the Electron-Renderer
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
-  // Make all links open with the browser, not with the application
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https:")) shell.openExternal(url);
     return { action: "deny" };
   });
 
-  // Auto update
   update(win);
 }
+
+// ── IPC: React app ready → close splash, reveal main window ──────────────────
+ipcMain.handle("splash-ready", () => {
+  if (!win || win.isDestroyed()) return;
+
+  win.maximize();
+  win.show();
+  win.focus();
+
+  if (VITE_DEV_SERVER_URL) {
+    win.webContents.openDevTools();
+  }
+
+  setTimeout(() => {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.close();
+      splashWindow = null;
+    }
+  }, 80);
+});
 
 app.whenReady().then(createWindow);
 registerAssemblyAiIpc();
