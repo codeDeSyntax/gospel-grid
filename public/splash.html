@@ -19,20 +19,21 @@
       -webkit-app-region: drag;
     }
 
-    /* ── Center card entrance ── */
+    /* ── Center card — 420×270 compact (MS Word-style) ── */
     .card {
       position: relative;
-      width: 560px;
-      height: 360px;
-      background: #ffffff;
-      border-radius: 28px;
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      width: 420px;
+      height: 270px;
+      background: #7bba4d;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.22);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      gap: 10px;
+      padding: 20px 28px;
       overflow: hidden;
       opacity: 0;
       transform: scale(.93);
@@ -42,128 +43,219 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* ── Halftone corner dots ── */
+    /* ── Corner halftone dots ── */
     .corner { position: absolute; width: 96px; height: 96px; pointer-events: none; }
     .corner-tl { top: 18px; left: 18px; }
     .corner-br { bottom: 18px; right: 18px; }
 
-    /* ── Brand row ── */
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 18px;
+    /* ── Monitor wrapper — tilted for style ── */
+    .monitor-wrap {
+      position: relative;
+      flex-shrink: 0;
+      transform: rotate(-2.5deg);
+      -webkit-app-region: no-drag;
     }
-    .logo-svg { width: 44px; height: 60px; flex-shrink: 0; }
 
-    .brand-text {
+    /* Screen overlay — scaled to 75% display SVG size */
+    .screen-content {
+      position: absolute;
+      /* SVG displays at 248×165 (75% of 330×220 viewBox)
+         Screen rect in viewBox: x=4 y=10 w=322 h=157
+         Scaled: x=3 y=7.5 w=241 h=118                    */
+      top: 7.5px;
+      left: 3px;
+      width: 241px;
+      height: 118px;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-    }
-    .brand-name {
-      font-size: 36px;
-      font-weight: 300;
-      letter-spacing: -.01em;
-      color: #111;
-      line-height: 1;
-    }
-    .brand-sub {
-      font-size: 10px;
-      font-weight: 600;
-      color: #7bb94d;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-    .brand-by {
-      font-size: 8px;
-      font-weight: 700;
-      color: rgba(0,0,0,.32);
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin-top: 3px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 16px 10px;
     }
 
-    /* ── Version ── */
-    .version {
-      font-size: 20px;
-      font-weight: 300;
-      color: rgba(0,0,0,.38);
-      letter-spacing: .06em;
-      margin-top: 22px;
-      margin-bottom: 26px;
+    /* Icon avatar stack — bare icons overlapping on white */
+    .icon-stack {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .icon-item {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      flex-shrink: 0;
+      position: relative;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.20));
+      transition: transform .2s ease, filter .2s ease;
+    }
+    .icon-item + .icon-item { margin-left: -10px; }
+    .icon-item:nth-child(1) { z-index: 5; }
+    .icon-item:nth-child(2) { z-index: 4; }
+    .icon-item:nth-child(3) { z-index: 3; }
+    .icon-item:nth-child(4) { z-index: 2; }
+    .icon-item:nth-child(5) { z-index: 1; }
+    .icon-item:hover {
+      transform: translateY(-6px) scale(1.12);
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.28));
+      z-index: 10;
     }
 
-    /* ── Loading bar ── */
+    /* Loading bar — inside monitor screen, green segments on white */
     .bar-wrap {
       display: flex;
-      gap: 3px;
-      width: 196px;
-      height: 14px;
-      border: 1px solid rgba(123,185,77,.5);
-      border-radius: 4px;
-      padding: 2px;
-      background: white;
+      gap: 2px;
+      width: 158px;
+      height: 9px;
+      border: 1px solid rgba(123,186,77,.35);
+      border-radius: 3px;
+      padding: 1.5px;
+      background: rgba(123,186,77,.07);
+      flex-shrink: 0;
     }
     .bar-seg {
       flex: 1;
       height: 100%;
-      background: #7bb94d;
+      background: #7bba4d;
       border-radius: 1px;
-      opacity: .15;
+      opacity: .18;
       animation: pulse 1.4s ease-in-out infinite;
     }
     @keyframes pulse {
-      0%,100% { opacity: .15; }
+      0%,100% { opacity: .18; }
       50%      { opacity: 1;   }
     }
 
-    /* ── Status text ── */
-    .status {
-      font-size: 9px;
-      font-weight: 500;
-      color: rgba(0,0,0,.32);
+    /* Status text — inside monitor screen */
+    .status-inner {
+      font-size: 6.5px;
+      font-weight: 600;
+      color: rgba(0,0,0,.28);
       letter-spacing: .18em;
       text-transform: uppercase;
-      margin-top: 10px;
       animation: blink 1.6s ease-in-out infinite;
     }
     @keyframes blink {
       0%,100% { opacity: .4; }
       50%      { opacity: 1;  }
     }
+
+    /* ── Compact brand row below monitor ── */
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-svg { width: 20px; height: 27px; flex-shrink: 0; }
+    .brand-text { display: flex; flex-direction: column; align-items: flex-start; }
+    .brand-name {
+      font-size: 15px;
+      font-weight: 300;
+      letter-spacing: -.01em;
+      color: #ffffff;
+      line-height: 1;
+    }
+    .brand-version {
+      font-size: 6.5px;
+      font-weight: 600;
+      color: rgba(255,255,255,.55);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Center card -->
   <div class="card">
 
-    <!-- Halftone corner SVGs (filled by JS) -->
+    <!-- Corner halftone dots -->
     <svg class="corner corner-tl" id="dots-tl" viewBox="0 0 100 100"></svg>
     <svg class="corner corner-br" id="dots-br" viewBox="0 0 100 100"></svg>
 
-    <!-- Brand row -->
-    <div class="brand-row">
-      <svg class="logo-svg" id="logo-dots" viewBox="0 0 45 72"></svg>
-      <div class="brand-text">
-        <span class="brand-name">WINGRID</span>
-       
+    <!-- ── Sleek tilted monitor ── -->
+    <div class="monitor-wrap">
+      <!--
+        Bezel asymmetry:
+          top    = 10px  (thick)
+          bottom = 18px  (chin — thickest)
+          left   = 4px   (thin)
+          right  = 4px   (thin)
+        Screen: x=4 y=10 w=322 h=157  (total body height = 10+157+18 = 185)
+        Stand + base below body.
+        SVG total h = 185 + 35 = 220
+      -->
+      <svg width="248" height="165" viewBox="0 0 330 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#232323"/>
+            <stop offset="100%" stop-color="#0c0c0c"/>
+          </linearGradient>
+          <!-- Subtle screen inner shadow at edges -->
+          <linearGradient id="screenTopFade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.04)"/>
+            <stop offset="8%"   stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ── Monitor body — thick top+bottom bezel, thin left+right ── -->
+        <rect x="0" y="0" width="330" height="180" rx="7" fill="url(#bezel)"/>
+
+        <!-- White screen surface -->
+        <rect x="4" y="10" width="322" height="157" rx="3" fill="#ffffff"/>
+
+        <!-- Subtle top inner shadow on screen -->
+        <rect x="4" y="10" width="322" height="20" rx="3" fill="url(#screenTopFade)"/>
+
+        <!-- Thin top sheen on bezel -->
+        <rect x="1" y="0.5" width="328" height="1.5" rx="0.75"
+              fill="rgba(255,255,255,0.09)"/>
+
+        <!-- Camera dot (in top bezel center) -->
+        <circle cx="165" cy="5.5" r="1.5" fill="rgba(255,255,255,0.14)"/>
+
+        <!-- ── Stand — slightly tapered ── -->
+        <polygon points="152,185 178,185 175,207 155,207" fill="#0c0c0c"/>
+
+        <!-- ── Base — thin bar ── -->
+        <rect x="100" y="207" width="130" height="5" rx="2.5" fill="#0c0c0c"/>
+        <!-- Base sheen -->
+        <rect x="100" y="207" width="130" height="1.5" rx="0.75"
+              fill="rgba(255,255,255,0.05)"/>
+      </svg>
+
+      <!-- Screen content: icons + loading bar + status — all on white -->
+      <div class="screen-content">
+        <div class="icon-stack">
+          <img class="icon-item" src="chrome.png"     alt="Chrome"/>
+          <img class="icon-item" src="powerpoint.png" alt="PowerPoint"/>
+          <img class="icon-item" src="vlc.png"        alt="VLC"/>
+          <img class="icon-item" src="fileexp.png"    alt="Files"/>
+          <img class="icon-item" src="messages.png"   alt="Messages"/>
+        </div>
+
+        <!-- Loading bar inside monitor screen -->
+        <div class="bar-wrap" id="bar"></div>
+
+        <!-- Status inside screen -->
+        <div class="status-inner">Loading...</div>
       </div>
     </div>
 
-    <div class="version">v. 2.2.39</div>
-
-    <div class="bar-wrap" id="bar"></div>
-
-    <div class="status">Loading...</div>
+    <!-- Compact brand row below monitor -->
+    <div class="brand-row">
+       <img class="icon-item" src="wingrid.png" alt="PowerPoint"/>
+      <div class="brand-text">
+        <span class="brand-name">WINGRID</span>
+        <span class="brand-version">v. 2.2.39</span>
+      </div>
+    </div>
 
   </div>
 
   <script>
     const ns = 'http://www.w3.org/2000/svg';
 
-    // ── Halftone corner dots ──────────────────────────────────
     function makeCornerDots(svgEl, corner) {
       const size = 8;
       for (let r = 0; r < size; r++) {
@@ -175,14 +267,13 @@
           el.setAttribute('cx',  x + 6);
           el.setAttribute('cy',  y + 6);
           el.setAttribute('r',   2.4 * t);
-          el.setAttribute('fill', '#7bb94d');
+          el.setAttribute('fill', '#ffffff');
           el.setAttribute('opacity', t * 0.7);
           svgEl.appendChild(el);
         }
       }
     }
 
-    // ── Arrow / play-button logo dots ────────────────────────
     function makeLogoDots(svgEl) {
       const rows = 9;
       for (let r = 0; r < rows; r++) {
@@ -192,14 +283,13 @@
           el.setAttribute('cx',  c * 7.5 + 6);
           el.setAttribute('cy',  r * 7.5 + 6);
           el.setAttribute('r',   2.2);
-          el.setAttribute('fill', '#7bb94d');
+          el.setAttribute('fill', '#ffffff');
           el.setAttribute('opacity', 0.5 + (c / 5) * 0.5);
           svgEl.appendChild(el);
         }
       }
     }
 
-    // ── Loading bar segments ──────────────────────────────────
     function makeBar(container, count) {
       for (let i = 0; i < count; i++) {
         const seg = document.createElement('div');

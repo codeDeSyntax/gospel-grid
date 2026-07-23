@@ -326,8 +326,8 @@ async function createWindow() {
   const db = controllerDisplay.bounds;
 
   // ── 1. Splash window — centered, transparent, pure HTML, appears instantly ─
-  const SPLASH_W = 600; // 560px card + shadow space
-  const SPLASH_H = 400; // 360px card + shadow space
+  const SPLASH_W = 460; // 420px card + shadow space
+  const SPLASH_H = 310; // 270px card + shadow space
   const splashX = Math.round(db.x + (db.width  - SPLASH_W) / 2);
   const splashY = Math.round(db.y + (db.height - SPLASH_H) / 2);
 
@@ -340,6 +340,7 @@ async function createWindow() {
     height: SPLASH_H,
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000',
     resizable: false,
     movable: false,
     skipTaskbar: true,
@@ -372,6 +373,7 @@ async function createWindow() {
     width: db.width,
     height: db.height,
     show: false,
+    backgroundColor: '#1d1d1d',
     webPreferences: { preload },
   });
 
@@ -395,24 +397,48 @@ async function createWindow() {
   update(win);
 }
 
-// ── IPC: React app ready → close splash, reveal main window ──────────────────
+// ── IPC: React app ready → crossfade splash → main window ───────────────────
 ipcMain.handle("splash-ready", () => {
   if (!win || win.isDestroyed()) return;
 
-  win.maximize();
-  win.show();
-  win.focus();
-
+  // Open DevTools before showing so they don't cause a flash
   if (VITE_DEV_SERVER_URL) {
     win.webContents.openDevTools();
   }
 
-  setTimeout(() => {
+  // Step 1: maximise & show the window fully INVISIBLE first
+  win.maximize();
+  win.setOpacity(0);
+  win.showInactive(); // show without stealing focus or triggering a visual pop
+
+  // Step 2: Crossfade — 30 steps × 16ms ≈ 480ms smooth fade
+  const STEPS = 30;
+  const INTERVAL_MS = 16;
+  let step = 0;
+
+  const fadeTimer = setInterval(() => {
+    step++;
+    const t = step / STEPS;
+    // Cubic ease-in-out for a polished feel
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    if (!win!.isDestroyed()) win!.setOpacity(eased);
     if (splashWindow && !splashWindow.isDestroyed()) {
-      splashWindow.close();
-      splashWindow = null;
+      splashWindow.setOpacity(1 - eased);
     }
-  }, 80);
+
+    if (step >= STEPS) {
+      clearInterval(fadeTimer);
+      if (!win!.isDestroyed()) {
+        win!.setOpacity(1);
+        win!.focus();
+      }
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.close();
+        splashWindow = null;
+      }
+    }
+  }, INTERVAL_MS);
 });
 
 app.whenReady().then(createWindow);

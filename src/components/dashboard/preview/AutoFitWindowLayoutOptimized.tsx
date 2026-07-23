@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Cast, Monitor, RefreshCcw, X, MonitorOff } from "lucide-react";
+import { Cast, Monitor, RefreshCcw, X, MonitorOff, MoreHorizontal, Settings } from "lucide-react";
 import { type WindowInfo } from "../picker/WindowPicker";
 import { getWindowFallbackIcon } from "@/utils/appIconMapping";
 import { DepthButton } from "@/shared/DepthButton";
@@ -34,6 +34,7 @@ import {
   loadFeatureCaptionsState,
 } from "../RightPanel/featureCaptionsState";
 import { FcDeleteRow } from "react-icons/fc";
+import { ManageDisplayMenu } from "../ManageDisplayMenu";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -98,6 +99,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const [openManageDisplayId, setOpenManageDisplayId] = useState<number | null>(
     null,
   );
+  const [openScreenMenuId, setOpenScreenMenuId] = useState<number | null>(null);
   const [captionsText, setCaptionsText] = useState(
     () => loadFeatureCaptionsState().text,
   );
@@ -247,17 +249,31 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         return;
       }
 
-      if (!menuRoot) {
-        setOpenManageDisplayId(null);
-        return;
-      }
-
       setOpenManageDisplayId(null);
     };
 
     document.addEventListener("mousedown", handleDocumentClick);
     return () => document.removeEventListener("mousedown", handleDocumentClick);
   }, [openManageDisplayId]);
+
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (openScreenMenuId === null) return;
+
+      const menuRoot = document.querySelector(
+        `[data-screen-menu-root="${openScreenMenuId}"]`,
+      );
+
+      if (menuRoot && menuRoot.contains(event.target as Node)) {
+        return;
+      }
+
+      setOpenScreenMenuId(null);
+    };
+
+    document.addEventListener("mousedown", handleDocumentClick);
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
+  }, [openScreenMenuId]);
 
   function makePlaceholderDataUrl(
     win: WindowInfo | undefined,
@@ -697,6 +713,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
             const isPublished = publishedDisplayIds.includes(display.id);
+            const hiddenIds = new Set(
+              displayHiddenAssignments[display.id] ?? [],
+            );
             return (
               <div
                 key={display.id}
@@ -706,137 +725,77 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 className={`relative w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl ring-dashed ring-4 ring-theme-primary-700 overflow-hidden transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black`}
               >
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
+                <div 
+                  data-screen-menu-root={display.id}
+                  className="absolute right-3 top-3 z-20 pointer-events-auto"
+                >
+                  <DepthButton
+                    onClick={() => setOpenScreenMenuId(openScreenMenuId === display.id ? null : display.id)}
+                    sizeClassName="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+                    inactiveClassName="text-theme-primary-100 border-theme-primary-500/35 hover:text-white"
+                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/70 via-theme-primary-900/80 to-theme-primary-950"
+                    title="Screen actions"
+                  >
+                    <MoreHorizontal className="h-4 w-4" strokeWidth={2.4} />
+                  </DepthButton>
 
-                <div className="absolute right-3 top-3 z-20 flex flex-col items-end gap-1 pointer-events-none">
-                  <DepthButton
-                    sizeClassName="h-4 px-2 p-1 rounded-xl shrink-0 pointer-events-auto"
-                    inactiveClassName="text-theme-primary-50 border-theme-primary-400/50"
-                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/60 via-theme-primary-700 to-theme-primary-800/60"
-                  >
-                    <span className="text-[10px] font-semibold text-theme-primary-50 truncate leading-tight traking-wide uppercase">
-                      {display.isPrimary
-                        ? "My PC"
-                        : display.label || `Display ${index + 1}`}
-                    </span>
-                  </DepthButton>
-                  <DepthButton
-                    onClick={() => handleToggleDisplayProjection(display.id)}
-                    disabled={
-                      !isPublished &&
-                      getVisibleAssignedIds(display.id).length === 0
-                    }
-                    sizeClassName="h-6 px-2 py-1 rounded-xl shrink-0 pointer-events-auto"
-                    title={
-                      isPublished
-                        ? "Close this display projection"
-                        : "Project this display"
-                    }
-                    active={isPublished}
-                    activeClassName="text-red-50 border-red-300/80"
-                    activeSurfaceClassName="bg-gradient-to-br from-red-600/90 via-red-700/95 to-red-800/90"
-                    inactiveClassName="text-theme-primary-50 border-theme-primary-400/50"
-                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/60 via-theme-primary-700 to-theme-primary-800/60"
-                  >
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase">
-                      {isPublished ? (
-                        <MonitorOff className="w-3.5 h-3.5" />
-                      ) : (
-                        <Cast className="w-3.5 h-3.5" />
-                      )}
-                      {isPublished ? "Close" : "Project"}
-                    </span>
-                  </DepthButton>
-                  <div
-                    className="relative pointer-events-auto"
-                    data-manage-menu-root={
-                      openManageDisplayId === display.id
-                        ? display.id
-                        : undefined
-                    }
-                  >
-                    <DepthButton
-                      onClick={() =>
-                        setOpenManageDisplayId((current) =>
-                          current === display.id ? null : display.id,
-                        )
-                      }
-                      sizeClassName="h-6 px-2 py-1 rounded-xl shrink-0"
-                      inactiveClassName="text-theme-primary-50 border-theme-primary-400/50"
-                      inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/60 via-theme-primary-700 to-theme-primary-800/60"
+                  {openScreenMenuId === display.id && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-md border border-solid border-theme-primary-600/70 bg-theme-primary-900 py-1 text-[12px] shadow-xl shadow-black/35 animate-in fade-in slide-in-from-top-1 duration-150"
                     >
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase">
-                        Manage
-                      </span>
-                    </DepthButton>
-
-                    {openManageDisplayId === display.id && (
-                      <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-theme-primary-400/20 bg-theme-primary-950/95 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-                        <div className="border-b border-theme-primary-500/15 px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-theme-primary-100">
-                            Manage Screen
-                          </p>
-                          <p className="text-[10px] text-theme-primary-300/70">
-                            Hide windows from the published layout or remove
-                            them from this screen.
-                          </p>
-                        </div>
-                        <div className="max-h-72 overflow-y-auto">
-                          {assignedIds.length === 0 ? (
-                            <div className="px-3 py-4 text-xs text-theme-primary-300/70">
-                              No windows assigned to this display yet.
-                            </div>
-                          ) : (
-                            assignedIds.map((windowId) => {
-                              const win = windowMap.get(windowId);
-                              if (!win) return null;
-                              const isHidden = (
-                                displayHiddenAssignments[display.id] ?? []
-                              ).includes(windowId);
-                              return (
-                                <div
-                                  key={`manage-${display.id}-${windowId}`}
-                                  className="flex items-center gap-2 border-b border-theme-primary-500/10 px-3 py-2 last:border-b-0"
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[11px] font-semibold text-theme-primary-50">
-                                      {win.name}
-                                    </p>
-                                    <p className="truncate text-[10px] text-theme-primary-300/65">
-                                      {win.app}
-                                      {isHidden ? " • Hidden" : ""}
-                                    </p>
-                                  </div>
-                                  <button
-                                    onClick={() => {
-                                      handleToggleHiddenOnDisplay(
-                                        display.id,
-                                        windowId,
-                                      );
-                                    }}
-                                    className="rounded-lg border border-theme-primary-400/25 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-theme-primary-50 hover:bg-theme-primary-500/15"
-                                  >
-                                    {isHidden ? "Show" : "Hide"}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleRemoveFromDisplay(
-                                        display.id,
-                                        windowId,
-                                      );
-                                    }}
-                                    className="rounded-lg border border-red-400/25 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-200 hover:bg-red-500/15"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
+                      <div className="px-3 py-1.5 text-[9px] font-semibold text-theme-primary-400 border-b border-theme-primary-800/60 uppercase tracking-wider select-none">
+                        {display.isPrimary ? "My PC" : display.label || `Display ${index + 1}`}
                       </div>
-                    )}
-                  </div>
+                      
+                      <button
+                        type="button"
+                        role="menuitem"
+                        disabled={!isPublished && getVisibleAssignedIds(display.id).length === 0}
+                        onClick={() => {
+                          handleToggleDisplayProjection(display.id);
+                          setOpenScreenMenuId(null);
+                        }}
+                        className="flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors text-white/80 hover:bg-theme-primary-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <span className="flex h-4 w-4 items-center justify-center">
+                          {isPublished ? <MonitorOff className="w-3.5 h-3.5 text-red-500" /> : <Cast className="w-3.5 h-3.5 text-theme-primary-300" />}
+                        </span>
+                        <span className="truncate">{isPublished ? "Close Projection" : "Project Screen"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpenManageDisplayId(display.id);
+                          setOpenScreenMenuId(null);
+                        }}
+                        className="flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors text-white/80 hover:bg-theme-primary-800"
+                      >
+                        <span className="flex h-4 w-4 items-center justify-center">
+                          <Settings className="w-3.5 h-3.5 text-theme-primary-300" />
+                        </span>
+                        <span>Manage Layout</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                <ManageDisplayMenu
+                  open={openManageDisplayId === display.id}
+                  menuRootId={display.id}
+                  assignedWindowIds={assignedIds}
+                  hiddenWindowIds={hiddenIds}
+                  windowMap={windowMap}
+                  onClose={() => setOpenManageDisplayId(null)}
+                  onToggleHidden={(windowId) =>
+                    handleToggleHiddenOnDisplay(display.id, windowId)
+                  }
+                  onRemove={(windowId) =>
+                    handleRemoveFromDisplay(display.id, windowId)
+                  }
+                />
 
                 {assignedIds.length === 0 ? (
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
