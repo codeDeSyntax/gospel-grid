@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 type ClickHandler<T> = (() => void) | ((event: React.MouseEvent<T>) => void);
 
-interface DepthSurfaceProps extends Omit<
+export interface DepthSurfaceProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "onClick"
 > {
@@ -15,7 +15,7 @@ interface DepthSurfaceProps extends Omit<
 
 export const DepthSurface: React.FC<DepthSurfaceProps> = ({
   className = "",
-  surfaceClassName = "depth-surface-shell",
+  surfaceClassName = "",
   children,
   onClick,
   ...divProps
@@ -32,28 +32,11 @@ export const DepthSurface: React.FC<DepthSurfaceProps> = ({
       {...divProps}
       onClick={handleClick}
       className={twMerge(
-        "relative overflow-hidden rounded",
-        onClick ? "cursor-pointer" : "",
+        "relative overflow-hidden rounded-xl border border-theme-primary-800/40 bg-theme-primary-900/50 backdrop-blur-sm transition-all duration-200",
+        onClick ? "cursor-pointer hover:border-theme-primary-700/60" : "",
         className,
       )}
     >
-      <span
-        className={`absolute inset-0 pointer-events-none ${surfaceClassName}`}
-      />
-      <span
-        className="absolute left-2 right-2 top-[2px] h-1.5 rounded-full blur-[1px] pointer-events-none"
-        style={{
-          background:
-            "color-mix(in srgb, var(--select-bg-alt) 50%, transparent)",
-        }}
-      />
-      <span
-        className="absolute inset-[1px] rounded-[inherit] pointer-events-none"
-        style={{
-          boxShadow:
-            "inset 0 1px 0 var(--select-border-hover), inset 0 -1px 0 var(--select-border)",
-        }}
-      />
       <div className="relative z-10 h-full min-h-0">{children}</div>
     </div>
   );

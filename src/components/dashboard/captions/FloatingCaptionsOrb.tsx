@@ -181,7 +181,6 @@ export const FloatingCaptionsOrb: React.FC = () => {
         {isExpanded && (
           <DepthSurface
             className="mb-3 w-[320px] rounded-3xl border border-theme-primary-400/30 bg-theme-primary-950/85 p-4 shadow-[0_26px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl"
-            surfaceClassName="depth-surface-shell"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -249,7 +248,6 @@ export const FloatingCaptionsOrb: React.FC = () => {
               ? "border border-emerald-300/80 bg-emerald-400/20 shadow-[0_0_0_5px_rgba(16,185,129,0.18),0_12px_30px_rgba(16,185,129,0.25)]"
               : "border border-theme-primary-300/50 bg-theme-primary-500/18 shadow-[0_10px_24px_rgba(0,0,0,0.4)]"
           }`}
-          surfaceClassName="depth-surface-shell"
         >
           <button
             type="button"

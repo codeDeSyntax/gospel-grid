@@ -316,7 +316,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       if (missingIds.length === 0) return;
 
       // Prefer the batch API for every missing thumbnail. The single-window
-      // capture path is kept only as a fallback because it is unreliable in
+      // capture path is kept only as a fallback because it is unreliable
       // bundled builds.
       missingIds.forEach((id) => thumbnailRequestsInFlightRef.current.add(id));
 
@@ -700,7 +700,6 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onClick={() => loadDisplays(true)}
                 sizeClassName="h-8 px-3 rounded-lg mr-2"
                 inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
-                inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800 via-theme-primary-900 to-theme-primary-950"
                 title="Refresh connected displays"
               >
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
@@ -753,7 +752,6 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                     onClick={() => setOpenScreenMenuId(openScreenMenuId === display.id ? null : display.id)}
                     sizeClassName="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
                     inactiveClassName="text-theme-primary-100 border-theme-primary-500/35 hover:text-white"
-                    inactiveSurfaceClassName="bg-gradient-to-br from-theme-primary-800/70 via-theme-primary-900/80 to-theme-primary-950"
                     title="Screen actions"
                   >
                     <MoreHorizontal className="h-4 w-4" strokeWidth={2.4} />
@@ -997,7 +995,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
       {isProjectionOn && (
         <div className="px-3 py-1.5 border-t border-theme-primary-600/20 bg-theme-primary-900/25 text-[10px] text-theme-primary-200/70">
-          Projection is live. Routing edits are reflected in this workspace
+          Projection is live. Routing edits are reflected this workspace
           setup.
         </div>
       )}

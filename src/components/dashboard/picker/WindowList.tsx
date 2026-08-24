@@ -165,7 +165,14 @@ export const WindowList: React.FC<WindowListProps> = ({
   }, [windows, searchTerm, intelligenceByWindowId]);
 
   return (
-    <div className="h-full flex flex-col p-2 py-4 bg-theme-primary-900">
+    <div className="relative h-full flex flex-col p-2 py-4 bg-theme-primary-900 overflow-hidden">
+      {/* Soft top-left ambient green aura */}
+      <div
+        className="pointer-events-none absolute -top-12 -left-12 w-64 h-48 rounded-full blur-3xl opacity-25 dark:opacity-20 z-0"
+        style={{
+          background: "radial-gradient(circle, rgb(var(--primary-500) / 0.55) 0%, transparent 80%)",
+        }}
+      />
       {/* Fixed Header Section */}
       <div className="flex-shrink-0 mb-2 px-1 space-y-2 ">
         {/* Title row */}
@@ -405,7 +412,6 @@ export const WindowList: React.FC<WindowListProps> = ({
                     {(isCaptionsWindow || isTimerWindow) && (
                       <DepthSurface
                         className="pointer-events-none absolute rounded-xl"
-                        surfaceClassName="depth-active-surface opacity-20 shadow-none"
                       >
                         <span className="sr-only">
                           {isCaptionsWindow
@@ -471,7 +477,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                           />
 
                           {isCaptionsWindow && (
-                            <DepthSurface className="absolute right-8  flex items-center justify-center h-6 py-0 z-20 rounded-full border border-theme-primary-200/45 bg-theme-primary-500 px-2  shadow-[0_0_14px_rgba(var(--theme-primary-300),0.45)]">
+                            <DepthSurface className="absolute right-8  flex items-center justify-center h-6 py-0 z-20 rounded-full border border-theme-primary-200/45 bg-theme-primary-500 px-2  shadow-sm">
                               <span className=" font-semibold uppercase  text-theme-primary-50">
                                 Live
                               </span>

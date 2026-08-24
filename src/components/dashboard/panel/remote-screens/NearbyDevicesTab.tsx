@@ -81,7 +81,7 @@ const NearbyDeviceRow: React.FC<{
         active={isLinked}
         inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
         activeClassName="text-emerald-50 border-solid border-emerald-300/60"
-        inactiveSurfaceClassName="depth-inactive-surface"
+        
       >
         <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
           {isDirectConnection ? (

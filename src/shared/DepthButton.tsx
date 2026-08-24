@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 type ClickHandler<T> = (() => void) | ((event: React.MouseEvent<T>) => void);
 
-interface DepthButtonProps extends Omit<
+export interface DepthButtonProps extends Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "onClick"
 > {
@@ -23,12 +23,12 @@ export const DepthButton = React.forwardRef<
   (
     {
       active = false,
-      sizeClassName = "w-7 h-7 rounded-3xl",
+      sizeClassName = "w-8 h-8 rounded-xl",
       className = "",
-      inactiveClassName = "text-primary-200/85 border-primary-500/35 hover:text-primary-100",
-      activeClassName = "text-white border-primary-300/70",
-      inactiveSurfaceClassName = "depth-inactive-surface",
-      activeSurfaceClassName = "depth-active-surface",
+      inactiveClassName = "text-theme-primary-300 hover:text-theme-primary-100 bg-theme-primary-800/40 hover:bg-theme-primary-700/60 border-theme-primary-600/30",
+      activeClassName = "text-white bg-primary-600 hover:bg-primary-500 border-primary-400/50 shadow-sm",
+      inactiveSurfaceClassName,
+      activeSurfaceClassName,
       children,
       ...buttonProps
     },
@@ -47,33 +47,13 @@ export const DepthButton = React.forwardRef<
         ref={ref}
         onClick={handleClick}
         className={twMerge(
-          "relative flex items-center justify-center overflow-hidden border transition-all duration-200 outline-none group",
+          "relative inline-flex items-center justify-center border font-medium transition-all duration-200 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95",
           sizeClassName,
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
           active ? activeClassName : inactiveClassName,
           className,
         )}
       >
-        <span
-          className={`absolute inset-0 transition-all duration-200 ${
-            active ? activeSurfaceClassName : inactiveSurfaceClassName
-          }`}
-        />
-        <span
-          className="absolute left-1.5 right-1.5 top-1 h-2 rounded-full blur-[1px] opacity-85"
-          style={{
-            background:
-              "color-mix(in srgb, var(--select-bg-alt) 70%, transparent)",
-          }}
-        />
-        <span
-          className="absolute inset-[1px] rounded-[inherit]"
-          style={{
-            boxShadow:
-              "inset 0 1px 0 var(--select-border-hover), inset 0 -1px 0 var(--select-border)",
-          }}
-        />
-        <span className="relative z-10 flex items-center justify-center">
+        <span className="relative z-10 flex items-center justify-center w-full h-full">
           {children}
         </span>
       </button>

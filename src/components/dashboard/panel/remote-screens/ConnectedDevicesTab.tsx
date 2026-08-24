@@ -82,7 +82,7 @@ const ConnectedDeviceRow: React.FC<{
           ? "text-red-50 border-solid border-red-300/60"
           : "text-amber-100 border-solid border-amber-300/50"
       }
-      inactiveSurfaceClassName="depth-inactive-surface"
+      
     >
       <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
         {hasActiveSession || isRequestPending ? (

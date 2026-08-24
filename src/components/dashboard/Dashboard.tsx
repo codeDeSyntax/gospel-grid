@@ -1083,7 +1083,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col no-scrollbar bg-theme-primary-950 border- border-none border-theme-primary-500">
+    <div className="h-screen w-screen overflow-hidden flex flex-col no-scrollbar bg-theme-primary-950 dashboard-ambient-glow border- border-none border-theme-primary-500">
       <TitleBar
         selectedWindowsCount={selectedWindows.length}
         windowsCount={state.windows.length}

@@ -354,11 +354,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         style={dragRegionStyle}
       >
         <div className="relative z-10 flex items-center gap-2 px-2">
+          
           <button
             type="button"
             onClick={onHomeClick}
             title="Go to home"
-            className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-400/20 bg-gradient-to-br from-theme-primary-500/30 via-theme-primary-600/20 to-theme-primary-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition-colors hover:border-theme-primary-300/45"
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-700/30 bg-theme-primary-850/60 transition-all hover:bg-theme-primary-750 hover:border-theme-primary-500/40 active:scale-95"
             style={noDragRegionStyle}
           >
             <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
