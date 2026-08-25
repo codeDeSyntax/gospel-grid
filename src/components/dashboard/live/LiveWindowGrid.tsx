@@ -23,6 +23,7 @@ import {
   loadFeatureCaptionsState,
   type FeatureCaptionsState,
 } from "../RightPanel/featureCaptionsState";
+import { LiveCaptionsSpeechDisplay } from "../captions";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE
@@ -239,20 +240,17 @@ export function LiveWindowGrid({
       return (
         <div
           key={win.id}
-          className="relative overflow-hidden bg-black"
+          className="relative overflow-hidden bg-black flex items-center justify-center p-8 select-none"
           style={{
             ...customStyle,
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center px-8 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_45%)]">
-            <div className="max-w-[90%]">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-theme-primary-300/85 mb-3">
-                Live Captions
-              </p>
-              <p className="text-3xl leading-tight text-theme-primary-50 break-words">
-                {captionsState.text || "Waiting for speech..."}
-              </p>
-            </div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_50%)] pointer-events-none" />
+          <div className="relative z-10 w-full max-w-4xl">
+            <LiveCaptionsSpeechDisplay
+              text={captionsState.text}
+              isDarkMode={true}
+            />
           </div>
         </div>
       );

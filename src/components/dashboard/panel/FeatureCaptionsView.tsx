@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { DepthButton } from "@/shared/DepthButton";
+import { Play, Pause, Square, Trash2, Mic } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { replaceCaptionsState } from "@/store/slices/captionsSlice";
 import { startRendererMicStreaming } from "@/components/dashboard/audio/micCapture";
+import { LiveCaptionsSpeechDisplay } from "../captions";
 import {
   CAPTIONS_FEATURE_WINDOW_ID,
   FEATURE_CAPTIONS_EVENT,
@@ -20,6 +21,7 @@ type CaptionsMicCapture = {
 
 export const FeatureCaptionsView: React.FC = () => {
   const dispatch = useAppDispatch();
+  const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
   const displayAssignments = useAppSelector((s) => s.grid.displayAssignments);
   const captionsState = useAppSelector((s) => s.captions.state);
   const micCaptureRef = useRef<CaptionsMicCapture | null>(null);
@@ -176,7 +178,7 @@ export const FeatureCaptionsView: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full overflow-auto no-scrollbar bg-theme-primary-900 px-5 py-5 text-theme-primary-50">
+    <div className="h-full w-full overflow-auto no-scrollbar bg-theme-primary-900 px-5 py-5 text-theme-primary-50 rounded-r-2xl">
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-900 p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-theme-primary-300/80">
@@ -191,50 +193,55 @@ export const FeatureCaptionsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-950/45 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <DepthButton
+        <div className="rounded-2xl border border-theme-primary-700/50 bg-theme-primary-950/70 p-4 shadow-sm backdrop-blur-xl">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Start / Resume Button */}
+            <button
+              type="button"
               onClick={handleStart}
               disabled={!isAssigned}
-              sizeClassName="h-9 px-4 rounded-xl"
-              inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+              className={`h-9 px-4 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-sm disabled:opacity-35 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95 ${
+                captionsState.isStreaming
+                  ? "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/25 border border-primary-400"
+                  : "bg-primary-500/20 hover:bg-primary-500/30 text-primary-300 border border-primary-500/40"
+              }`}
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                {captionsState.isPaused ? "Resume" : "Start"}
-              </span>
-            </DepthButton>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{captionsState.isPaused ? "Resume" : "Start"}</span>
+            </button>
 
-            <DepthButton
+            {/* Pause Button */}
+            <button
+              type="button"
               onClick={handlePause}
               disabled={!captionsState.isStreaming}
-              sizeClassName="h-9 px-4 rounded-xl"
-              inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+              className="h-9 px-4 rounded-xl flex items-center gap-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] text-white/90 hover:text-white shadow-sm disabled:opacity-35 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                Pause
-              </span>
-            </DepthButton>
+              <Pause className="w-3.5 h-3.5" />
+              <span>Pause</span>
+            </button>
 
-            <DepthButton
+            {/* Stop Button */}
+            <button
+              type="button"
               onClick={handleStop}
               disabled={!captionsState.isStreaming && !captionsState.isPaused}
-              sizeClassName="h-9 px-4 rounded-xl"
-              inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+              className="h-9 px-4 rounded-xl flex items-center gap-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border border-white/15 bg-white/[0.06] hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300 text-white/90 shadow-sm disabled:opacity-35 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                Stop
-              </span>
-            </DepthButton>
+              <Square className="w-3.5 h-3.5" />
+              <span>Stop</span>
+            </button>
 
-            <DepthButton
+            {/* Clear Text Button */}
+            <button
+              type="button"
               onClick={handleClear}
-              sizeClassName="h-9 px-4 rounded-xl"
-              inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
+              disabled={!captionsState.text}
+              className="h-9 px-4 rounded-xl flex items-center gap-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] text-white/90 hover:text-white shadow-sm disabled:opacity-35 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
             >
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                Clear Text
-              </span>
-            </DepthButton>
+              <Trash2 className="w-3.5 h-3.5 opacity-80" />
+              <span>Clear Text</span>
+            </button>
           </div>
 
           {!isAssigned && (
@@ -251,13 +258,17 @@ export const FeatureCaptionsView: React.FC = () => {
           )}
         </div>
 
-        <div className="rounded-2xl border border-theme-primary-400/25 bg-theme-primary-900 p-4 min-h-[220px]">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-theme-primary-300/80 mb-3">
-            Caption Output
-          </p>
-          <p className="text-xl leading-relaxed text-theme-primary-50/95">
-            {captionsState.text || "Waiting for speech..."}
-          </p>
+        <div
+          className={`rounded-2xl border p-6 min-h-[220px] flex flex-col justify-between transition-colors `}
+        >
+         
+
+          <div className="my-6">
+            <LiveCaptionsSpeechDisplay
+              text={captionsState.text}
+              isDarkMode={isDarkMode}
+            />
+          </div>
         </div>
       </div>
     </div>

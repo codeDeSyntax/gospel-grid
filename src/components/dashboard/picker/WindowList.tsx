@@ -30,25 +30,25 @@ const getIntelligenceBadgeClasses = (
 ) => {
   if (intel.riskLevel === "high" || intel.recommendation === "avoid") {
     return isLightMode
-      ? "border-primary-700/45 bg-primary-100/90 text-primary-950"
-      : "border-primary-300/35 bg-primary-500/18 text-primary-100";
+      ? "border border-red-500/30 bg-red-100/90 text-red-950"
+      : "border border-red-500/30 bg-red-500/15 text-red-200";
   }
 
   if (tag === "Recommended") {
     return isLightMode
-      ? "border-primary-700/45 bg-primary-200/90 text-primary-950"
-      : "border-primary-300/45 bg-primary-500/24 text-primary-50";
+      ? "border border-primary-500/40 bg-primary-100/90 text-primary-950 font-bold"
+      : "border border-primary-500/35 bg-primary-500/20 text-primary-300 font-bold";
   }
 
   if (intel.riskLevel === "medium") {
     return isLightMode
-      ? "border-primary-700/35 bg-primary-50 text-primary-900"
-      : "border-primary-400/30 bg-primary-700/18 text-primary-100";
+      ? "border border-amber-500/35 bg-amber-100/90 text-amber-950"
+      : "border border-amber-500/30 bg-amber-500/15 text-amber-200";
   }
 
   return isLightMode
-    ? "border-primary-700/25 bg-primary-50/85 text-primary-900"
-    : "border-primary-400/25 bg-primary-900/28 text-primary-100";
+    ? "border border-neutral-300/80 bg-neutral-100/90 text-neutral-800"
+    : "border border-white/10 bg-white/[0.06] text-white/80";
 };
 
 export interface WindowInfo {
@@ -303,7 +303,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-1.5 pb-2 ">
+          <div className="space-y-2 pb-2">
             <AnimatePresence mode="popLayout">
               {filteredWindows.map((window, index) => {
                 const isCaptionsWindow =
@@ -396,8 +396,8 @@ export const WindowList: React.FC<WindowListProps> = ({
                       }
                     }}
                     className={`
-                    relative overflow-hidden border-1  border-solid transition-all duration-200
-                    flex items-center gap-2.5 pl-5 pr-8  py-0.5 rounded-full group
+                    relative overflow-hidden border border-solid transition-all duration-200
+                    flex items-center gap-2.5 pl-5 pr-8 py-1 rounded-full group
                     cursor-pointer
                     ${draggedWindow?.id === window.id ? "opacity-50 scale-95" : ""}
                     ${
@@ -405,7 +405,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                         ? "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18"
                         : window.isSelected
                           ? "border-theme-primary-300/35 border-hidden bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 shadow-sm shadow-theme-primary-500/15 backdrop-blur-lg"
-                          : "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18 "
+                          : "border-theme-primary-600/25 backdrop-blur-md hover:border-theme-primary-400/35 hover:bg-theme-primary-300/12 hover:shadow-sm hover:shadow-theme-primary-500/8 bg-gradient-to-br from-theme-primary-400/20 via-theme-primary-500/10 to-theme-primary-600/18"
                     }
                   `}
                   >
@@ -439,30 +439,30 @@ export const WindowList: React.FC<WindowListProps> = ({
                               e.stopPropagation();
                             }}
                             className={`
-                      absolute left-0 top-0 w-4 h-full z-10
-                      flex items-center justify-center
-                      cursor-grab active:cursor-grabbing
-                      transition-all duration-200
-                      hover:bg-theme-primary-400/20 active:bg-theme-primary-500/30
-                      border-r border-theme-primary-50/10 hover:border-theme-primary-300/30
-                      rounded-l-xl
-                      ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
-                    `}
+                              absolute left-0 top-0 w-3.5 h-full z-10
+                              flex items-center justify-center
+                              cursor-grab active:cursor-grabbing
+                              transition-all duration-200
+                              hover:bg-theme-primary-400/20 active:bg-theme-primary-500/30
+                              border-r border-theme-primary-50/10 hover:border-theme-primary-300/30
+                              rounded-l-full
+                              ${draggedWindow?.id === window.id ? "cursor-grabbing bg-theme-primary-500/30" : ""}
+                            `}
                             title="Drag to add window to layout"
                           >
                             {/* Grip dots */}
-                            <div className="flex flex-col gap-[3px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
-                              <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                            <div className="flex flex-col gap-[2.5px] pointer-events-none opacity-30 group-hover:opacity-60 transition-opacity duration-200">
+                              <div className="flex gap-[2px]">
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
                               </div>
-                              <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                              <div className="flex gap-[2px]">
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
                               </div>
-                              <div className="flex gap-[3px]">
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
-                                <div className="w-[3px] h-[3px] bg-theme-primary-200 rounded-full"></div>
+                              <div className="flex gap-[2px]">
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
+                                <div className="w-[2.5px] h-[2.5px] bg-theme-primary-200 rounded-full"></div>
                               </div>
                             </div>
                           </div>
@@ -477,11 +477,11 @@ export const WindowList: React.FC<WindowListProps> = ({
                           />
 
                           {isCaptionsWindow && (
-                            <DepthSurface className="absolute right-8  flex items-center justify-center h-6 py-0 z-20 rounded-full border border-theme-primary-200/45 bg-theme-primary-500 px-2  shadow-sm">
-                              <span className=" font-semibold uppercase  text-theme-primary-50">
+                            <div className="absolute right-8 flex items-center justify-center h-5 py-0 z-20 rounded-full border border-primary-400/50 bg-primary-500/20 px-2 shadow-sm">
+                              <span className="text-[9px] font-bold uppercase text-primary-400 tracking-wider">
                                 Live
                               </span>
-                            </DepthSurface>
+                            </div>
                           )}
 
                           {/* Pin Button — absolute, doesn't affect layout */}
@@ -509,59 +509,41 @@ export const WindowList: React.FC<WindowListProps> = ({
                             </button>
                           )}
 
-                          {/* App Icon */}
-                          <DepthButton
-                            sizeClassName="relative flex-shrink-0 w-10 h-10 rounded-full z-10 pointer-events-none"
-                            className="!cursor-default"
-                            active={window.isSelected}
-                            inactiveClassName={
+                          {/* App Icon — Sleek refined circular badge (removed clumsy bulky ring) */}
+                          <div
+                            className={`relative flex-shrink-0 w-8 h-8 rounded-full z-10 flex items-center justify-center overflow-hidden transition-all duration-200 ${
                               isCaptionsWindow
-                                ? "text-primary-50 border-primary-300/45"
-                                : "text-primary-200/90 border-primary-500/30"
-                            }
-                            activeClassName={
-                              isCaptionsWindow
-                                ? "text-primary-50 border-primary-200/75"
-                                : "text-primary-50 border-primary-300/70"
-                            }
-                            inactiveSurfaceClassName={
-                              isCaptionsWindow
-                                ? "bg-gradient-to-br from-primary-500/45 via-primary-400/28 to-primary-700/45"
-                                : "bg-theme-primary-900"
-                            }
-                            activeSurfaceClassName={
-                              isCaptionsWindow
-                                ? "bg-gradient-to-br from-primary-300/90 via-primary-400/95 to-primary-600/92"
-                                : "bg-theme-primary-400/90"
-                            }
-                            aria-hidden
-                            tabIndex={-1}
+                                ? "bg-primary-500/25 border border-primary-400/40 text-primary-400 shadow-[0_0_10px_rgba(94,172,36,0.25)]"
+                                : window.isSelected
+                                  ? "bg-primary-500/20 border border-primary-400/60 ring-1 ring-primary-500/40 shadow-[0_0_8px_rgba(94,172,36,0.2)]"
+                                  : isLightMode
+                                    ? "bg-neutral-100 border border-neutral-300/80 shadow-sm"
+                                    : "bg-[#252525] border border-white/10 shadow-sm"
+                            }`}
                           >
-                            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full pointer-events-none">
-                              {window.icon ? (
-                                <img
-                                  src={window.icon}
-                                  alt={`${window.app} icon`}
-                                  className="h-8 w-8 object-contain"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                    const fallback = e.currentTarget
-                                      .nextElementSibling as HTMLElement;
-                                    if (fallback)
-                                      fallback.style.display = "flex";
-                                  }}
-                                />
-                              ) : null}
-                              <div
-                                style={{
-                                  display: window.icon ? "none" : "flex",
+                            {window.icon ? (
+                              <img
+                                src={window.icon}
+                                alt={`${window.app} icon`}
+                                className="h-5 w-5 object-contain pointer-events-none"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = e.currentTarget
+                                    .nextElementSibling as HTMLElement;
+                                  if (fallback)
+                                    fallback.style.display = "flex";
                                 }}
-                                className="w-full h-full items-center justify-center"
-                              >
-                                {getWindowFallbackIcon(window, 24)}
-                              </div>
+                              />
+                            ) : null}
+                            <div
+                              style={{
+                                display: window.icon ? "none" : "flex",
+                              }}
+                              className="w-full h-full items-center justify-center"
+                            >
+                              {getWindowFallbackIcon(window, 17)}
                             </div>
-                          </DepthButton>
+                          </div>
 
                           {/* Text Content */}
                           <div className="flex-1 min-w-0 z-10">
@@ -620,7 +602,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                       .map((tag) => (
                                         <span
                                           key={`${window.id}-${tag}`}
-                                          className={`inline-flex max-w-[86px] items-center gap-1 truncate rounded-full bg-theme-primary-700 text-white/50   border-none px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.1em] shadow-sm ${getIntelligenceBadgeClasses(
+                                          className={`inline-flex max-w-[90px] items-center gap-1 truncate rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] shadow-sm ${getIntelligenceBadgeClasses(
                                             intelligence,
                                             tag,
                                             isLightMode,
@@ -632,13 +614,13 @@ export const WindowList: React.FC<WindowListProps> = ({
                                           }
                                         >
                                           {tag === "Recommended" ? (
-                                            <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                            <Sparkles className="h-2.5 w-2.5 shrink-0 text-primary-600 dark:text-primary-400" />
+                                          ) : intelligence.riskLevel === "high" || intelligence.recommendation === "avoid" ? (
+                                            <ShieldAlert className="h-2.5 w-2.5 shrink-0 text-red-600 dark:text-red-400" />
                                           ) : hasPrivacyWarning ? (
-                                            <ShieldAlert className="h-2.5 w-2.5 shrink-0" />
+                                            <ShieldAlert className="h-2.5 w-2.5 shrink-0 text-amber-600 dark:text-amber-400" />
                                           ) : null}
-                                          <span className="truncate text-black/50 dark:text-white/70">
-                                            {tag}
-                                          </span>
+                                          <span className="truncate">{tag}</span>
                                         </span>
                                       ))}
                                   </span>
@@ -706,7 +688,7 @@ export const WindowList: React.FC<WindowListProps> = ({
 
                           {/* Select / Check Handle — right side */}
                           <div
-                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-theme-primary-50/10 transition-all duration-200 rounded-r-xl ${
+                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-l border-theme-primary-50/10 transition-all duration-200 rounded-r-full ${
                               window.isSelected
                                 ? "opacity-100 bg-theme-primary-500/15 hover:bg-theme-primary-500/25"
                                 : "opacity-0 group-hover:opacity-100 hover:bg-theme-primary-50/10"

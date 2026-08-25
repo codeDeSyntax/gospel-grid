@@ -109,10 +109,35 @@ export function update(win: Electron.BrowserWindow) {
       win.webContents.send("update-downloaded", { version: event.version });
     }
   });
+  function formatFriendlyUpdateError(rawError: unknown): string {
+    const msg =
+      rawError instanceof Error ? rawError.message : String(rawError || "");
+    const lower = msg.toLowerCase();
+
+    if (
+      lower.includes("err_internet_disconnected") ||
+      lower.includes("err_name_not_resolved") ||
+      lower.includes("enotfound") ||
+      lower.includes("getaddrinfo") ||
+      lower.includes("offline") ||
+      lower.includes("network error") ||
+      lower.includes("etimedout") ||
+      lower.includes("connection_refused") ||
+      lower.includes("connection_timed_out") ||
+      lower.includes("failed to fetch") ||
+      lower.includes("internet")
+    ) {
+      return "No internet connection";
+    }
+
+    return "Unable to check updates";
+  }
+
   autoUpdater.on("error", (error: Error) => {
     downloadInProgress = false;
     if (!win.isDestroyed()) {
-      win.webContents.send("update-error", { message: error.message, error });
+      const friendlyMessage = formatFriendlyUpdateError(error);
+      win.webContents.send("update-error", { message: friendlyMessage, error });
     }
   });
 
@@ -121,7 +146,11 @@ export function update(win: Electron.BrowserWindow) {
     try {
       return await autoUpdater.checkForUpdates();
     } catch (error) {
-      return { message: "Network error", error };
+      const friendlyMessage = formatFriendlyUpdateError(error);
+      return {
+        message: friendlyMessage,
+        error: { message: friendlyMessage },
+      };
     }
   });
 

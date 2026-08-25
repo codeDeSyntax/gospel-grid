@@ -242,6 +242,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     };
   }, []);
 
+function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
+  if (!rawMsg) return "Offline";
+  const str = String(rawMsg);
+  const lower = str.toLowerCase();
+
+  if (
+    lower.includes("err_internet_disconnected") ||
+    lower.includes("err_name_not_resolved") ||
+    lower.includes("enotfound") ||
+    lower.includes("getaddrinfo") ||
+    lower.includes("offline") ||
+    lower.includes("network error") ||
+    lower.includes("no internet") ||
+    lower.includes("etimedout") ||
+    lower.includes("connection_refused") ||
+    lower.includes("connection_timed_out") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("internet")
+  ) {
+    return "Offline • No connection";
+  }
+
+  if (lower.includes("installed app") || lower.includes("devmode")) {
+    return "App installed only";
+  }
+
+  if (lower.includes("unavailable") || lower.includes("could not be loaded")) {
+    return "Check unavailable";
+  }
+
+  if (str.length > 28) {
+    return "Unable to check";
+  }
+
+  return str;
+}
+
   useEffect(() => {
     let disposed = false;
 
@@ -314,9 +351,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
       setIsCheckingUpdate(false);
       setIsDownloadingUpdate(false);
       setUpdateDownloaded(false);
-      setUpdateStatus(
-        payload?.message ? `Error: ${payload.message}` : "Update error",
-      );
+      setUpdateStatus(formatFriendlyUpdateStatus(payload?.message));
     };
 
     window.ipcRenderer.on("update-can-available", onUpdateCanAvailable);
@@ -343,21 +378,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
             setUpdateStatus("Updates available after install");
           } else if (result?.error) {
             setIsCheckingUpdate(false);
-            setUpdateStatus(
-              result.error.message
-                ? `Check failed: ${result.error.message}`
-                : "Check failed",
-            );
+            setUpdateStatus(formatFriendlyUpdateStatus(result.error.message));
           }
         },
       )
       .catch((error: unknown) => {
         setIsCheckingUpdate(false);
-        setUpdateStatus(
-          error instanceof Error
-            ? `Check failed: ${error.message}`
-            : "Check failed",
-        );
+        const errMsg = error instanceof Error ? error.message : String(error);
+        setUpdateStatus(formatFriendlyUpdateStatus(errMsg));
       });
 
     return () => {
@@ -396,21 +424,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
           if (result?.devMode) {
             setUpdateStatus("Updates available after install");
           } else if (result?.error) {
-            setUpdateStatus(
-              result.error.message
-                ? `Check failed: ${result.error.message}`
-                : "Check failed",
-            );
+            setUpdateStatus(formatFriendlyUpdateStatus(result.error.message));
           }
         },
       )
       .catch((error: unknown) => {
         setIsCheckingUpdate(false);
-        setUpdateStatus(
-          error instanceof Error
-            ? `Check failed: ${error.message}`
-            : "Check failed",
-        );
+        const errMsg = error instanceof Error ? error.message : String(error);
+        setUpdateStatus(formatFriendlyUpdateStatus(errMsg));
       });
   }, [isDownloadingUpdate]);
 

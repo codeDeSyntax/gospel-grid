@@ -459,9 +459,6 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </div>
       </div>
 
-      {/* stylish thin line with fading endings */}
-      {/* <div className="w-[55%] m-auto h-px bg-gradient-to-r from-transparent via-theme-primary-700 to-transparent" /> */}
-
       <div
         className="relative flex h-8 items-center justify-between bg-theme-primary-950 px-3 text-[10px] leading-none border-b border-solid border-x-0 border-t-0 border-theme-primary-600"
         style={dragRegionStyle}
@@ -513,16 +510,23 @@ export const TitleBar: React.FC<TitleBarProps> = ({
                 ? "bg-primary-500/14 text-primary-200"
                 : updateReady
                   ? "bg-primary-500/12 text-primary-200"
-                  : "bg-theme-primary-900/55 text-theme-primary-200"
+                  : updateStatus.toLowerCase().includes("offline") ||
+                      updateStatus.toLowerCase().includes("no connection")
+                    ? "bg-amber-500/10 text-amber-300/90 border border-amber-500/20"
+                    : "bg-theme-primary-900/55 text-theme-primary-200"
             }`}
+            title={updateStatus}
           >
             {updateDownloaded ? (
-              <CheckCircle2 className="h-3 w-3 shrink-0" />
+              <CheckCircle2 className="h-3 w-3 shrink-0 text-primary-400" />
             ) : isCheckingUpdate || isDownloadingUpdate ? (
               <img
                 src="./update.png"
                 className="h-3 w-3 shrink-0 animate-spin"
               />
+            ) : updateStatus.toLowerCase().includes("offline") ||
+              updateStatus.toLowerCase().includes("no connection") ? (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
             ) : (
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-theme-primary-400" />
             )}

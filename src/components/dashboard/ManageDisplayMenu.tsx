@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Trash2, X } from "lucide-react";
 import { type WindowInfo } from "./picker/WindowPicker";
 import { getWindowFallbackIcon } from "@/utils/appIconMapping";
+import { useAppSelector } from "@/store/hooks";
 
 interface ManageDisplayMenuProps {
   open: boolean;
@@ -24,6 +25,7 @@ export const ManageDisplayMenu: React.FC<ManageDisplayMenuProps> = ({
   onToggleHidden,
   onRemove,
 }) => {
+  const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
   const [isDragging, setIsDragging] = useState(false);
   const [draggingWindowId, setDraggingWindowId] = useState<string | null>(null);
   const [isOverTrash, setIsOverTrash] = useState(false);
@@ -66,22 +68,43 @@ export const ManageDisplayMenu: React.FC<ManageDisplayMenuProps> = ({
       className="absolute inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-black/55 backdrop-blur-[5px] pointer-events-none"
     >
       {/* Card */}
-      <div className="pointer-events-auto overflow-visible rounded-2xl border border-white/10 bg-theme-primary-950/92 backdrop-blur-2xl shadow-[0_24px_60px_rgba(0,0,0,0.55)] flex flex-col animate-in fade-in zoom-in-95 duration-150 min-w-[14rem] max-w-[96%]">
-
+      <div
+        className={`pointer-events-auto overflow-visible rounded-2xl border backdrop-blur-2xl flex flex-col animate-in fade-in zoom-in-95 duration-150 min-w-[14rem] max-w-[96%] ${
+          isDarkMode
+            ? "border-white/10 bg-[#161616]/95 shadow-[0_24px_60px_rgba(0,0,0,0.55)] text-white"
+            : "border-neutral-200 bg-white/95 shadow-[0_20px_50px_rgba(0,0,0,0.15)] text-neutral-900"
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-white/8">
+        <div
+          className={`flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b ${
+            isDarkMode ? "border-white/8" : "border-neutral-200"
+          }`}
+        >
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-theme-primary-100">
+            <p
+              className={`text-[10px] font-bold uppercase tracking-widest ${
+                isDarkMode ? "text-white" : "text-neutral-900"
+              }`}
+            >
               Manage Layout
             </p>
-            <p className="text-[9px] text-theme-primary-400 mt-0.5 leading-none">
+            <p
+              className={`text-[9px] mt-0.5 leading-none ${
+                isDarkMode ? "text-white/50" : "text-neutral-500"
+              }`}
+            >
               {assignedWindowIds.length} window{assignedWindowIds.length !== 1 ? "s" : ""} assigned
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-theme-primary-400 hover:text-white hover:bg-white/10 transition-colors border-none bg-transparent cursor-pointer"
+            className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer ${
+              isDarkMode
+                ? "text-white/60 hover:text-white hover:bg-white/10"
+                : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100"
+            }`}
             title="Close"
           >
             <X className="w-3.5 h-3.5" />
@@ -91,7 +114,13 @@ export const ManageDisplayMenu: React.FC<ManageDisplayMenuProps> = ({
         {/* Avatar Stack Row */}
         <div className="px-5 pt-4 pb-5">
           {assignedWindowIds.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/10 px-4 py-5 text-center text-[10px] text-theme-primary-400/80">
+            <div
+              className={`rounded-xl border border-dashed px-4 py-5 text-center text-[10px] ${
+                isDarkMode
+                  ? "border-white/10 text-white/50"
+                  : "border-neutral-300 text-neutral-500"
+              }`}
+            >
               No windows assigned yet.
             </div>
           ) : (
@@ -114,10 +143,19 @@ export const ManageDisplayMenu: React.FC<ManageDisplayMenuProps> = ({
                     >
                       {/* Avatar circle */}
                       <div
-                        className={`relative rounded-full border-[2.5px] border-theme-primary-950 flex items-center justify-center transition-all duration-200 ease-out select-none overflow-hidden
+                        className={`relative rounded-full border-[2.5px] flex items-center justify-center transition-all duration-200 ease-out select-none overflow-hidden
                           group-hover:-translate-y-2 group-hover:scale-110 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)]
+                          ${isDarkMode ? "border-[#161616]" : "border-white"}
                           ${isBeingDragged ? "opacity-30 scale-95" : ""}
-                          ${isHidden ? "opacity-40 bg-theme-primary-900/40" : "bg-theme-primary-900/70"}
+                          ${
+                            isHidden
+                              ? isDarkMode
+                                ? "opacity-40 bg-[#252525]"
+                                : "opacity-40 bg-neutral-200"
+                              : isDarkMode
+                                ? "bg-[#282828] shadow-sm"
+                                : "bg-neutral-100 shadow-sm"
+                          }
                         `}
                         style={{ width: 52, height: 52 }}
                       >
@@ -165,8 +203,12 @@ export const ManageDisplayMenu: React.FC<ManageDisplayMenuProps> = ({
                       </div>
 
                       {/* App name label below avatar */}
-                      <p className="text-center text-[7.5px] font-medium text-theme-primary-300/80 mt-1.5 truncate leading-none"
-                        style={{ maxWidth: 52 }}>
+                      <p
+                        className={`text-center text-[8px] font-medium mt-1.5 truncate leading-none ${
+                          isDarkMode ? "text-white/70" : "text-neutral-700"
+                        }`}
+                        style={{ maxWidth: 52 }}
+                      >
                         {win.app || win.name}
                       </p>
                     </div>

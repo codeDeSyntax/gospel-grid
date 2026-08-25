@@ -16,6 +16,9 @@ import {
   EyeClosed,
   MoreHorizontal,
   Settings,
+  Mic,
+  Radio,
+  Sparkles,
 } from "lucide-react";
 import { FcDeleteRow } from "react-icons/fc";
 import { type WindowInfo } from "./picker/WindowPicker";
@@ -48,6 +51,7 @@ import {
   loadFeatureCaptionsState,
 } from "./RightPanel/featureCaptionsState";
 import { ManageDisplayMenu } from "./ManageDisplayMenu";
+import { LiveCaptionsSpeechDisplay } from "./captions";
 import { MdDeleteSweep } from "react-icons/md";
 import { FiRefreshCcw } from "react-icons/fi";
 
@@ -131,6 +135,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     useAppSelector((state) => state.grid.displayHiddenAssignments) ?? {};
   const windowThumbnails =
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
+  const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
 
   const timerPreviewMap = useMemo(() => {
     const collection = loadFeatureTimerCollection();
@@ -653,63 +658,81 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
   return (
     <div className="relative w-full h-full min-h-0 rounded-none overflow-hidden flex flex-col">
-      <div className="shrink-0 mt-0 overflow-hidden rounded-none border border-theme-primary-700 bg-theme-primary-900 ">
-        <div className="flex min-h-[54px] items-center justify-between gap-3 px-4 py-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-solid border-theme-primary-600 bg-theme-primary-800 text-theme-primary-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-              <img src="./screen.png" className="h-full w-full" />
+      {/* Header with left edge boundary */}
+      <div
+        className={`shrink-0 border-b border-l border-solid border-theme-primary-800/40 bg-theme-primary-950/80 backdrop-blur-xl text-theme-primary-50 z-20 ${
+          isDarkMode ? "border-l-white/20" : "border-l-neutral-300"
+        }`}
+      >
+        <div className="flex min-h-[56px] items-center justify-between gap-4 px-5 py-2.5">
+          {/* Left Title & Icon */}
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-theme-primary-700/60 bg-theme-primary-900/80 text-theme-primary-100 p-1.5 shadow-sm transition-transform hover:scale-105">
+              <img src="./screen.png" alt="Workspace" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-theme-primary-50">
-                Display Workspace
-              </p>
-              <p className="mt-0.5 truncate text-[11px] text-theme-primary-300">
-                Drop windows onto a screen, then project only what each audience
-                display should see.
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-bold tracking-tight text-theme-primary-50">
+                  Display Workspace
+                </p>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary-500/20 text-primary-300 border border-primary-500/30">
+                  Live Multi-Display
+                </span>
+              </div>
+              <p className="mt-0.5 truncate text-[11px] font-normal text-theme-primary-300/80">
+                Drop windows onto screens to manage audience projections in real time.
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="hidden items-center overflow-hidden rounded-lg border-none  border-theme-primary-700 bg-theme-primary-950 md:flex">
-              <div className="border-x-0 border-y-0 border-solid border-theme-primary-700 px-3 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+          {/* Right Stats Pills & Refresh Action */}
+          <div className="flex shrink-0 items-center gap-3">
+            {/* Stat Capsules matching feature rail */}
+            <div className="hidden md:flex items-center gap-1 rounded-full p-1 border border-theme-primary-700/50 bg-theme-primary-900/60 shadow-inner">
+              <div className="px-3 py-1 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
                   Screens
                 </p>
-                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                <p className="mt-0.5 text-xs font-bold leading-none text-theme-primary-50">
                   {displays.length}
                 </p>
               </div>
-              <div className="border-r border-y-0 border-solid border-theme-primary-700  px-3 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+
+              <div className="h-5 w-px bg-theme-primary-700/50" />
+
+              <div className="px-3 py-1 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
                   Routed
                 </p>
-                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                <p className={`mt-0.5 text-xs font-bold leading-none ${routedDisplayCount > 0 ? "text-primary-400 font-extrabold" : "text-theme-primary-50"}`}>
                   {routedDisplayCount}
                 </p>
               </div>
-              <div className="px-3 py-1.5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-theme-primary-400">
+
+              <div className="h-5 w-px bg-theme-primary-700/50" />
+
+              <div className="px-3 py-1 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
                   Windows
                 </p>
-                <p className="mt-0.5 text-xs font-semibold text-theme-primary-50">
+                <p className="mt-0.5 text-xs font-bold leading-none text-theme-primary-50">
                   {assignedWindowCount}
                 </p>
               </div>
-              <DepthButton
-                onClick={() => loadDisplays(true)}
-                sizeClassName="h-8 px-3 rounded-lg mr-2"
-                inactiveClassName="text-theme-primary-100 border-solid border-theme-primary-500/35"
-                title="Refresh connected displays"
-              >
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
-                  <FiRefreshCcw
-                    className={`h-3.5 w-3.5 ${loadingDisplays ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </span>
-              </DepthButton>
             </div>
+
+            {/* Refresh Displays Action */}
+            <button
+              type="button"
+              onClick={() => loadDisplays(true)}
+              className="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold border border-theme-primary-600/40 bg-theme-primary-900/80 hover:bg-theme-primary-800 text-theme-primary-100 hover:text-white backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
+              title="Refresh connected displays"
+            >
+              <FiRefreshCcw
+                className={`h-3.5 w-3.5 transition-transform ${loadingDisplays ? "animate-spin text-primary-400" : "opacity-80"}`}
+              />
+              <span>Refresh</span>
+            </button>
           </div>
         </div>
       </div>
@@ -730,6 +753,24 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         <div
           className={`relative flex-1 min-h-0 p-3 grid  gap-3 ${getGridClasses(displays.length)} auto-rows-max content-start items-start overflow-visible bg-theme-primary-900`}
         >
+          {/* Corridor Upper Gate Notch */}
+          <div
+            className={`pointer-events-none absolute left-0 top-0 w-3.5 h-px z-10 ${
+              isDarkMode ? "bg-white/20" : "bg-neutral-300"
+            }`}
+          />
+
+          {/* Corridor Lower Gate Notch & Bottom Remaining Border */}
+          <div
+            className={`pointer-events-none absolute left-0 top-[55%] w-3.5 h-px z-10 ${
+              isDarkMode ? "bg-white/20" : "bg-neutral-300"
+            }`}
+          />
+          <div
+            className={`pointer-events-none absolute left-0 bottom-0 top-[55%] w-px z-10 ${
+              isDarkMode ? "bg-white/20" : "bg-neutral-300"
+            }`}
+          />
           {displays.map((display, index) => {
             const assignedIds = displayAssignments[display.id] ?? [];
             const hiddenIds = new Set(
@@ -746,25 +787,41 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
               >
                 <div 
                   data-screen-menu-root={display.id}
-                  className="absolute right-6 top-6 z-20 pointer-events-auto"
+                  className="absolute right-4 top-4 z-20 pointer-events-auto"
                 >
-                  <DepthButton
+                  <button
+                    type="button"
                     onClick={() => setOpenScreenMenuId(openScreenMenuId === display.id ? null : display.id)}
-                    sizeClassName="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
-                    inactiveClassName="text-theme-primary-100 border-theme-primary-500/35 hover:text-white"
-                    title="Screen actions"
+                    className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 border backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md ${
+                      openScreenMenuId === display.id
+                        ? isDarkMode
+                          ? "bg-primary-500/20 border-primary-400/50 text-white"
+                          : "bg-primary-100 border-primary-400 text-primary-900"
+                        : isDarkMode
+                          ? "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
+                          : "bg-white/90 hover:bg-neutral-100 border-neutral-300/90 text-neutral-700 hover:text-neutral-950"
+                    }`}
+                    title="Screen options"
                   >
                     <MoreHorizontal className="h-4 w-4" strokeWidth={2.4} />
-                  </DepthButton>
+                  </button>
 
                   {openScreenMenuId === display.id && (
                     <div
                       role="menu"
-                      className="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-md border border-solid border-theme-primary-600/70 bg-theme-primary-900 py-1 text-[12px] shadow-xl shadow-black/35 animate-in fade-in slide-in-from-top-1 duration-150"
+                      className={`absolute right-0 top-9 z-30 w-48 overflow-hidden rounded-xl border p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 ${
+                        isDarkMode
+                          ? "bg-[#181818]/95 border-white/15 text-white"
+                          : "bg-white/95 border-neutral-200 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
+                      }`}
                     >
-                      <div className="px-3 py-1.5 text-[9px] font-semibold text-theme-primary-400 border-b border-theme-primary-800/60 uppercase tracking-wider select-none">
-                        {display.isPrimary ? "My PC" : display.label || `Display ${index + 1}`}
+                      <div className="px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-60">
+                        <span className="truncate">
+                          {display.isPrimary ? "My PC (Primary)" : display.label || `Display ${index + 1}`}
+                        </span>
                       </div>
+
+                      <div className="my-1 h-px bg-black/[0.06] dark:bg-white/[0.08]" />
                       
                       <button
                         type="button"
@@ -774,12 +831,20 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           handleToggleDisplayProjection(display.id);
                           setOpenScreenMenuId(null);
                         }}
-                        className="flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors text-white/80 hover:bg-theme-primary-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                          isDarkMode
+                            ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
+                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                        }`}
                       >
-                        <span className="flex h-4 w-4 items-center justify-center">
-                          {isPublished ? <MonitorOff className="w-3.5 h-3.5 text-red-500" /> : <Cast className="w-3.5 h-3.5 text-theme-primary-300" />}
+                        <span className="flex h-4 w-4 items-center justify-center shrink-0">
+                          {isPublished ? (
+                            <MonitorOff className="w-3.5 h-3.5 text-red-400" />
+                          ) : (
+                            <Cast className="w-3.5 h-3.5 text-primary-500" />
+                          )}
                         </span>
-                        <span className="truncate">{isPublished ? "Close Projection" : "Project Screen"}</span>
+                        <span className="truncate font-semibold">{isPublished ? "Stop Projection" : "Project Screen"}</span>
                       </button>
 
                       <button
@@ -789,12 +854,16 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           setOpenManageDisplayId(display.id);
                           setOpenScreenMenuId(null);
                         }}
-                        className="flex h-8 w-full items-center gap-2 border-0 bg-transparent px-3 text-left transition-colors text-white/80 hover:bg-theme-primary-800"
+                        className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer ${
+                          isDarkMode
+                            ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
+                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                        }`}
                       >
-                        <span className="flex h-4 w-4 items-center justify-center">
-                          <Settings className="w-3.5 h-3.5 text-theme-primary-300" />
+                        <span className="flex h-4 w-4 items-center justify-center shrink-0">
+                          <Settings className="w-3.5 h-3.5 text-primary-500" />
                         </span>
-                        <span>Manage Layout</span>
+                        <span className="font-semibold">Manage Layout</span>
                       </button>
                     </div>
                   )}
@@ -860,14 +929,74 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           title={`${win.app} • ${win.name}`}
                         >
                           {isCaptionsFeature ? (
-                            <div className="absolute inset-0 z-0 flex items-center justify-center px-4 text-center bg-primary-50 dark:bg-primary-950/50 hover:border-none">
-                              <div className="max-w-[90%]">
-                                <p className="text-3xl font-bold  tracking-tighter uppercase  text-primary-950 dark:text-white   mb-2">
-                                  Live Captions
-                                </p>
-                                <p className="text-sm leading-snug font-thin text-primary-400 break-words">
-                                  {captionsText || "Waiting for speech..."}
-                                </p>
+                            <div
+                              className={`absolute inset-0 z-0 flex flex-col items-center justify-between p-3.5 sm:p-4 overflow-hidden select-none transition-colors duration-200 ${
+                                isDarkMode
+                                  ? "bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]"
+                                  : "bg-gradient-to-b from-stone-100 via-neutral-50 to-stone-200"
+                              }`}
+                            >
+                              {/* Subtle top ambient glow */}
+                              <div
+                                className="absolute -top-10 inset-x-0 h-28 blur-2xl opacity-35 pointer-events-none"
+                                style={{
+                                  background: isDarkMode
+                                    ? "radial-gradient(circle, rgb(var(--primary-500) / 0.7) 0%, transparent 70%)"
+                                    : "radial-gradient(circle, rgb(var(--primary-500) / 0.25) 0%, transparent 70%)",
+                                }}
+                              />
+
+                              {/* Top Header Live Pill & Waveform */}
+                              <div className="relative z-10 w-full flex items-center justify-between">
+                                <div
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border shadow-sm ${
+                                    isDarkMode
+                                      ? "border-primary-500/30 bg-primary-500/15 text-primary-300"
+                                      : "border-primary-500/40 bg-primary-100/90 text-primary-900 font-bold"
+                                  }`}
+                                >
+                                  <span
+                                    className={`h-1.5 w-1.5 rounded-full animate-pulse ${
+                                      isDarkMode ? "bg-primary-400" : "bg-primary-600"
+                                    }`}
+                                  />
+                                  <span className="text-[9px] font-bold tracking-wider uppercase">
+                                    Live AI Captions
+                                  </span>
+                                </div>
+
+                                {/* Simulated Audio Equalizer Bars */}
+                                <div className="flex items-center gap-0.5">
+                                  <span
+                                    className={`w-0.5 h-2 rounded-full animate-pulse ${
+                                      isDarkMode ? "bg-primary-400/70" : "bg-primary-600/70"
+                                    }`}
+                                  />
+                                  <span
+                                    className={`w-0.5 h-3.5 rounded-full animate-pulse ${
+                                      isDarkMode ? "bg-primary-400" : "bg-primary-600"
+                                    }`}
+                                  />
+                                  <span
+                                    className={`w-0.5 h-2.5 rounded-full animate-pulse ${
+                                      isDarkMode ? "bg-primary-400/90" : "bg-primary-600/90"
+                                    }`}
+                                  />
+                                  <span
+                                    className={`w-0.5 h-1.5 rounded-full animate-pulse ${
+                                      isDarkMode ? "bg-primary-400/60" : "bg-primary-600/60"
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Floating Live Speech Transcription with Audio Waveform */}
+                              <div className="relative z-10 my-auto w-full flex items-center justify-center">
+                                <LiveCaptionsSpeechDisplay
+                                  text={captionsText}
+                                  isDarkMode={isDarkMode}
+                                  compact
+                                />
                               </div>
                             </div>
                           ) : isTimerFeature ? (
@@ -957,16 +1086,21 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
 
-                          <DepthButton
+                          <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFromDisplay(display.id, windowId);
                             }}
-                            className="absolute bottom-1.5 left-10 w-8 h-8 rounded-full bg-red-500/90 text-primary-500  group-hover:opacity-100 transition-opacity flex bg-theme-primary-500 items-center justify-center z-10"
-                            title="Remove window"
+                            className={`absolute bottom-1.5 left-1.5 z-30 h-6 w-6 rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 border backdrop-blur-md shadow-md cursor-pointer ${
+                              isDarkMode
+                                ? "bg-[#181818]/90 hover:bg-red-500 border-white/20 text-white/80 hover:text-white hover:border-red-400"
+                                : "bg-white/90 hover:bg-red-500 border-neutral-300/90 text-neutral-700 hover:text-white hover:border-red-400"
+                            }`}
+                            title="Remove window from screen"
                           >
-                            <MdDeleteSweep className="w-6 h-6 " />
-                          </DepthButton>
+                            <X size={12} strokeWidth={2.4} />
+                          </button>
                         </button>
                       );
                     })}
@@ -994,7 +1128,11 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       )}
 
       {isProjectionOn && (
-        <div className="px-3 py-1.5 border-t border-theme-primary-600/20 bg-theme-primary-900/25 text-[10px] text-theme-primary-200/70">
+        <div
+          className={`px-3 py-1.5 border-t border-l border-solid border-theme-primary-600/20 bg-theme-primary-900/25 text-[10px] text-theme-primary-200/70 ${
+            isDarkMode ? "border-l-white/20" : "border-l-neutral-300"
+          }`}
+        >
           Projection is live. Routing edits are reflected this workspace
           setup.
         </div>
