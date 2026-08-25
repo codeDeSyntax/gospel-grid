@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld("windowControls", {
   isMaximized: () => ipcRenderer.invoke("window-is-maximized"),
   isMinimized: () => ipcRenderer.invoke("window-is-minimized"),
   splashReady: () => ipcRenderer.invoke("splash-ready"),
+  relaunch: () => ipcRenderer.invoke("app-relaunch"),
 });
 
 // --------- Window Enumeration APIs ---------

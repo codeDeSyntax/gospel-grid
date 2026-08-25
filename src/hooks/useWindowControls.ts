@@ -39,11 +39,20 @@ export const useWindowControls = () => {
     }
   };
 
+  const handleRelaunch = async () => {
+    if (window.windowControls?.relaunch) {
+      await window.windowControls.relaunch();
+    } else if (window.ipcRenderer) {
+      await window.ipcRenderer.invoke("app-relaunch");
+    }
+  };
+
   return {
     isMaximized,
     isMinimized,
     minimize: handleMinimize,
     maximize: handleMaximize,
     close: handleClose,
+    relaunch: handleRelaunch,
   };
 };

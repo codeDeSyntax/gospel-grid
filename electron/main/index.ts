@@ -560,6 +560,12 @@ ipcMain.handle("window-is-minimized", (event) => {
   return currentWindow ? currentWindow.isMinimized() : false;
 });
 
+// App relaunch handler
+ipcMain.handle("app-relaunch", () => {
+  app.relaunch();
+  app.exit(0);
+});
+
 // Desktop capturer sources for video streaming
 ipcMain.handle("get-desktop-sources", async (event, options) => {
   try {

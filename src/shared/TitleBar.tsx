@@ -8,7 +8,6 @@ import {
   Play,
   CheckCircle2,
   Download,
-  RefreshCw,
   RotateCcw,
   Undo2,
   Redo2,
@@ -125,12 +124,10 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   onRestartToUpdate,
   onStartDownload,
 }) => {
-  const { isMaximized, minimize, maximize, close } = useWindowControls();
+  const { isMaximized, minimize, maximize, close, relaunch } = useWindowControls();
   const [isActionMenuOpen, setIsActionMenuOpen] = React.useState(false);
   const actionMenuRef = React.useRef<HTMLDivElement>(null);
   const hasSelections = selectedWindowsCount > 0;
-  const titlebarBackground =
-    "radial-gradient(ellipse at 30% 50%, color-mix(in srgb, var(--select-border) 36%, transparent) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, color-mix(in srgb, var(--select-border) 32%, transparent) 0%, transparent 50%), repeating-linear-gradient(90deg, transparent, transparent 80px, color-mix(in srgb, var(--select-border) 18%, transparent) 80px, color-mix(in srgb, var(--select-border) 18%, transparent) 81px), repeating-linear-gradient(0deg, transparent, transparent 80px, color-mix(in srgb, var(--select-border) 16%, transparent) 80px, color-mix(in srgb, var(--select-border) 16%, transparent) 81px), linear-gradient(135deg, var(--card-bg) 0%, var(--card-bg-alt) 100%)";
 
   const actionItems: Array<ActionButtonItem | DividerItem> = [
     {
@@ -253,6 +250,17 @@ export const TitleBar: React.FC<TitleBarProps> = ({
       inactiveClassName:
         "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-theme-primary-100",
     },
+    { kind: "divider", key: "divider-restart" },
+    {
+      kind: "button",
+      key: "restart-app",
+      icon: <RotateCcw className="w-3.5 h-3.5" strokeWidth={2.4} />,
+      onClick: relaunch,
+      label: "Restart Wingrid",
+      title: "Restart Wingrid application",
+      inactiveClassName:
+        "text-theme-primary-200/85 border-theme-primary-500/35 hover:text-primary-300",
+    },
   ];
 
   React.useEffect(() => {
@@ -288,6 +296,15 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   };
 
   const windowControlItems: WindowControlItem[] = [
+    {
+      key: "restart",
+      title: "Restart Wingrid",
+      onClick: relaunch,
+      className: "hover:bg-theme-primary-700/45 hover:text-primary-300 group",
+      icon: (
+        <RotateCcw className="w-3 h-3 transition-transform duration-300 group-hover:-rotate-90" strokeWidth={2.2} />
+      ),
+    },
     {
       key: "minimize",
       title: "Minimize",
@@ -341,20 +358,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({
   ];
 
   return (
-    <div className="relative z-20 flex  flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-visible bg-theme-primary-900 ">
-      <span
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-3 z-[1]"
-        // style={{
-        //   background:
-        //     "linear-gradient(to bottom, transparent, rgb(var(--theme-primary-800) / 0.72))",
-        // }}
-      />
+    <div className="relative z-20 flex flex-col select-none shrink-0 border-b border-theme-primary-500/10 overflow-visible bg-theme-primary-900">
       <div
         className="relative z-10 flex h-8 items-center justify-between px-2"
         style={dragRegionStyle}
       >
         <div className="relative z-10 flex items-center gap-2 px-2">
-          
           <button
             type="button"
             onClick={onHomeClick}

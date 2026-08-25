@@ -14,295 +14,108 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       user-select: none;
       -webkit-app-region: drag;
     }
 
-    /* ── Center card — 420×270 compact (MS Word-style) ── */
+    /* ── Clean Minimal Obsidian Card (420×270) ── */
     .card {
       position: relative;
       width: 420px;
       height: 270px;
-      background: #7bba4d;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.15);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.22);
+      background: linear-gradient(145deg, #181d16 0%, #0e120c 60%, #070906 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 
+        0 24px 60px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(133, 202, 62, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 20px 28px;
       overflow: hidden;
       opacity: 0;
-      transform: scale(.93);
-      animation: cardIn .48s cubic-bezier(.22,1,.36,1) .06s forwards;
-    }
-    @keyframes cardIn {
-      to { opacity: 1; transform: scale(1); }
+      transform: scale(0.95);
+      animation: cardEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* ── Corner halftone dots ── */
-    .corner { position: absolute; width: 96px; height: 96px; pointer-events: none; }
-    .corner-tl { top: 18px; left: 18px; }
-    .corner-br { bottom: 18px; right: 18px; }
-
-    /* ── Monitor wrapper — tilted for style ── */
-    .monitor-wrap {
-      position: relative;
-      flex-shrink: 0;
-      transform: rotate(-2.5deg);
-      -webkit-app-region: no-drag;
+    @keyframes cardEnter {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
-    /* Screen overlay — scaled to 75% display SVG size */
-    .screen-content {
+    /* ── Subtle Ambient Glow Behind Icon ── */
+    .ambient-glow {
       position: absolute;
-      /* SVG displays at 248×165 (75% of 330×220 viewBox)
-         Screen rect in viewBox: x=4 y=10 w=322 h=157
-         Scaled: x=3 y=7.5 w=241 h=118                    */
-      top: 7.5px;
-      left: 3px;
-      width: 241px;
-      height: 118px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(133, 202, 62, 0.22) 0%, rgba(94, 172, 36, 0.06) 50%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Center Content ── */
+    .content {
+      position: relative;
+      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 6px 16px 10px;
+      gap: 16px;
     }
 
-    /* Icon avatar stack — bare icons overlapping on white */
-    .icon-stack {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .icon-item {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-      flex-shrink: 0;
+    .icon-wrap {
       position: relative;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.20));
-      transition: transform .2s ease, filter .2s ease;
-    }
-    .icon-item + .icon-item { margin-left: -10px; }
-    .icon-item:nth-child(1) { z-index: 5; }
-    .icon-item:nth-child(2) { z-index: 4; }
-    .icon-item:nth-child(3) { z-index: 3; }
-    .icon-item:nth-child(4) { z-index: 2; }
-    .icon-item:nth-child(5) { z-index: 1; }
-    .icon-item:hover {
-      transform: translateY(-6px) scale(1.12);
-      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.28));
-      z-index: 10;
-    }
-
-    /* Loading bar — inside monitor screen, green segments on white */
-    .bar-wrap {
-      display: flex;
-      gap: 2px;
-      width: 158px;
-      height: 9px;
-      border: 1px solid rgba(123,186,77,.35);
-      border-radius: 3px;
-      padding: 1.5px;
-      background: rgba(123,186,77,.07);
-      flex-shrink: 0;
-    }
-    .bar-seg {
-      flex: 1;
-      height: 100%;
-      background: #7bba4d;
-      border-radius: 1px;
-      opacity: .18;
-      animation: pulse 1.4s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity: .18; }
-      50%      { opacity: 1;   }
-    }
-
-    /* Status text — inside monitor screen */
-    .status-inner {
-      font-size: 6.5px;
-      font-weight: 600;
-      color: rgba(0,0,0,.28);
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      animation: blink 1.6s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%,100% { opacity: .4; }
-      50%      { opacity: 1;  }
-    }
-
-    /* ── Compact brand row below monitor ── */
-    .brand-row {
+      width: 90px;
+      height: 90px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      animation: float 3s ease-in-out infinite alternate;
     }
-    .logo-svg { width: 20px; height: 27px; flex-shrink: 0; }
-    .brand-text { display: flex; flex-direction: column; align-items: flex-start; }
-    .brand-name {
-      font-size: 15px;
-      font-weight: 300;
-      letter-spacing: -.01em;
-      color: #ffffff;
-      line-height: 1;
+
+    @keyframes float {
+      0% { transform: translateY(0); filter: drop-shadow(0 8px 24px rgba(133, 202, 62, 0.3)); }
+      100% { transform: translateY(-4px); filter: drop-shadow(0 14px 32px rgba(133, 202, 62, 0.45)); }
     }
-    .brand-version {
-      font-size: 6.5px;
+
+    .app-icon {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .version-text {
+      font-size: 11px;
       font-weight: 600;
-      color: rgba(255,255,255,.55);
-      letter-spacing: .13em;
-      text-transform: uppercase;
-      margin-top: 2px;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
     }
   </style>
 </head>
 <body>
 
   <div class="card">
-
-    <!-- Corner halftone dots -->
-    <svg class="corner corner-tl" id="dots-tl" viewBox="0 0 100 100"></svg>
-    <svg class="corner corner-br" id="dots-br" viewBox="0 0 100 100"></svg>
-
-    <!-- ── Sleek tilted monitor ── -->
-    <div class="monitor-wrap">
-      <!--
-        Bezel asymmetry:
-          top    = 10px  (thick)
-          bottom = 18px  (chin — thickest)
-          left   = 4px   (thin)
-          right  = 4px   (thin)
-        Screen: x=4 y=10 w=322 h=157  (total body height = 10+157+18 = 185)
-        Stand + base below body.
-        SVG total h = 185 + 35 = 220
-      -->
-      <svg width="248" height="165" viewBox="0 0 330 220" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#232323"/>
-            <stop offset="100%" stop-color="#0c0c0c"/>
-          </linearGradient>
-          <!-- Subtle screen inner shadow at edges -->
-          <linearGradient id="screenTopFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="rgba(0,0,0,0.04)"/>
-            <stop offset="8%"   stop-color="rgba(0,0,0,0)"/>
-          </linearGradient>
-        </defs>
-
-        <!-- ── Monitor body — thick top+bottom bezel, thin left+right ── -->
-        <rect x="0" y="0" width="330" height="180" rx="7" fill="url(#bezel)"/>
-
-        <!-- White screen surface -->
-        <rect x="4" y="10" width="322" height="157" rx="3" fill="#ffffff"/>
-
-        <!-- Subtle top inner shadow on screen -->
-        <rect x="4" y="10" width="322" height="20" rx="3" fill="url(#screenTopFade)"/>
-
-        <!-- Thin top sheen on bezel -->
-        <rect x="1" y="0.5" width="328" height="1.5" rx="0.75"
-              fill="rgba(255,255,255,0.09)"/>
-
-        <!-- Camera dot (in top bezel center) -->
-        <circle cx="165" cy="5.5" r="1.5" fill="rgba(255,255,255,0.14)"/>
-
-        <!-- ── Stand — slightly tapered ── -->
-        <polygon points="152,185 178,185 175,207 155,207" fill="#0c0c0c"/>
-
-        <!-- ── Base — thin bar ── -->
-        <rect x="100" y="207" width="130" height="5" rx="2.5" fill="#0c0c0c"/>
-        <!-- Base sheen -->
-        <rect x="100" y="207" width="130" height="1.5" rx="0.75"
-              fill="rgba(255,255,255,0.05)"/>
-      </svg>
-
-      <!-- Screen content: icons + loading bar + status — all on white -->
-      <div class="screen-content">
-        <div class="icon-stack">
-          <img class="icon-item" src="chrome.png"     alt="Chrome"/>
-          <img class="icon-item" src="powerpoint.png" alt="PowerPoint"/>
-          <img class="icon-item" src="vlc.png"        alt="VLC"/>
-          <img class="icon-item" src="fileexp.png"    alt="Files"/>
-          <img class="icon-item" src="messages.png"   alt="Messages"/>
-        </div>
-
-        <!-- Loading bar inside monitor screen -->
-        <div class="bar-wrap" id="bar"></div>
-
-        <!-- Status inside screen -->
-        <div class="status-inner">Loading...</div>
+    <div class="ambient-glow"></div>
+    <div class="content">
+      <div class="icon-wrap">
+        <img class="app-icon" src="wingrid.png" alt="Wingrid"/>
       </div>
+      <span class="version-text">v2.2.42</span>
     </div>
-
-    <!-- Compact brand row below monitor -->
-    <div class="brand-row">
-       <img class="icon-item" src="wingrid.png" alt="PowerPoint"/>
-      <div class="brand-text">
-        <span class="brand-name">WINGRID</span>
-        <span class="brand-version">v. 2.2.39</span>
-      </div>
-    </div>
-
   </div>
 
-  <script>
-    const ns = 'http://www.w3.org/2000/svg';
-
-    function makeCornerDots(svgEl, corner) {
-      const size = 8;
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size - r; c++) {
-          const t = (size - r - c) / size;
-          const x = corner === 'tl' ? c * 9 : 80 - c * 9;
-          const y = corner === 'tl' ? r * 9 : 80 - r * 9;
-          const el = document.createElementNS(ns, 'circle');
-          el.setAttribute('cx',  x + 6);
-          el.setAttribute('cy',  y + 6);
-          el.setAttribute('r',   2.4 * t);
-          el.setAttribute('fill', '#ffffff');
-          el.setAttribute('opacity', t * 0.7);
-          svgEl.appendChild(el);
-        }
-      }
-    }
-
-    function makeLogoDots(svgEl) {
-      const rows = 9;
-      for (let r = 0; r < rows; r++) {
-        const cols = r < 5 ? r + 1 : 9 - r;
-        for (let c = 0; c < cols; c++) {
-          const el = document.createElementNS(ns, 'circle');
-          el.setAttribute('cx',  c * 7.5 + 6);
-          el.setAttribute('cy',  r * 7.5 + 6);
-          el.setAttribute('r',   2.2);
-          el.setAttribute('fill', '#ffffff');
-          el.setAttribute('opacity', 0.5 + (c / 5) * 0.5);
-          svgEl.appendChild(el);
-        }
-      }
-    }
-
-    function makeBar(container, count) {
-      for (let i = 0; i < count; i++) {
-        const seg = document.createElement('div');
-        seg.className = 'bar-seg';
-        seg.style.animationDelay = (i * 0.09) + 's';
-        container.appendChild(seg);
-      }
-    }
-
-    makeCornerDots(document.getElementById('dots-tl'), 'tl');
-    makeCornerDots(document.getElementById('dots-br'), 'br');
-    makeLogoDots(document.getElementById('logo-dots'));
-    makeBar(document.getElementById('bar'), 14);
-  </script>
 </body>
 </html>

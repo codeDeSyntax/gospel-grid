@@ -5,6 +5,7 @@ export interface WindowControls {
   close: () => Promise<void>;
   isMaximized: () => Promise<boolean>;
   isMinimized: () => Promise<boolean>;
+  relaunch: () => Promise<void>;
 }
 
 // Window enumeration API types
