@@ -31,6 +31,7 @@ export interface UseContextIntelligenceReturn {
   dismissCard: (index: number) => void;
   clearCards: () => void;
   pushCardToOverlay: (card: AiProducerCard) => void;
+  hideOverlay: () => void;
   generateFromText: (text: string) => Promise<void>;
 }
 
@@ -155,9 +156,15 @@ export function useContextIntelligence({
       ?.catch(() => {});
   }, [dispatch]);
 
+  const hideOverlay = useCallback(() => {
+    dispatch(setOverlayVisible(false));
+    const api = window.electronAPI as any;
+    api?.updateProjectionState?.({ overlayVisible: false })?.catch(() => {});
+  }, [dispatch]);
+
   const generateFromText = useCallback(async (text: string) => {
     await generateFromCustomText(text);
   }, []);
 
-  return { cards, status, mode, setMode, dismissCard, clearCards, pushCardToOverlay, generateFromText };
+  return { cards, status, mode, setMode, dismissCard, clearCards, pushCardToOverlay, hideOverlay, generateFromText };
 }

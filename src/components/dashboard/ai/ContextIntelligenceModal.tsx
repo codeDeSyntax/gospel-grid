@@ -20,10 +20,12 @@ import {
   Copy,
   Check,
   CornerDownLeft,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import type { AiProducerCard } from "@/services/ai/types";
 import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceService";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setOverlayText, setOverlayVisible } from "@/store/slices/appSlice";
 
 // ─── Card Type Icons & Styles ───────────────────────────────────────────────
@@ -126,6 +128,7 @@ export interface ContextIntelligenceModalProps {
   onDismiss: (index: number) => void;
   onClear: () => void;
   onPush: (card: AiProducerCard) => void;
+  onHide?: () => void;
 }
 
 export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> = ({
@@ -138,8 +141,11 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
   onDismiss,
   onClear,
   onPush,
+  onHide,
 }) => {
   const dispatch = useAppDispatch();
+  const overlayText = useAppSelector((s) => s.app.overlayText);
+  const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
   const [inputText, setInputText] = useState("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -195,6 +201,45 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
     const api = window.electronAPI as any;
     api?.updateProjectionState?.({ overlayText: trimmed, overlayVisible: true })?.catch(() => {});
   }, [inputText, dispatch]);
+
+  const handleHideOverlay = useCallback(() => {
+    if (onHide) {
+      onHide();
+    } else {
+      dispatch(setOverlayVisible(false));
+      const api = window.electronAPI as any;
+      api?.updateProjectionState?.({ overlayVisible: false })?.catch(() => {});
+    }
+  }, [dispatch, onHide]);
+
+  const isCardLive = useCallback(
+    (card: AiProducerCard) => {
+      if (!overlayVisible || !overlayText) return false;
+      if (overlayText.startsWith("{") && overlayText.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(overlayText);
+          if (parsed.headline && card.headline && parsed.headline === card.headline) return true;
+          if (parsed.quote && card.quote && parsed.quote === card.quote) return true;
+          if (parsed.reference && card.reference && parsed.reference === card.reference) return true;
+          if (parsed.item && card.item && parsed.item === card.item) return true;
+          if (parsed.body && card.body && parsed.body === card.body) return true;
+        } catch {}
+      }
+      if (card.htmlCode && overlayText.trim() === card.htmlCode.trim()) return true;
+      const keyText = card.headline || card.quote || card.reference || card.item;
+      if (keyText && overlayText === keyText) return true;
+      return false;
+    },
+    [overlayText, overlayVisible],
+  );
+
+  const handleCardPushOrToggle = (card: AiProducerCard) => {
+    if (isCardLive(card)) {
+      handleHideOverlay();
+    } else {
+      onPush(card);
+    }
+  };
 
   const handleCopyCard = (card: AiProducerCard, index: number) => {
     const text = `${getCardHeadline(card)}${getCardSubline(card) ? " " + getCardSubline(card) : ""}`;
@@ -425,15 +470,23 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
 
                         {/* Actions */}
                         <div className="flex flex-col justify-between items-end shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
-                          {/* Push to live screen */}
+                          {/* Push / Hide live screen */}
                           <button
                             type="button"
-                            onClick={() => onPush(card)}
-                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-[#76cb01] text-black hover:bg-[#88e003] shadow-sm transition-all"
-                            title="Push to screen overlay"
+                            onClick={() => handleCardPushOrToggle(card)}
+                            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold shadow-sm transition-all cursor-pointer ${
+                              isCardLive(card)
+                                ? "bg-emerald-500 hover:bg-red-500 text-white"
+                                : "bg-[#76cb01] text-black hover:bg-[#88e003]"
+                            }`}
+                            title={isCardLive(card) ? "Currently live on projection screen. Click to hide." : "Push to screen overlay"}
                           >
-                            <span>Push</span>
-                            <ArrowUpRight className="w-3 h-3" />
+                            <span>{isCardLive(card) ? "Hide" : "Push"}</span>
+                            {isCardLive(card) ? (
+                              <EyeOff className="w-3 h-3" />
+                            ) : (
+                              <ArrowUpRight className="w-3 h-3" />
+                            )}
                           </button>
 
                           {/* Copy to prompt input */}

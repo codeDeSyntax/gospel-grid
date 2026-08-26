@@ -273,6 +273,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     dismissCard: handleDismissAiCard,
     clearCards: handleClearAiCards,
     pushCardToOverlay: handlePushAiCard,
+    hideOverlay: handleHideAiCardOverlay,
     generateFromText: handleGenerateFromText,
   } = useContextIntelligence({
     provider: activeAiProvider,
@@ -1413,6 +1414,7 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
         onDismiss={handleDismissAiCard}
         onClear={handleClearAiCards}
         onPush={handlePushAiCard}
+        onHide={handleHideAiCardOverlay}
         onGenerateFromText={handleGenerateFromText}
       />
     </div>

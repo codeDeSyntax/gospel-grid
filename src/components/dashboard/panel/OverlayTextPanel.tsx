@@ -40,6 +40,21 @@ const saveHistory = (msgs: string[]) => {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(msgs));
 };
 
+const isStructuredOrHtml = (text: string | null | undefined): boolean => {
+  if (!text) return false;
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      JSON.parse(trimmed);
+      return true;
+    } catch {}
+  }
+  if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+    return true;
+  }
+  return false;
+};
+
 export const OverlayTextPanel: React.FC = () => {
   const dispatch = useAppDispatch();
   const isDarkMode = useAppSelector((s: RootState) => s.app.isDarkMode);
@@ -55,8 +70,10 @@ export const OverlayTextPanel: React.FC = () => {
 
   const [isRecentsOpen, setIsRecentsOpen] = useState(false);
   const [isTargetMenuOpen, setIsTargetMenuOpen] = useState(false);
-  const [draftText, setDraftText] = useState(overlayText);
-  const [recentMessages, setRecentMessages] = useState<string[]>(loadHistory);
+  const [draftText, setDraftText] = useState(() => (isStructuredOrHtml(overlayText) ? "" : overlayText || ""));
+  const [recentMessages, setRecentMessages] = useState<string[]>(() => {
+    return loadHistory().filter((m) => !isStructuredOrHtml(m));
+  });
   const [availableDisplays, setAvailableDisplays] = useState<
     Array<{ id: number; label: string; isPrimary: boolean }>
   >([]);
@@ -90,9 +107,11 @@ export const OverlayTextPanel: React.FC = () => {
     };
   }, []);
 
-  // Sync draft if overlayText is updated externally
+  // Sync draft if overlayText is updated externally with plain text (do NOT clobber with AI card JSON/HTML)
   useEffect(() => {
-    setDraftText(overlayText);
+    if (!isStructuredOrHtml(overlayText)) {
+      setDraftText(overlayText || "");
+    }
   }, [overlayText]);
 
   // Click outside listener for floating popup menus
@@ -116,6 +135,7 @@ export const OverlayTextPanel: React.FC = () => {
   }, []);
 
   const isLive = overlayVisible && !!overlayText;
+  const isCardLive = isLive && isStructuredOrHtml(overlayText);
 
   const commitMessage = useCallback(
     (text: string) => {
@@ -123,14 +143,20 @@ export const OverlayTextPanel: React.FC = () => {
       if (!trimmed) return;
       dispatch(setOverlayText(trimmed));
       dispatch(setOverlayVisible(true));
-      setRecentMessages((prev) => {
-        const deduped = [trimmed, ...prev.filter((m) => m !== trimmed)].slice(
-          0,
-          MAX_HISTORY,
-        );
-        saveHistory(deduped);
-        return deduped;
-      });
+
+      const api = window.electronAPI as any;
+      api?.updateProjectionState?.({ overlayText: trimmed, overlayVisible: true })?.catch(() => {});
+
+      if (!isStructuredOrHtml(trimmed)) {
+        setRecentMessages((prev) => {
+          const deduped = [trimmed, ...prev.filter((m) => m !== trimmed)].slice(
+            0,
+            MAX_HISTORY,
+          );
+          saveHistory(deduped);
+          return deduped;
+        });
+      }
     },
     [dispatch],
   );
@@ -153,13 +179,18 @@ export const OverlayTextPanel: React.FC = () => {
   );
 
   const handleToggle = useCallback(() => {
-    dispatch(toggleOverlayVisible());
-  }, [dispatch]);
+    const next = !overlayVisible;
+    dispatch(setOverlayVisible(next));
+    const api = window.electronAPI as any;
+    api?.updateProjectionState?.({ overlayVisible: next })?.catch(() => {});
+  }, [dispatch, overlayVisible]);
 
   const handleClear = useCallback(() => {
     setDraftText("");
     dispatch(setOverlayText(""));
     dispatch(setOverlayVisible(false));
+    const api = window.electronAPI as any;
+    api?.updateProjectionState?.({ overlayText: "", overlayVisible: false })?.catch(() => {});
     inputRef.current?.focus();
   }, [dispatch]);
 
@@ -229,7 +260,7 @@ export const OverlayTextPanel: React.FC = () => {
                     : "bg-neutral-400"
               }`}
             />
-            {isLive ? "Broadcasting" : "Idle"}
+            {isCardLive ? "AI Card Live" : isLive ? "Broadcasting" : "Idle"}
           </span>
         </div>
       </div>

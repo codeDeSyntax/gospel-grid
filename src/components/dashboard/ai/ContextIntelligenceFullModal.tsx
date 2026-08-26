@@ -19,6 +19,8 @@ import {
   Trash2,
   Square,
   Tv,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import type { AiProducerCard } from "@/services/ai/types";
 import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceService";
@@ -65,90 +67,90 @@ interface ThemeVisual {
 
 const THEME_PALETTES: Record<string, ThemeVisual> = {
   emerald: {
-    gradientDark: "from-emerald-500/[0.08] to-[#181818]",
+    gradientDark: "from-emerald-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-emerald-50 via-white to-white",
-    borderDark: "border-emerald-500/20 hover:border-emerald-500/35",
+    borderDark: "border-emerald-500/30 hover:border-emerald-500/50",
     borderLight: "border-emerald-200 hover:border-emerald-400",
-    badgeBgDark: "bg-emerald-500/10 border-emerald-500/20",
+    badgeBgDark: "bg-emerald-500/15 border-emerald-500/30",
     badgeBgLight: "bg-emerald-100 border-emerald-200",
-    badgeTextDark: "text-emerald-300/90",
+    badgeTextDark: "text-emerald-300",
     badgeTextLight: "text-emerald-800",
     dotColor: "bg-emerald-400",
   },
   rose: {
-    gradientDark: "from-rose-500/[0.08] to-[#181818]",
+    gradientDark: "from-rose-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-rose-50 via-white to-white",
-    borderDark: "border-rose-500/20 hover:border-rose-500/35",
+    borderDark: "border-rose-500/30 hover:border-rose-500/50",
     borderLight: "border-rose-200 hover:border-rose-400",
-    badgeBgDark: "bg-rose-500/10 border-rose-500/20",
+    badgeBgDark: "bg-rose-500/15 border-rose-500/30",
     badgeBgLight: "bg-rose-100 border-rose-200",
-    badgeTextDark: "text-rose-300/90",
+    badgeTextDark: "text-rose-300",
     badgeTextLight: "text-rose-800",
     dotColor: "bg-rose-400",
   },
   purple: {
-    gradientDark: "from-purple-500/[0.08] to-[#181818]",
+    gradientDark: "from-purple-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-purple-50 via-white to-white",
-    borderDark: "border-purple-500/20 hover:border-purple-500/35",
+    borderDark: "border-purple-500/30 hover:border-purple-500/50",
     borderLight: "border-purple-200 hover:border-purple-400",
-    badgeBgDark: "bg-purple-500/10 border-purple-500/20",
+    badgeBgDark: "bg-purple-500/15 border-purple-500/30",
     badgeBgLight: "bg-purple-100 border-purple-200",
-    badgeTextDark: "text-purple-300/90",
+    badgeTextDark: "text-purple-300",
     badgeTextLight: "text-purple-800",
     dotColor: "bg-purple-400",
   },
   amber: {
-    gradientDark: "from-amber-500/[0.08] to-[#181818]",
+    gradientDark: "from-amber-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-amber-50 via-white to-white",
-    borderDark: "border-amber-500/20 hover:border-amber-500/35",
+    borderDark: "border-amber-500/30 hover:border-amber-500/50",
     borderLight: "border-amber-200 hover:border-amber-400",
-    badgeBgDark: "bg-amber-500/10 border-amber-500/20",
+    badgeBgDark: "bg-amber-500/15 border-amber-500/30",
     badgeBgLight: "bg-amber-100 border-amber-200",
-    badgeTextDark: "text-amber-300/90",
+    badgeTextDark: "text-amber-300",
     badgeTextLight: "text-amber-800",
     dotColor: "bg-amber-400",
   },
   cyan: {
-    gradientDark: "from-cyan-500/[0.08] to-[#181818]",
+    gradientDark: "from-cyan-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-cyan-50 via-white to-white",
-    borderDark: "border-cyan-500/20 hover:border-cyan-500/35",
+    borderDark: "border-cyan-500/30 hover:border-cyan-500/50",
     borderLight: "border-cyan-200 hover:border-cyan-400",
-    badgeBgDark: "bg-cyan-500/10 border-cyan-500/20",
+    badgeBgDark: "bg-cyan-500/15 border-cyan-500/30",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
-    badgeTextDark: "text-cyan-300/90",
+    badgeTextDark: "text-cyan-300",
     badgeTextLight: "text-cyan-800",
     dotColor: "bg-cyan-400",
   },
   orange: {
-    gradientDark: "from-orange-500/[0.08] to-[#181818]",
+    gradientDark: "from-orange-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-orange-50 via-white to-white",
-    borderDark: "border-orange-500/20 hover:border-orange-500/35",
+    borderDark: "border-orange-500/30 hover:border-orange-500/50",
     borderLight: "border-orange-200 hover:border-orange-400",
-    badgeBgDark: "bg-orange-500/10 border-orange-500/20",
+    badgeBgDark: "bg-orange-500/15 border-orange-500/30",
     badgeBgLight: "bg-orange-100 border-orange-200",
-    badgeTextDark: "text-orange-300/90",
+    badgeTextDark: "text-orange-300",
     badgeTextLight: "text-orange-800",
     dotColor: "bg-orange-400",
   },
   blue: {
-    gradientDark: "from-blue-500/[0.08] to-[#181818]",
+    gradientDark: "from-blue-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-blue-50 via-white to-white",
-    borderDark: "border-blue-500/20 hover:border-blue-500/35",
+    borderDark: "border-blue-500/30 hover:border-blue-500/50",
     borderLight: "border-blue-200 hover:border-blue-400",
-    badgeBgDark: "bg-blue-500/10 border-blue-500/20",
+    badgeBgDark: "bg-blue-500/15 border-blue-500/30",
     badgeBgLight: "bg-blue-100 border-blue-200",
-    badgeTextDark: "text-blue-300/90",
+    badgeTextDark: "text-blue-300",
     badgeTextLight: "text-blue-800",
     dotColor: "bg-blue-400",
   },
   indigo: {
-    gradientDark: "from-indigo-500/[0.08] to-[#181818]",
+    gradientDark: "from-indigo-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-indigo-50 via-white to-white",
-    borderDark: "border-indigo-500/20 hover:border-indigo-500/35",
+    borderDark: "border-indigo-500/30 hover:border-indigo-500/50",
     borderLight: "border-indigo-200 hover:border-indigo-400",
-    badgeBgDark: "bg-indigo-500/10 border-indigo-500/20",
+    badgeBgDark: "bg-indigo-500/15 border-indigo-500/30",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
-    badgeTextDark: "text-indigo-300/90",
+    badgeTextDark: "text-indigo-300",
     badgeTextLight: "text-indigo-800",
     dotColor: "bg-indigo-400",
   },
@@ -158,11 +160,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   lower_third: {
     label: "Speaker / Title",
     category: "Speaker",
-    gradientDark: "from-cyan-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-cyan-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-cyan-50 to-white",
-    borderDark: "border-cyan-500/20 hover:border-cyan-500/35",
+    borderDark: "border-cyan-500/30 hover:border-cyan-500/50",
     borderLight: "border-cyan-200 hover:border-cyan-400",
-    badgeBgDark: "bg-cyan-500/10 border-cyan-500/20",
+    badgeBgDark: "bg-cyan-500/15 border-cyan-500/30",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
     badgeTextDark: "text-cyan-300",
     badgeTextLight: "text-cyan-700",
@@ -171,11 +173,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   key_metric: {
     label: "Key Metric",
     category: "Metric",
-    gradientDark: "from-emerald-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-emerald-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-emerald-50 to-white",
-    borderDark: "border-emerald-500/20 hover:border-emerald-500/35",
+    borderDark: "border-emerald-500/30 hover:border-emerald-500/50",
     borderLight: "border-emerald-200 hover:border-emerald-400",
-    badgeBgDark: "bg-emerald-500/10 border-emerald-500/20",
+    badgeBgDark: "bg-emerald-500/15 border-emerald-500/30",
     badgeBgLight: "bg-emerald-100 border-emerald-200",
     badgeTextDark: "text-emerald-300",
     badgeTextLight: "text-emerald-700",
@@ -184,11 +186,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   quote: {
     label: "Quote",
     category: "Highlight",
-    gradientDark: "from-purple-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-purple-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-purple-50 to-white",
-    borderDark: "border-purple-500/20 hover:border-purple-500/35",
+    borderDark: "border-purple-500/30 hover:border-purple-500/50",
     borderLight: "border-purple-200 hover:border-purple-400",
-    badgeBgDark: "bg-purple-500/10 border-purple-500/20",
+    badgeBgDark: "bg-purple-500/15 border-purple-500/30",
     badgeBgLight: "bg-purple-100 border-purple-200",
     badgeTextDark: "text-purple-300",
     badgeTextLight: "text-purple-700",
@@ -197,11 +199,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   citation: {
     label: "Citation",
     category: "Reference",
-    gradientDark: "from-amber-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-amber-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-amber-50 to-white",
-    borderDark: "border-amber-500/20 hover:border-amber-500/35",
+    borderDark: "border-amber-500/30 hover:border-amber-500/50",
     borderLight: "border-amber-200 hover:border-amber-400",
-    badgeBgDark: "bg-amber-500/10 border-amber-500/20",
+    badgeBgDark: "bg-amber-500/15 border-amber-500/30",
     badgeBgLight: "bg-amber-100 border-amber-200",
     badgeTextDark: "text-amber-300",
     badgeTextLight: "text-amber-700",
@@ -210,11 +212,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   agenda_item: {
     label: "Agenda",
     category: "Milestone",
-    gradientDark: "from-indigo-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-indigo-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-indigo-50 to-white",
-    borderDark: "border-indigo-500/20 hover:border-indigo-500/35",
+    borderDark: "border-indigo-500/30 hover:border-indigo-500/50",
     borderLight: "border-indigo-200 hover:border-indigo-400",
-    badgeBgDark: "bg-indigo-500/10 border-indigo-500/20",
+    badgeBgDark: "bg-indigo-500/15 border-indigo-500/30",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
     badgeTextDark: "text-indigo-300",
     badgeTextLight: "text-indigo-700",
@@ -223,11 +225,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   custom_ui: {
     label: "UI Design Block",
     category: "Design",
-    gradientDark: "from-rose-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-rose-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-rose-50 to-white",
-    borderDark: "border-rose-500/20 hover:border-rose-500/35",
+    borderDark: "border-rose-500/30 hover:border-rose-500/50",
     borderLight: "border-rose-200 hover:border-rose-400",
-    badgeBgDark: "bg-rose-500/10 border-rose-500/20",
+    badgeBgDark: "bg-rose-500/15 border-rose-500/30",
     badgeBgLight: "bg-rose-100 border-rose-200",
     badgeTextDark: "text-rose-300",
     badgeTextLight: "text-rose-700",
@@ -236,11 +238,11 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   concept: {
     label: "Key Concept",
     category: "Knowledge",
-    gradientDark: "from-blue-500/[0.1] to-[#1e1e1e]",
+    gradientDark: "from-blue-500/[0.14] via-[#0e0e0e] to-[#080808]",
     gradientLight: "from-blue-50 to-white",
-    borderDark: "border-blue-500/20 hover:border-blue-500/35",
+    borderDark: "border-blue-500/30 hover:border-blue-500/50",
     borderLight: "border-blue-200 hover:border-blue-400",
-    badgeBgDark: "bg-blue-500/10 border-blue-500/20",
+    badgeBgDark: "bg-blue-500/15 border-blue-500/30",
     badgeBgLight: "bg-blue-100 border-blue-200",
     badgeTextDark: "text-blue-300",
     badgeTextLight: "text-blue-700",
@@ -283,6 +285,21 @@ function getSubline(card: AiProducerCard): string | null {
   }
 }
 
+const isStructuredOrHtml = (text: string | null | undefined): boolean => {
+  if (!text) return false;
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      JSON.parse(trimmed);
+      return true;
+    } catch {}
+  }
+  if (/<[a-z][\s\S]*>/i.test(trimmed)) {
+    return true;
+  }
+  return false;
+};
+
 export interface ContextIntelligenceFullModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -295,6 +312,7 @@ export interface ContextIntelligenceFullModalProps {
   onDismiss: (index: number) => void;
   onClear: () => void;
   onPush: (card: AiProducerCard) => void;
+  onHide?: () => void;
   onGenerateFromText?: (text: string) => Promise<void>;
 }
 
@@ -310,12 +328,14 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
   onDismiss,
   onClear,
   onPush,
+  onHide,
   onGenerateFromText,
 }) => {
   const dispatch = useAppDispatch();
   const overlayText = useAppSelector((s: RootState) => s.app.overlayText);
+  const overlayVisible = useAppSelector((s: RootState) => s.app.overlayVisible);
 
-  const [draftText, setDraftText] = useState(overlayText || "");
+  const [draftText, setDraftText] = useState(() => (isStructuredOrHtml(overlayText) ? "" : overlayText || ""));
   const [isMicStreaming, setIsMicStreaming] = useState(false);
   const [pushedIndex, setPushedIndex] = useState<number | null>(null);
 
@@ -437,10 +457,47 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
     inputRef.current?.focus();
   };
 
+  const isCardLive = useCallback(
+    (card: AiProducerCard) => {
+      if (!overlayVisible || !overlayText) return false;
+      if (overlayText.startsWith("{") && overlayText.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(overlayText);
+          if (parsed.headline && card.headline && parsed.headline === card.headline) return true;
+          if (parsed.quote && card.quote && parsed.quote === card.quote) return true;
+          if (parsed.reference && card.reference && parsed.reference === card.reference) return true;
+          if (parsed.item && card.item && parsed.item === card.item) return true;
+          if (parsed.body && card.body && parsed.body === card.body) return true;
+          if (parsed.type && card.type && parsed.type === card.type && parsed.headline === card.headline) return true;
+        } catch {}
+      }
+      if (card.htmlCode && overlayText.trim() === card.htmlCode.trim()) return true;
+      const keyText = card.headline || card.quote || card.reference || card.item;
+      if (keyText && overlayText === keyText) return true;
+      return false;
+    },
+    [overlayText, overlayVisible],
+  );
+
+  const handleHideOverlay = useCallback(() => {
+    if (onHide) {
+      onHide();
+    } else {
+      dispatch(setOverlayVisible(false));
+      const api = window.electronAPI as any;
+      api?.updateProjectionState?.({ overlayVisible: false })?.catch(() => {});
+    }
+  }, [dispatch, onHide]);
+
   const handleCardPush = (card: AiProducerCard, index: number) => {
-    onPush(card);
-    setPushedIndex(index);
-    setTimeout(() => setPushedIndex(null), 1800);
+    if (isCardLive(card)) {
+      // If currently live on screen, clicking it takes it down/hides it!
+      handleHideOverlay();
+    } else {
+      onPush(card);
+      setPushedIndex(index);
+      setTimeout(() => setPushedIndex(null), 1800);
+    }
   };
 
   const handleCardInsert = (card: AiProducerCard) => {
@@ -472,9 +529,9 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
             exit={{ opacity: 0, scale: 0.92, y: 12 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className={`pointer-events-auto relative w-[94vw] sm:w-[590px] max-w-2xl h-[420px] sm:h-[450px] flex flex-col justify-between rounded-[28px] border shadow-[0_24px_70px_rgba(0,0,0,0.65)] overflow-hidden origin-bottom-right transition-colors duration-200 backdrop-blur-xl ${
+            className={`pointer-events-auto relative w-[94vw] sm:w-[590px] max-w-2xl h-[420px] sm:h-[450px] flex flex-col justify-between rounded-[28px] border shadow-[0_24px_80px_rgba(0,0,0,0.95)] overflow-hidden origin-bottom-right transition-colors duration-200 backdrop-blur-xl ${
               isDarkMode
-                ? "border-white/[0.14] bg-[#282828]/95 text-white"
+                ? "border-neutral-800 bg-black text-white"
                 : "border-neutral-200 bg-white/95 text-neutral-900"
             }`}
           >
@@ -484,7 +541,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 <div
                   className={`flex h-6.5 w-6.5 items-center justify-center rounded-lg p-0.5 shrink-0 ${
                     isDarkMode
-                      ? "bg-white/10 border border-white/10"
+                      ? "bg-neutral-900 border border-neutral-800"
                       : "bg-neutral-100 border border-neutral-200"
                   }`}
                 >
@@ -517,7 +574,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                         ? "bg-primary-500/20 text-primary-300 border-primary-500/40 hover:bg-primary-500/30"
                         : "bg-primary-100 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                       : isDarkMode
-                        ? "bg-white/10 text-white/80 border-white/20 hover:bg-white/15"
+                        ? "bg-neutral-900 text-neutral-300 border-neutral-800 hover:bg-neutral-800"
                         : "bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200"
                   }`}
                   title={
@@ -528,7 +585,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      mode === "auto" ? "bg-primary-400 animate-pulse" : isDarkMode ? "bg-white/60" : "bg-neutral-500"
+                      mode === "auto" ? "bg-primary-400 animate-pulse" : isDarkMode ? "bg-neutral-400" : "bg-neutral-500"
                     }`}
                   />
                   <span>{mode === "auto" ? "Auto Pick" : "User Controlled"}</span>
@@ -537,7 +594,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 <span
                   className={`px-2.5 py-0.5 rounded-full font-bold text-[9.5px] border ${
                     isDarkMode
-                      ? "bg-white/10 text-white/90 border-white/20"
+                      ? "bg-neutral-900 text-neutral-200 border-neutral-800"
                       : "bg-neutral-100 text-neutral-800 border-neutral-300"
                   }`}
                 >
@@ -548,7 +605,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   onClick={onClose}
                   className={`p-1 rounded-lg transition-colors ${
                     isDarkMode
-                      ? "text-white/40 hover:text-white hover:bg-white/10"
+                      ? "text-neutral-400 hover:text-white hover:bg-neutral-900"
                       : "text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100"
                   }`}
                   title="Close (Esc)"
@@ -563,7 +620,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
               <div
                 className={`relative w-full h-full rounded-[22px] p-4 flex flex-col justify-between min-h-[130px] transition-all duration-300 ${
                   isDarkMode
-                    ? "bg-[#181818] shadow-[0_12px_36px_rgba(0,0,0,0.5)]"
+                    ? "bg-[#0c0c0c] shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
                     : "bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
                 } ${
                   isMicStreaming
@@ -571,7 +628,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       ? "ring-2 ring-white/60 border border-white/70 shadow-[0_0_25px_rgba(255,255,255,0.15)]"
                       : "ring-2 ring-neutral-800 border border-neutral-900 shadow-[0_0_20px_rgba(0,0,0,0.1)]"
                     : isDarkMode
-                      ? "ring-1.5 ring-white/15 border border-white/20 hover:ring-white/25 focus-within:ring-2 focus-within:ring-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+                      ? "ring-1 ring-neutral-800 border border-neutral-800 hover:ring-neutral-700 focus-within:ring-2 focus-within:ring-neutral-500 shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
                       : "ring-1.5 ring-black/10 border border-black/15 hover:ring-black/15 focus-within:ring-2 focus-within:ring-black/30 shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
                 }`}
               >
@@ -605,7 +662,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 {/* Bottom control pills row inside composer card */}
                 <div
                   className={`flex items-center justify-between gap-1.5 pt-2 border-t ${
-                    isDarkMode ? "border-white/[0.08]" : "border-neutral-200/60"
+                    isDarkMode ? "border-neutral-800/90" : "border-neutral-200/60"
                   }`}
                 >
                   {/* Left Action Controls */}
@@ -616,7 +673,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       onClick={handleClear}
                       className={`h-6.5 w-6.5 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
                         isDarkMode
-                          ? "bg-[#282828] hover:bg-[#343434] border-white/15 text-white/90 hover:text-white"
+                          ? "bg-[#181818] hover:bg-[#222222] border-neutral-800 text-neutral-300 hover:text-white"
                           : "bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700 hover:text-neutral-900"
                       }`}
                       title="Clear text"
@@ -632,7 +689,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                         isMicStreaming
                           ? "bg-primary-500 text-white font-bold border-primary-400 shadow-sm"
                           : isDarkMode
-                            ? "bg-[#282828] hover:bg-[#343434] border-white/15 text-white/90 hover:text-white"
+                            ? "bg-[#181818] hover:bg-[#222222] border-neutral-800 text-neutral-300 hover:text-white"
                             : "bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700 hover:text-neutral-900"
                       }`}
                       title={isMicStreaming ? "Stop Microphone Captions" : "Start Live Microphone Captions"}
@@ -657,7 +714,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       disabled={!draftText.trim() || status === "analyzing"}
                       className={`h-6.5 px-3 rounded-full flex items-center gap-1.5 text-[10.5px] font-semibold transition-all cursor-pointer border disabled:opacity-35 disabled:cursor-not-allowed ${
                         isDarkMode
-                          ? "bg-[#282828] hover:bg-[#343434] border-white/15 text-white/90 hover:text-white"
+                          ? "bg-[#181818] hover:bg-[#222222] border-neutral-800 text-neutral-300 hover:text-white"
                           : "bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700 hover:text-neutral-900"
                       }`}
                       title="Extract AI Context Cards directly from the input text"
@@ -675,7 +732,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-[9.5px] font-mono ${
-                        isDarkMode ? "text-white/40" : "text-neutral-400"
+                        isDarkMode ? "text-neutral-500" : "text-neutral-400"
                       }`}
                     >
                       {draftText.length}/{MAX_LENGTH}
@@ -687,7 +744,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       disabled={!draftText.trim()}
                       className={`h-6.5 w-6.5 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
                         isDarkMode
-                          ? "bg-white text-black hover:bg-neutral-200 hover:scale-105 active:scale-95"
+                          ? "bg-white text-black hover:bg-neutral-200 hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.15)]"
                           : "bg-neutral-900 text-white hover:bg-neutral-800 hover:scale-105 active:scale-95"
                       }`}
                       title="Push to live audience screen (Enter)"
@@ -754,7 +811,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 <div
                   className={`w-full py-3 px-4 flex items-center justify-center gap-2 text-center border border-dashed rounded-2xl shrink-0 ${
                     isDarkMode
-                      ? "text-white/40 border-white/10"
+                      ? "text-neutral-500 border-neutral-800 bg-[#080808]/50"
                       : "text-neutral-400 border-neutral-200"
                   }`}
                 >
@@ -764,7 +821,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-0.5 shrink-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-0.5 shrink-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-800 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full">
                   {cards.map((card, index) => {
                     const typeVisual = CARD_VISUALS[card.type] ?? CARD_VISUALS.agenda_item;
                     const themeKey = (card.themeColor as string)?.toLowerCase();
@@ -782,13 +839,13 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                         exit={{ opacity: 0, scale: 0.94 }}
                         className={`group relative flex flex-row items-stretch gap-2 w-[240px] sm:w-[255px] h-[108px] shrink-0 rounded-2xl border p-1.5 transition-all duration-200 shadow-sm ${
                           isDarkMode
-                            ? `bg-gradient-to-b ${themePalette.gradientDark} ${themePalette.borderDark} bg-[#1e1e1e]`
+                            ? `bg-gradient-to-b ${themePalette.gradientDark} ${themePalette.borderDark} bg-[#080808]`
                             : `bg-gradient-to-b ${themePalette.gradientLight} ${themePalette.borderLight} bg-white`
                         }`}
                       >
                         {/* Tall Image / Visual taking almost full card height */}
                         {card.imageUrl ? (
-                          <div className="relative w-[72px] sm:w-[78px] shrink-0 self-stretch overflow-hidden rounded-xl border border-white/10 shadow-sm bg-black/20">
+                          <div className="relative w-[72px] sm:w-[78px] shrink-0 self-stretch overflow-hidden rounded-xl border border-neutral-800 shadow-sm bg-black/60">
                             <img
                               src={card.imageUrl}
                               alt={headline}
@@ -802,7 +859,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                           <div
                             className={`flex w-[72px] sm:w-[78px] shrink-0 self-stretch items-center justify-center rounded-xl border ${
                               isDarkMode
-                                ? "bg-white/5 border-white/10 text-white/80"
+                                ? "bg-neutral-900/80 border-neutral-800 text-neutral-300"
                                 : "bg-neutral-100 border-neutral-200 text-neutral-800"
                             }`}
                           >
@@ -896,16 +953,23 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                               <button
                                 type="button"
                                 onClick={() => handleCardPush(card, index)}
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold transition-all shadow-sm ${
-                                  isPushed
-                                    ? "bg-emerald-500 text-white"
-                                    : isDarkMode
-                                      ? "bg-white text-black hover:bg-neutral-200 active:scale-95"
-                                      : "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold transition-all shadow-sm cursor-pointer ${
+                                  isCardLive(card)
+                                    ? "bg-emerald-500 hover:bg-red-500 text-white"
+                                    : isPushed
+                                      ? "bg-emerald-500 text-white"
+                                      : isDarkMode
+                                        ? "bg-white text-black hover:bg-neutral-200 active:scale-95"
+                                        : "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
                                 }`}
-                                title="Push to live overlay"
+                                title={isCardLive(card) ? "Currently live on projection screen. Click to hide." : "Push to live overlay"}
                               >
-                                {isPushed ? (
+                                {isCardLive(card) ? (
+                                  <>
+                                    <EyeOff className="w-2.5 h-2.5" />
+                                    <span>Hide</span>
+                                  </>
+                                ) : isPushed ? (
                                   <>
                                     <Check className="w-2.5 h-2.5" />
                                     <span>Live</span>
@@ -931,7 +995,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
             <div
               className={`flex items-center justify-between px-5 py-2 border-t text-[10px] shrink-0 ${
                 isDarkMode
-                  ? "border-white/[0.1] text-neutral-300"
+                  ? "border-neutral-800 bg-black text-neutral-400"
                   : "border-neutral-200 text-neutral-400"
               }`}
             >
@@ -940,7 +1004,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   <kbd
                     className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
                       isDarkMode
-                        ? "bg-white/[0.14] text-white"
+                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
                         : "bg-neutral-200 text-neutral-700"
                     }`}
                   >
@@ -952,7 +1016,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   <kbd
                     className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
                       isDarkMode
-                        ? "bg-white/10 text-white/70"
+                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
                         : "bg-neutral-200 text-neutral-700"
                     }`}
                   >
@@ -964,7 +1028,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                   <kbd
                     className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
                       isDarkMode
-                        ? "bg-white/10 text-white/70"
+                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
                         : "bg-neutral-200 text-neutral-700"
                     }`}
                   >
@@ -974,13 +1038,32 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 </span>
               </div>
 
-              <span
-                className={`text-[10px] font-bold ${
-                  isDarkMode ? "text-white/60" : "text-neutral-600"
-                }`}
-              >
-                Wingrid Live AI
-              </span>
+              <div className="flex items-center gap-2">
+                {overlayVisible && overlayText && (
+                  <button
+                    type="button"
+                    onClick={handleHideOverlay}
+                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[9.5px] transition-all cursor-pointer shadow-sm border active:scale-95 ${
+                      isDarkMode
+                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-300"
+                        : "bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                    }`}
+                    title="Projection overlay is currently live. Click to hide."
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <EyeOff className="w-3 h-3" />
+                    <span>Hide Screen</span>
+                  </button>
+                )}
+
+                <span
+                  className={`text-[10px] font-bold ${
+                    isDarkMode ? "text-white/60" : "text-neutral-600"
+                  }`}
+                >
+                  Wingrid Live AI
+                </span>
+              </div>
             </div>
           </motion.div>
         </div>
