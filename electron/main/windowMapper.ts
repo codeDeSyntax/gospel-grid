@@ -30,39 +30,7 @@ export async function getWindowSourceMapping(
       fetchWindowIcons: true, // Enable fetching window icons!
     });
 
-    // console.log(`Found ${sources.length} window sources from desktopCapturer`);
 
-    // Log detailed information about what desktopCapturer provides
-    console.log("=== DESKTOP CAPTURER SOURCES DETAILS ===");
-    sources.forEach((source, index) => {
-      // Extract window handle from ID format: window:XX:YY
-      const handleMatch = source.id.match(/window:(\d+):/);
-      const windowHandle = handleMatch ? parseInt(handleMatch[1]) : null;
-
-      console.log(`📱 Source ${index + 1}:`);
-      console.log(`   ID: ${source.id}`);
-      console.log(`   Extracted Handle: ${windowHandle || "N/A"}`);
-      console.log(`   Name: ${source.name}`);
-      console.log(`   Display ID: ${source.display_id || "undefined"}`);
-      console.log(`   Has App Icon: ${source.appIcon ? "YES" : "NO"}`);
-      console.log(
-        `   App Icon Size: ${
-          source.appIcon
-            ? `${source.appIcon.getSize().width}x${
-                source.appIcon.getSize().height
-              }`
-            : "N/A"
-        }`,
-      );
-      console.log(
-        `   Thumbnail size: ${source.thumbnail?.getSize().width}x${
-          source.thumbnail?.getSize().height
-        }`,
-      );
-      console.log(`   All properties:`, Object.keys(source));
-      console.log(`   ---`);
-    });
-    console.log("=== END DESKTOP CAPTURER DETAILS ===");
 
     return Promise.all(
       sources.map(async (source, index) => {

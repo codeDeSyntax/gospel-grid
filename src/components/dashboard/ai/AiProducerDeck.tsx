@@ -5,6 +5,7 @@ import {
   Quote,
   BookOpen,
   List,
+  Lightbulb,
   ChevronDown,
   ChevronUp,
   X,
@@ -78,6 +79,14 @@ const CARD_CONFIG: Record<AiProducerCard["type"], CardConfig> = {
     badgeLight: "bg-cyan-50 text-cyan-700 border-cyan-200",
     badgeDark: "bg-cyan-900/40 text-cyan-300 border-cyan-700/50",
   },
+  concept: {
+    icon: Lightbulb,
+    label: "Concept",
+    accentLight: "border-l-blue-500",
+    accentDark: "border-l-blue-400",
+    badgeLight: "bg-blue-50 text-blue-700 border-blue-200",
+    badgeDark: "bg-blue-900/40 text-blue-300 border-blue-700/50",
+  },
 };
 
 // ─── Card Primary Text Helpers ────────────────────────────────────────────────
@@ -87,6 +96,7 @@ function getCardHeadline(card: AiProducerCard): string {
     case "lower_third":
     case "key_metric":
     case "custom_ui":
+    case "concept":
       return card.headline || (card as any).item || "Highlight";
     case "quote":
       return card.quote ? `"${card.quote}"` : (card.headline || "");
@@ -242,23 +252,37 @@ const ProducerCard: React.FC<ProducerCardProps> = ({
         </button>
       </div>
 
-      {/* Content */}
-      <p
-        className={`text-[12px] font-semibold leading-snug ${
-          isDarkMode ? "text-white/90" : "text-gray-800"
-        } ${card.type === "quote" ? "italic" : ""}`}
-      >
-        {headline}
-      </p>
-      {subline && (
-        <p
-          className={`text-[10px] leading-snug ${
-            isDarkMode ? "text-white/45" : "text-gray-500"
-          }`}
-        >
-          {subline}
-        </p>
-      )}
+      {/* Content row with thumbnail */}
+      <div className="flex items-center gap-2">
+        {card.imageUrl && (
+          <img
+            src={card.imageUrl}
+            alt={headline}
+            className="w-10 h-10 rounded-lg object-cover border border-white/10 shadow-sm shrink-0"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = "none";
+            }}
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-[12px] font-bold leading-snug ${
+              isDarkMode ? "text-white/90" : "text-gray-800"
+            } ${card.type === "quote" ? "italic" : ""}`}
+          >
+            {headline}
+          </p>
+          {subline && (
+            <p
+              className={`text-[10px] leading-snug truncate ${
+                isDarkMode ? "text-white/45" : "text-gray-500"
+              }`}
+            >
+              {subline}
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Push action */}
       <button

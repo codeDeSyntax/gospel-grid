@@ -330,6 +330,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     let cancelled = false;
 
     const requestMissingThumbnails = async () => {
+      // ── PERFORMANCE GUARD ──────────────────────────────────────────────────
+      // Skip thumbnail fetches entirely while a projection is live.
+      // The preview panel is not visible during projection, and firing
+      // batchCaptureThumbnails() while LiveWindowGrid holds a getUserMedia()
+      // WGC stream causes two concurrent capture sessions → app-wide lag.
+      if (isProjectionOn) return;
+
       const assignedWindowIds = Array.from(
         new Set(Object.values(displayAssignments).flat()),
       );
@@ -338,6 +345,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         if (windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX)) return false;
         if (windowId.startsWith(IMAGE_FEATURE_WINDOW_PREFIX)) return false;
         if (windowId === CAPTIONS_FEATURE_WINDOW_ID) return false;
+
         if (!windowMap.has(windowId)) return false;
         if (windowThumbnails[windowId]) return false;
         if (thumbnailRequestsInFlightRef.current.has(windowId)) return false;
@@ -426,7 +434,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       cancelled = true;
       window.clearInterval(retryTimer);
     };
-  }, [displayAssignments, windowMap, windowThumbnails, dispatch]);
+  }, [displayAssignments, isProjectionOn, windowMap, windowThumbnails, dispatch]);
+
 
   useEffect(() => {
     const next: Record<number, string[]> = {};

@@ -97,7 +97,8 @@ function deduplicateCards(existing: AiProducerCard[], incoming: AiProducerCard[]
   }
 
   if (newCards.length === 0) return existing;
-  return [...existing, ...newCards].slice(-maxCards);
+  // Prepend new cards to the front so the latest generated cards appear first
+  return [...newCards, ...existing].slice(0, maxCards);
 }
 
 async function runAnalysis() {

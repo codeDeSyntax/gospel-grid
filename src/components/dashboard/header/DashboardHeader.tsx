@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { ExternalLink, BrushCleaning, Settings, X } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
 
 interface DashboardHeaderProps {
   onRefreshWindows: () => void;
@@ -18,31 +19,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onToggleSettings,
   isSettingsView,
 }) => {
-  const [hasPublishedWindows, setHasPublishedWindows] = useState(false);
-
-  // Check for published windows on mount and periodically
-  useEffect(() => {
-    const checkPublishedWindows = async () => {
-      try {
-        const status = await (
-          window.electronAPI as any
-        ).checkPublishedWindows();
-        setHasPublishedWindows(status.hasActivePublications);
-      } catch (error) {
-        console.error("Error checking published windows:", error);
-      }
-    };
-
-    checkPublishedWindows();
-    const interval = setInterval(checkPublishedWindows, 1000); // Check every second
-
-    return () => clearInterval(interval);
-  }, []);
+  // Read projection state directly from the Redux store — no IPC polling needed.
+  // AutoFitWindowLayoutOptimized already manages this value via checkPublishedWindows().
+  const hasPublishedWindows = useAppSelector((state) => state.app.isProjectionOn);
 
   const handleCloseProjection = async () => {
     try {
       await (window.electronAPI as any).closePublishedWindows();
-      setHasPublishedWindows(false);
     } catch (error) {
       console.error("Error closing published windows:", error);
     }

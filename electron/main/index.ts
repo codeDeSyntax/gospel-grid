@@ -1012,8 +1012,9 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       height: publishDisplay.bounds.height,
       fullscreen: true,
       frame: false,
-      show: true, // Show immediately instead of waiting
+      show: true,
       backgroundColor: "#000000", // Black background for immediate display
+
       skipTaskbar: false, // Ensure window appears in taskbar and Alt+Tab
       focusable: true, // Make sure window can be focused and unfocused
       minimizable: true, // Allow minimizing for better window management

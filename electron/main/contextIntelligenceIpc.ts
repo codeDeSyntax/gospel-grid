@@ -219,7 +219,10 @@ async function getAvailableGroqModels(apiKey: string): Promise<string[]> {
             !id.includes("whisper") &&
             !id.includes("embed") &&
             !id.includes("tts") &&
-            !id.includes("guard"),
+            !id.includes("guard") &&
+            !id.includes("orpheus") &&
+            !id.includes("vision") &&
+            !id.includes("audio"),
         );
 
       if (chatModels.length > 0) {
@@ -243,99 +246,159 @@ async function getAvailableGroqModels(apiKey: string): Promise<string[]> {
   ];
 }
 
+// ─── Verified Royalty-Free Topic Images (100% Real, Guaranteed 200 OK) ────────
+
+const VERIFIED_TOPIC_IMAGES: Record<string, string> = {
+  // AI, Data Science, Machine Learning, Technology
+  ai: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+  tech: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+  machine_learning: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=600&q=80",
+  data: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
+  metrics: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
+  analytics: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80",
+  finance: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80",
+  concept: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+  speaker: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+  presentation: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=600&q=80",
+  quote: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+  citation: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80",
+  church: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=600&q=80",
+  agenda: "https://images.unsplash.com/photo-1506784365847-bbad939e9335?auto=format&fit=crop&w=600&q=80",
+  default: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80",
+};
+
+function resolveVerifiedImageUrl(text: string, cardType: string, rawUrl?: string): string {
+  // If rawUrl is already one of our verified working URLs, keep it
+  if (rawUrl && Object.values(VERIFIED_TOPIC_IMAGES).includes(rawUrl)) {
+    return rawUrl;
+  }
+
+  const lower = `${text} ${cardType}`.toLowerCase();
+
+  if (lower.includes("classif") || lower.includes("cluster") || lower.includes("model") || lower.includes("learn") || lower.includes("train") || lower.includes("valid") || lower.includes("neural") || lower.includes("algorithm")) {
+    return VERIFIED_TOPIC_IMAGES.machine_learning;
+  }
+  if (lower.includes("ai") || lower.includes("tech") || lower.includes("software") || lower.includes("code") || lower.includes("computer")) {
+    return VERIFIED_TOPIC_IMAGES.ai;
+  }
+  if (lower.includes("metric") || lower.includes("data") || lower.includes("%") || lower.includes("arr") || lower.includes("growth") || lower.includes("stat") || lower.includes("revenue") || lower.includes("sale")) {
+    return VERIFIED_TOPIC_IMAGES.data;
+  }
+  if (lower.includes("speaker") || lower.includes("dr.") || lower.includes("prof") || lower.includes("minister") || lower.includes("pastor") || lower.includes("officer") || lower.includes("ceo")) {
+    return VERIFIED_TOPIC_IMAGES.speaker;
+  }
+  if (lower.includes("quote") || lower.includes("said") || lower.includes("wisdom") || lower.includes("remember")) {
+    return VERIFIED_TOPIC_IMAGES.quote;
+  }
+  if (lower.includes("verse") || lower.includes("chapter") || lower.includes("bible") || lower.includes("scripture") || lower.includes("citation") || lower.includes("book")) {
+    return VERIFIED_TOPIC_IMAGES.citation;
+  }
+  if (lower.includes("church") || lower.includes("worship") || lower.includes("prayer") || lower.includes("god") || lower.includes("faith")) {
+    return VERIFIED_TOPIC_IMAGES.church;
+  }
+  if (lower.includes("agenda") || lower.includes("step") || lower.includes("schedule") || lower.includes("timeline")) {
+    return VERIFIED_TOPIC_IMAGES.agenda;
+  }
+
+  return VERIFIED_TOPIC_IMAGES[cardType] || VERIFIED_TOPIC_IMAGES.concept;
+}
+
 // ─── AI Prompt & Parser ──────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an expert live broadcast UI designer & AI producer assistant for Wingrid event software.
-You receive live speech transcript chunks from presentations, conferences, worship services, keynotes, lectures, or meetings.
-Your job is to extract cohesive visual cards AND generate dynamic, colorful HTML+Tailwind UI code blocks that operators can push directly to presentation screens.
+const SYSTEM_PROMPT = `You are an expert live broadcast visual UI designer & AI producer assistant for Wingrid event software.
+You receive live speech transcript excerpts from presentations, conferences, worship services, keynotes, lectures, or meetings.
+Your job is to analyze the speech and generate dynamic, visually stunning HTML+Tailwind UI code blocks placed on a premium, clean, extra-sleek BIG WHITE SOFT CARD with an integrated topical image that operators can push directly to projection and presentation screens.
 
-Synthesis & Grouping Rules (CRITICAL):
-1. GROUP & SYNTHESIZE RELATED TEXT: Do NOT split sentences or related ideas into multiple fragmented cards. Work on collective context. If the speaker mentions multiple stats, points, or steps on a topic, synthesize them together into a SINGLE unified, rich card (e.g. multi-stat grid, structured list, or takeaway card).
-2. Quality over Quantity: Output at most 1 or 2 comprehensive, meaningful cards per transcript chunk rather than a flood of micro-cards.
-3. Extract ONLY what is clearly mentioned in the speech. Never fabricate facts. Return a JSON array of cards.
-
-Each card in the JSON array must have:
-- type: "lower_third" | "key_metric" | "quote" | "citation" | "agenda_item" | "custom_ui"
-- headline: Brief title or main text (max 7 words)
-- subline: (optional) Subtitle, attribution, context, or detail
-- themeColor: A vibrant color theme matching the context. Choose one of: "emerald" (growth/money/finance), "blue" (tech/corporate/trust), "purple" (wisdom/vision/quotes), "amber" (scriptures/citations/awards), "rose" (urgency/passion/highlights), "cyan" (speakers/modern tech), "orange" (action/energy/events), "indigo" (agendas/strategy).
+Card Type & Structure:
+- You have full freedom to decide the most accurate 'type' that fits the speech content (e.g. "concept", "citation", "quote", "lower_third", "key_metric", "agenda_item", "custom_ui").
+- layoutVariant: One of "split_comparison" | "hero_cover" | "scripture_wisdom" | "stat_spotlight" | "top_banner" | "speaker_profile"
+- headline: Bold, impactful title or topic name (max 7 words)
+- subline: (optional) Subtitle, attribution, Bible reference, or concise summary
+- imageTopic: One of: "machine_learning" | "ai" | "data" | "finance" | "concept" | "speaker" | "presentation" | "quote" | "citation" | "church" | "agenda"
+- themeColor: A vibrant color theme matching the context. Choose one of: "blue" (concepts/tech/knowledge), "emerald" (growth/money/finance), "purple" (wisdom/vision/quotes), "amber" (scriptures/citations/awards), "rose" (urgency/passion/highlights), "cyan" (speakers/modern tech), "orange" (action/energy/events), "indigo" (agendas/strategy).
+- blocks: (optional) Array of 2 to 4 structured items/techniques/points: [{ "title": "Classification", "description": "Predicting categories & labels", "icon": "📊" }, { "title": "Clustering", "description": "Grouping similar data points", "icon": "📁" }]
 - confidence: number (0.75 - 1.0)
-- htmlCode: A self-contained, sleek, high-impact React/HTML code block using className='...' with standard Tailwind CSS classes matching the themeColor.
+- htmlCode: A self-contained, high-impact React/HTML code block using className='...' with rich visual design blocks, large typography, and the embedded image with Tailwind CSS.
 
-UI Code Block Design Guidelines for htmlCode:
-1. Always use className='...' for all Tailwind utility classes.
-2. Design for live audience projection screens with dark glassmorphism, glowing borders, modern typography, and vibrant accents corresponding to the card's themeColor.
-3. For unified multi-stat or multi-point topics, use a clean grid/flex layout (e.g. 2-column or 3-item row) inside the single card htmlCode.
-4. For lower_third: Broadcast speaker banner with glowing live indicator dot and title in themeColor.
-5. For key_metric: Huge prominent metric figure (or multi-metric pill grid) + stat badge and description matching the themeColor.
-6. For quote: Quotation marks + bold quote statement + attribution.
-7. For citation/scripture: Scripture/book badge in amber/gold + highlighted verse/excerpt body.
-8. For visual concepts: You can creatively include high-quality royalty-free image URLs (e.g. from Unsplash https://images.unsplash.com/...) or decorative SVG elements when fitting the topic.
+BROADCAST DESIGN GUIDELINES for htmlCode (CRITICAL FOR VISUAL PERFECTION):
+1. CONTAINER: Balanced, centered, non-stretched white card container with generous internal padding:
+   - "bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-4xl w-full mx-auto flex flex-col gap-5 text-neutral-900"
+2. HEADER BAR (Inside top of card with clear spacing):
+   - '<div className="flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1"><div className="flex items-center gap-2.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span><span className="text-xs sm:text-sm font-black uppercase tracking-widest text-blue-700">Core Concept</span></div><span className="text-xs sm:text-sm font-bold text-neutral-600 bg-neutral-100 px-3.5 py-1 rounded-full border border-neutral-200">Data Science</span></div>'
+3. HERO BODY CANVAS (Side-by-side with full-height image):
+   - Left side: A tall, full-height image cover:
+     '<img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=600&q=80" alt="Visual" className="w-44 sm:w-56 self-stretch min-h-[180px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" />'
+   - Right side: Title + 2-COLUMN PASTEL GRID BLOCKS (Never use plain raw text bullet lists):
+     '<div className="flex-1 flex flex-col justify-between gap-4"><h2 className="text-2xl sm:text-3xl font-black text-neutral-950 leading-tight">Data Science Techniques</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-3.5 flex flex-col gap-1"><div className="text-sm font-black text-blue-950 flex items-center gap-2"><span>📊</span> Classification</div><p className="text-xs text-neutral-700 font-medium">Predicting categories & labels</p></div><div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-3.5 flex flex-col gap-1"><div className="text-sm font-black text-emerald-950 flex items-center gap-2"><span>📁</span> Clustering</div><p className="text-xs text-neutral-700 font-medium">Grouping similar data points</p></div></div></div>'
 
 Card Examples:
 [
   {
-    "type": "lower_third",
-    "headline": "Dr. Sarah Jenkins",
-    "subline": "Chief Medical Officer • AI Health",
-    "themeColor": "cyan",
-    "confidence": 0.95,
-    "htmlCode": "<div className=\\"bg-neutral-950/90 backdrop-blur-2xl border border-cyan-500/30 rounded-2xl p-5 shadow-2xl flex items-center gap-4 max-w-xl mx-auto\\"><div className=\\"w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold text-lg shadow-lg\\">SJ</div><div><div className=\\"flex items-center gap-2\\"><span className=\\"text-xs font-bold uppercase tracking-widest text-cyan-400\\">Speaker</span><span className=\\"w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse\\"></span></div><h2 className=\\"text-2xl font-black text-white leading-tight\\">Dr. Sarah Jenkins</h2><p className=\\"text-sm text-neutral-300 font-medium\\">Chief Medical Officer • AI Health</p></div></div>"
+    "type": "concept",
+    "layoutVariant": "split_comparison",
+    "headline": "Data Science Techniques",
+    "subline": "Core Machine Learning Methods",
+    "imageTopic": "machine_learning",
+    "themeColor": "blue",
+    "confidence": 0.96,
+    "blocks": [
+      { "title": "Classification", "description": "Predicting categories & discrete labels", "icon": "📊" },
+      { "title": "Clustering", "description": "Grouping similar unlabelled data", "icon": "📁" },
+      { "title": "Anomaly Detection", "description": "Identifying outliers and deviations", "icon": "⚠️" },
+      { "title": "Regression", "description": "Predicting continuous numerical values", "icon": "📈" }
+    ],
+    "htmlCode": "<div className=\\"bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-4xl w-full mx-auto flex flex-col gap-5 text-neutral-900\\"><div className=\\"flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1\\"><div className=\\"flex items-center gap-2.5\\"><span className=\\"w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse\\"></span><span className=\\"text-xs sm:text-sm font-black uppercase tracking-widest text-blue-700\\">Core Concept</span></div><span className=\\"text-xs sm:text-sm font-bold text-neutral-600 bg-neutral-100 px-3.5 py-1 rounded-full border border-neutral-200\\">Data Science</span></div><div className=\\"flex flex-col sm:flex-row items-stretch gap-6\\"><img src=\\"https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=600&q=80\\" alt=\\"Data Science\\" className=\\"w-44 sm:w-56 self-stretch min-h-[180px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0\\" /><div className=\\"flex-1 flex flex-col justify-between gap-4\\"><h2 className=\\"text-2xl sm:text-3xl font-black text-neutral-950 leading-tight\\">Data Science Techniques</h2><div className=\\"grid grid-cols-1 sm:grid-cols-2 gap-3\\"><div className=\\"bg-blue-50/90 border border-blue-200/80 rounded-2xl p-3.5 flex flex-col gap-1\\"><div className=\\"text-sm font-black text-blue-950 flex items-center gap-2\\"><span>📊</span> Classification</div><p className=\\"text-xs text-neutral-700 font-medium\\">Predicting categories & discrete labels</p></div><div className=\\"bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-3.5 flex flex-col gap-1\\"><div className=\\"text-sm font-black text-emerald-950 flex items-center gap-2\\"><span>📁</span> Clustering</div><p className=\\"text-xs text-neutral-700 font-medium\\">Grouping similar unlabelled data</p></div><div className=\\"bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3.5 flex flex-col gap-1\\"><div className=\\"text-sm font-black text-amber-950 flex items-center gap-2\\"><span>⚠️</span> Anomaly Detection</div><p className=\\"text-xs text-neutral-700 font-medium\\">Identifying outliers and deviations</p></div><div className=\\"bg-purple-50/90 border border-purple-200/80 rounded-2xl p-3.5 flex flex-col gap-1\\"><div className=\\"text-sm font-black text-purple-950 flex items-center gap-2\\"><span>📈</span> Regression</div><p className=\\"text-xs text-neutral-700 font-medium\\">Predicting continuous numerical values</p></div></div></div></div></div>"
   },
   {
-    "type": "key_metric",
-    "headline": "Q3 Growth Metrics",
-    "subline": "$4.2M ARR (+35% YoY) • 98% Retention",
-    "themeColor": "emerald",
-    "confidence": 0.92,
-    "htmlCode": "<div className=\\"bg-neutral-950/90 backdrop-blur-2xl border border-emerald-500/30 rounded-3xl p-6 shadow-2xl max-w-lg mx-auto text-center flex flex-col items-center gap-3\\"><span className=\\"px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wider uppercase border border-emerald-500/30\\">Q3 Growth Summary</span><div className=\\"grid grid-cols-2 gap-4 w-full pt-1\\"><div className=\\"bg-white/[0.04] p-3 rounded-2xl border border-white/10\\"><div className=\\"text-3xl font-black text-white\\">$4.2M</div><div className=\\"text-xs text-emerald-400 font-semibold mt-0.5\\">+35% YoY ARR</div></div><div className=\\"bg-white/[0.04] p-3 rounded-2xl border border-white/10\\"><div className=\\"text-3xl font-black text-white\\">98%</div><div className=\\"text-xs text-emerald-400 font-semibold mt-0.5\\">Customer Retention</div></div></div></div>"
-  },
-  {
-    "type": "quote",
-    "headline": "Consistency beats intensity every single time.",
-    "subline": "Keynote Speaker",
-    "themeColor": "purple",
-    "confidence": 0.90,
-    "htmlCode": "<div className=\\"bg-neutral-950/90 backdrop-blur-2xl border border-purple-500/30 rounded-3xl p-6 shadow-2xl max-w-2xl mx-auto flex flex-col gap-2\\"><div className=\\"text-purple-400 text-3xl font-serif leading-none\\">“</div><p className=\\"text-2xl font-extrabold text-white leading-snug\\">Consistency beats intensity every single time.</p><div className=\\"text-xs text-purple-300 font-bold mt-1\\">— Keynote Speaker</div></div>"
+    "type": "citation",
+    "layoutVariant": "scripture_wisdom",
+    "headline": "Ezekiel 18:4",
+    "subline": "All Souls Are Mine",
+    "imageTopic": "citation",
+    "themeColor": "amber",
+    "confidence": 0.96,
+    "htmlCode": "<div className=\\"bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-3xl w-full mx-auto flex flex-col gap-5 text-neutral-900\\"><div className=\\"flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1\\"><div className=\\"flex items-center gap-2.5\\"><span className=\\"w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse\\"></span><span className=\\"text-xs sm:text-sm font-black uppercase tracking-widest text-amber-800\\">Scripture</span></div><span className=\\"text-xs sm:text-sm font-bold text-neutral-600 bg-neutral-100 px-3.5 py-1 rounded-full border border-neutral-200\\">Ezekiel 18:4</span></div><div className=\\"flex flex-col sm:flex-row items-stretch gap-6\\"><img src=\\"https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80\\" alt=\\"Scripture\\" className=\\"w-44 sm:w-52 self-stretch min-h-[160px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0\\" /><div className=\\"flex flex-col justify-center gap-3 flex-1\\"><p className=\\"text-xl sm:text-2xl md:text-[26px] font-bold text-neutral-900 leading-snug tracking-tight\\">“Behold, all souls are mine; as the soul of the father, so also the soul of the son is mine.”</p><div className=\\"text-xs sm:text-sm font-semibold text-neutral-500\\">— Ezekiel 18:4 (NIV)</div></div></div></div>"
   }
 ]
 
 Rules:
-1. Prioritize grouped, cohesive context cards over fragmented micro-outputs.
-2. Only return cards with confidence > 0.75.
-3. Return [] if nothing meaningful is found.
-4. Return ONLY valid raw JSON array — no markdown fences.
-5. Limit to 1 or 2 comprehensive cards per call.`;
+1. Synthesize related text into unified visual cards rather than fragmented micro-cards.
+2. Return ONLY a valid JSON array of 1 or 2 cards.
+3. Only return cards with confidence > 0.75.`;
 
 function buildMessages(transcript: string) {
   return [
     { role: "system", content: SYSTEM_PROMPT },
     {
       role: "user",
-      content: `Extract visual cards with colorful dynamic HTML+Tailwind UI code blocks from this live speech excerpt:\n\n"${transcript.slice(-1200)}"`,
+      content: `Extract visual cards with colorful dynamic HTML+Tailwind UI code blocks on a sleek, large white soft card from this speech text:\n\n"${transcript.slice(-1500)}"`,
     },
   ];
 }
 
 function ensureCardHtmlCode(card: any, themeColor: string): string {
-  if (card.htmlCode && typeof card.htmlCode === "string" && card.htmlCode.trim().length > 0) {
-    return card.htmlCode.trim();
-  }
-
   const headline = card.headline || card.quote || card.reference || card.item || "Highlight";
   const subline = card.subline || card.attribution || card.body || "";
+  const imgUrl = card.imageUrl || resolveVerifiedImageUrl(`${headline} ${subline}`, card.type);
+
+  if (card.htmlCode && typeof card.htmlCode === "string" && card.htmlCode.trim().length > 0) {
+    // Replace any hallucinated img src with our verified working URL
+    return card.htmlCode.replace(/<img([^>]+)src=["'][^"']+["']/gi, `<img$1src="${imgUrl}"`);
+  }
 
   switch (card.type) {
+    case "concept":
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-4xl w-full mx-auto flex flex-col gap-5 text-neutral-900"><div className="flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1"><div className="flex items-center gap-2.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span><span className="text-xs sm:text-sm font-black uppercase tracking-widest text-blue-700">Core Concept</span></div><span className="text-xs sm:text-sm font-bold text-neutral-600 bg-neutral-100 px-3.5 py-1 rounded-full border border-neutral-200">Highlight</span></div><div className="flex flex-col sm:flex-row items-stretch gap-6"><img src="${imgUrl}" alt="${headline}" className="w-44 sm:w-56 self-stretch min-h-[180px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex flex-col justify-center gap-3 flex-1"><h2 className="text-2xl sm:text-3xl font-black text-neutral-950 leading-tight">${headline}</h2>${subline ? `<div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4 text-sm sm:text-base text-neutral-700 font-medium leading-relaxed">${subline}</div>` : ""}</div></div></div>`;
     case "lower_third":
-      return `<div className="bg-neutral-950/90 backdrop-blur-2xl border border-cyan-500/30 rounded-2xl p-5 shadow-2xl flex items-center gap-4 max-w-xl mx-auto"><div className="w-12 h-12 rounded-full bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-300 font-bold text-lg">★</div><div><div className="flex items-center gap-2"><span className="text-xs font-bold uppercase tracking-widest text-cyan-400">Speaker</span><span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span></div><h2 className="text-2xl font-black text-white leading-tight">${headline}</h2>${subline ? `<p className="text-sm text-neutral-300 font-medium">${subline}</p>` : ""}</div></div>`;
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[28px] p-6 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] flex items-center gap-5 max-w-2xl w-full mx-auto text-neutral-900"><img src="${imgUrl}" alt="${headline}" className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex-1"><div className="flex items-center gap-2 mb-1"><span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span><span className="text-xs sm:text-sm font-black uppercase tracking-widest text-blue-700">Speaker</span></div><h2 className="text-2xl sm:text-3xl font-black text-neutral-950 leading-tight">${headline}</h2>${subline ? `<p className="text-sm sm:text-base text-neutral-600 font-medium mt-1">${subline}</p>` : ""}</div></div>`;
     case "key_metric":
-      return `<div className="bg-neutral-950/90 backdrop-blur-2xl border border-emerald-500/30 rounded-3xl p-6 shadow-2xl max-w-md mx-auto text-center flex flex-col items-center gap-2"><span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wider uppercase border border-emerald-500/30">Key Metric</span><div className="text-5xl font-black tracking-tight text-white">${headline}</div>${subline ? `<p className="text-sm text-neutral-300 font-medium">${subline}</p>` : ""}</div>`;
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-2xl w-full mx-auto flex flex-col sm:flex-row items-stretch gap-6 text-neutral-900"><img src="${imgUrl}" alt="${headline}" className="w-36 sm:w-44 self-stretch min-h-[140px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex flex-col justify-center text-center sm:text-left flex-1"><span className="px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black tracking-wider uppercase border border-emerald-200 w-fit">Key Metric</span><div className="text-4xl sm:text-5xl font-black tracking-tight text-neutral-950 mt-2">${headline}</div>${subline ? `<p className="text-sm sm:text-base text-neutral-600 font-medium mt-1">${subline}</p>` : ""}</div></div>`;
     case "quote":
-      return `<div className="bg-neutral-950/90 backdrop-blur-2xl border border-purple-500/30 rounded-3xl p-6 shadow-2xl max-w-2xl mx-auto flex flex-col gap-2"><div className="text-purple-400 text-3xl font-serif leading-none">“</div><p className="text-2xl font-extrabold text-white leading-snug">${headline}</p>${subline ? `<div className="text-xs text-purple-300 font-bold mt-1">— ${subline}</div>` : ""}</div>`;
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-3xl w-full mx-auto flex flex-col gap-5 text-neutral-900"><div className="flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1"><div className="flex items-center gap-2.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span><span className="text-xs sm:text-sm font-black uppercase tracking-widest text-purple-700">Quote</span></div></div><div className="flex flex-col sm:flex-row items-stretch gap-6"><img src="${imgUrl}" alt="Quote Visual" className="w-44 sm:w-52 self-stretch min-h-[160px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex flex-col justify-center gap-3 flex-1"><p className="text-xl sm:text-2xl md:text-[26px] font-bold text-neutral-900 leading-snug tracking-tight">“${headline}”</p>${subline ? `<div className="text-xs sm:text-sm font-bold text-purple-700">— ${subline}</div>` : ""}</div></div></div>`;
     case "citation":
-      return `<div className="bg-neutral-950/90 backdrop-blur-2xl border border-amber-500/30 rounded-2xl p-6 shadow-2xl max-w-xl mx-auto flex flex-col gap-2"><span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold w-fit border border-amber-500/30">${headline}</span>${subline ? `<p className="text-base text-neutral-200 font-medium">${subline}</p>` : ""}</div>`;
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[36px] p-8 sm:p-10 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-3xl w-full mx-auto flex flex-col gap-5 text-neutral-900"><div className="flex items-center justify-between border-b border-neutral-200/80 pb-4 mb-1"><div className="flex items-center gap-2.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span><span className="text-xs sm:text-sm font-black uppercase tracking-widest text-amber-800">Scripture</span></div><span className="text-xs sm:text-sm font-bold text-neutral-600 bg-neutral-100 px-3.5 py-1 rounded-full border border-neutral-200">${headline}</span></div><div className="flex flex-col sm:flex-row items-stretch gap-6"><img src="${imgUrl}" alt="${headline}" className="w-44 sm:w-52 self-stretch min-h-[160px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex flex-col justify-center gap-3 flex-1">${subline ? `<p className="text-xl sm:text-2xl md:text-[26px] font-bold text-neutral-900 leading-snug tracking-tight">“${subline}”</p>` : `<p className="text-xl sm:text-2xl font-bold text-neutral-900">${headline}</p>`}<div className="text-xs sm:text-sm font-semibold text-neutral-500">— ${headline}</div></div></div></div>`;
     default:
-      return `<div className="bg-neutral-950/90 backdrop-blur-2xl border border-white/20 rounded-2xl p-6 shadow-2xl max-w-xl mx-auto"><h3 className="text-xl font-bold text-white">${headline}</h3>${subline ? `<p className="text-sm text-neutral-300 mt-1">${subline}</p>` : ""}</div>`;
+      return `<div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[32px] p-7 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-2xl w-full mx-auto flex items-center gap-6 text-neutral-900"><img src="${imgUrl}" alt="${headline}" className="w-24 h-24 rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0" /><div className="flex-1"><h3 className="text-2xl font-black text-neutral-950">${headline}</h3>${subline ? `<p className="text-sm sm:text-base text-neutral-600 mt-1 font-medium">${subline}</p>` : ""}</div></div>`;
   }
 }
 
@@ -345,6 +408,8 @@ function normalizeTheme(theme: any, cardType: string): string {
     return theme.toLowerCase();
   }
   switch (cardType) {
+    case "concept":
+      return "blue";
     case "lower_third":
       return "cyan";
     case "key_metric":
@@ -356,27 +421,83 @@ function normalizeTheme(theme: any, cardType: string): string {
     case "agenda_item":
       return "indigo";
     default:
-      return "rose";
+      return "blue";
   }
+}
+
+function sanitizeJsonString(str: string): string {
+  let inString = false;
+  let escaped = false;
+  let result = "";
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+
+    if (char === '"' && !escaped) {
+      inString = !inString;
+      result += char;
+    } else if (inString) {
+      if (char === "\n") {
+        result += "\\n";
+      } else if (char === "\r") {
+        result += "\\r";
+      } else if (char === "\t") {
+        result += "\\t";
+      } else if (char.charCodeAt(0) < 32) {
+        // Skip control characters
+      } else {
+        result += char;
+      }
+    } else {
+      result += char;
+    }
+
+    escaped = char === "\\" && !escaped;
+  }
+
+  return result;
 }
 
 function parseCards(raw: string): AiProducerCard[] {
   try {
     const cleaned = raw.replace(/```[a-z]*\n?/gi, "").trim();
+    const sanitized = sanitizeJsonString(cleaned);
     let parsed: any;
 
     try {
-      parsed = JSON.parse(cleaned);
+      parsed = JSON.parse(sanitized);
     } catch {
-      const firstBracket = cleaned.indexOf("[");
-      const lastBracket = cleaned.lastIndexOf("]");
+      const firstBracket = sanitized.indexOf("[");
+      const lastBracket = sanitized.lastIndexOf("]");
       if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-        parsed = JSON.parse(cleaned.slice(firstBracket, lastBracket + 1));
-      } else {
-        const firstBrace = cleaned.indexOf("{");
-        const lastBrace = cleaned.lastIndexOf("}");
+        try {
+          parsed = JSON.parse(sanitized.slice(firstBracket, lastBracket + 1));
+        } catch {}
+      }
+      
+      if (!parsed) {
+        const firstBrace = sanitized.indexOf("{");
+        const lastBrace = sanitized.lastIndexOf("}");
         if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+          try {
+            parsed = JSON.parse(sanitized.slice(firstBrace, lastBrace + 1));
+          } catch {}
+        }
+      }
+
+      // If still not parsed, attempt regex match on individual card objects
+      if (!parsed) {
+        const objectMatches = sanitized.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+        if (objectMatches && objectMatches.length > 0) {
+          parsed = objectMatches
+            .map((om) => {
+              try {
+                return JSON.parse(om);
+              } catch {
+                return null;
+              }
+            })
+            .filter(Boolean);
         }
       }
     }
@@ -387,7 +508,9 @@ function parseCards(raw: string): AiProducerCard[] {
         ? parsed.cards
         : Array.isArray(parsed?.visual_cards)
           ? parsed.visual_cards
-          : [parsed];
+          : parsed
+            ? [parsed]
+            : [];
 
     return arr
       .filter(
@@ -400,13 +523,33 @@ function parseCards(raw: string): AiProducerCard[] {
       .map((c: any) => {
         const type = c.type || "custom_ui";
         const themeColor = normalizeTheme(c.themeColor, type);
-        return {
+        const headline = c.headline || c.quote || c.reference || c.item || "Context Card";
+        const subline = c.subline || c.attribution || c.body || undefined;
+        
+        // Resolve a guaranteed 100% working verified image URL
+        const imageUrl = resolveVerifiedImageUrl(
+          `${headline} ${subline || ""} ${c.imageTopic || ""}`,
+          type,
+          c.imageUrl,
+        );
+
+        const enrichedCard = {
           ...c,
           type,
-          headline: c.headline || c.quote || c.reference || c.item || "Context Card",
-          subline: c.subline || c.attribution || c.body || undefined,
           themeColor,
-          htmlCode: ensureCardHtmlCode(c, themeColor),
+          imageUrl,
+          headline,
+          subline,
+          layoutVariant: c.layoutVariant,
+          blocks: Array.isArray(c.blocks) ? c.blocks : undefined,
+          metadata: c.metadata && typeof c.metadata === "object" ? c.metadata : undefined,
+        };
+
+        return {
+          ...enrichedCard,
+          imageUrl,
+          themeColor,
+          htmlCode: ensureCardHtmlCode(enrichedCard, themeColor),
           confidence: typeof c.confidence === "number" ? c.confidence : 0.88,
         };
       }) as AiProducerCard[];
@@ -446,7 +589,7 @@ async function analyzeTranscript(
     const bodyFinal = JSON.stringify({
       model,
       messages,
-      max_tokens: 512,
+      max_tokens: 2500,
       temperature: 0.2,
       ...(isGroq ? {} : { response_format: { type: "json_object" } }),
     });

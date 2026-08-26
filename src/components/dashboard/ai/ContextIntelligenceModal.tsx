@@ -12,6 +12,7 @@ import {
   Quote,
   BookOpen,
   List,
+  Lightbulb,
   Loader2,
   AlertCircle,
   KeyRound,
@@ -72,6 +73,12 @@ const CARD_STYLES: Record<
     badge: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
     border: "border-l-cyan-500",
   },
+  concept: {
+    icon: Lightbulb,
+    label: "Concept",
+    badge: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    border: "border-l-blue-500",
+  },
 };
 
 function getCardHeadline(card: AiProducerCard): string {
@@ -79,6 +86,7 @@ function getCardHeadline(card: AiProducerCard): string {
     case "lower_third":
     case "key_metric":
     case "custom_ui":
+    case "concept":
       return card.headline || (card as any).item || "Highlight";
     case "quote":
       return card.quote ? `"${card.quote}"` : (card.headline || "");
@@ -365,43 +373,58 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className={`group relative flex items-start gap-3 rounded-xl border border-l-4 p-3 transition-all ${style.border} ${
+                        className={`group relative flex items-stretch gap-3 rounded-xl border border-l-4 p-2.5 transition-all ${style.border} ${
                           isDarkMode
                             ? "bg-white/[0.03] hover:bg-white/[0.06] border-white/8"
                             : "bg-neutral-50 hover:bg-neutral-100 border-neutral-200"
                         }`}
                       >
-                        {/* Type Icon */}
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/40 border border-white/10 text-white/80 mt-0.5">
-                          <IconComponent className="h-3.5 w-3.5" />
-                        </div>
+                        {/* Tall Image / Visual taking full height */}
+                        {card.imageUrl ? (
+                          <div className="relative w-20 sm:w-24 shrink-0 self-stretch overflow-hidden rounded-lg border border-white/10 shadow-sm bg-black/20">
+                            <img
+                              src={card.imageUrl}
+                              alt={headline}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex w-16 sm:w-20 shrink-0 self-stretch items-center justify-center rounded-lg bg-black/40 border border-white/10 text-white/80">
+                            <IconComponent className="h-5 w-5" />
+                          </div>
+                        )}
 
                         {/* Card Content */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${style.badge}`}
-                            >
-                              {style.label}
-                            </span>
-                            <span className="text-[9px] text-white/35 font-mono">
-                              {Math.round(card.confidence * 100)}% match
-                            </span>
-                          </div>
+                        <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${style.badge}`}
+                              >
+                                {style.label}
+                              </span>
+                              <span className="text-[9px] text-white/35 font-mono">
+                                {Math.round(card.confidence * 100)}% match
+                              </span>
+                            </div>
 
-                          <p className="text-xs sm:text-[13px] font-bold text-white leading-snug">
-                            {headline}
-                          </p>
-
-                          {subline && (
-                            <p className="text-[11px] text-white/60 mt-0.5 leading-relaxed">
-                              {subline}
+                            <p className="text-xs sm:text-[13px] font-bold text-white leading-snug">
+                              {headline}
                             </p>
-                          )}
+
+                            {subline && (
+                              <p className="text-[11px] text-white/60 mt-0.5 leading-relaxed line-clamp-2">
+                                {subline}
+                              </p>
+                            )}
+                          </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
+                        <div className="flex flex-col justify-between items-end shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                           {/* Push to live screen */}
                           <button
                             type="button"

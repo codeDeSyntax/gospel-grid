@@ -281,13 +281,29 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     }
   }, [dispatch]);
 
+  // Use a ref so the interval callback always sees the latest isProjectionOn value
+  // without needing to recreate the interval on every projection state change.
+  const isProjectionOnRef = useRef(isProjectionOn);
+  useEffect(() => {
+    isProjectionOnRef.current = isProjectionOn;
+  }, [isProjectionOn]);
+
   useEffect(() => {
     refreshPublicationState();
     const timer = setInterval(() => {
-      refreshPublicationState();
-    }, 1500);
+      // When projection is already live we only need infrequent checks (5s)
+      // to detect if the user closes it from the projection window itself.
+      // This reduces IPC pressure on the already-busy main process.
+      if (!isProjectionOnRef.current) {
+        refreshPublicationState();
+      } else {
+        // Still check, but much less aggressively
+        refreshPublicationState();
+      }
+    }, isProjectionOn ? 5000 : 1500);
     return () => clearInterval(timer);
-  }, [refreshPublicationState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshPublicationState, isProjectionOn]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -368,6 +384,20 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
     const monitorFrames = async () => {
       if (isCancelled) return;
+
+      // ── PERFORMANCE GUARD ────────────────────────────────────────────────
+      // When a projection is live, LiveWindowGrid is already running a
+      // getUserMedia() WGC capture stream per window. Firing an additional
+      // batchCaptureThumbnails() call on the same HWND causes two concurrent
+      // WGC sessions, which stalls the GPU compositor and creates app-wide lag.
+      // Back off to a 5s poll while projection is active — changes will be
+      // detected soon after the user ends the projection.
+      if (isProjectionOn) {
+        if (!isCancelled) {
+          timerId = setTimeout(monitorFrames, 5000);
+        }
+        return;
+      }
 
       // Skip if a capture is already in-flight or if user is interacting with display menus
       if (isCapturingRef.current || openManageDisplayId !== null || openScreenMenuId !== null) {
@@ -510,6 +540,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   }, [
     autoDirectorMode,
     displayAssignments,
+    isProjectionOn,
     windowMap,
     dispatch,
     onWindowFocus,

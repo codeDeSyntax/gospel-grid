@@ -114,9 +114,11 @@ export function useContextIntelligence({
   }, []);
 
   const pushCardToOverlay = useCallback((card: AiProducerCard) => {
-    // Build overlay text/html from card content
+    // Build overlay text/html/json from card content
     let text = "";
-    if (card.htmlCode && card.htmlCode.trim().length > 0) {
+    if (card.layoutVariant || (card.blocks && card.blocks.length > 0)) {
+      text = JSON.stringify(card);
+    } else if (card.htmlCode && card.htmlCode.trim().length > 0) {
       text = card.htmlCode.trim();
     } else {
       switch (card.type) {

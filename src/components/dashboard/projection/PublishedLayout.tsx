@@ -5,6 +5,8 @@ import { LiveWindowGrid } from "../live/LiveWindowGrid";
 import { useWindowControls } from "@/hooks/useWindowControls";
 import { useAppSelector } from "@/store/hooks";
 import { Minimize2, X } from "lucide-react";
+import { DynamicBroadcastCard } from "../ai/DynamicBroadcastCard";
+import { AiProducerCard } from "@/services/ai/types";
 
 interface PublishedLayoutProps {
   windows: WindowInfo[];
@@ -32,6 +34,14 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
   const isFrozen = useAppSelector((state) => state.app.isFrozen);
   const overlayText = useAppSelector((state) => state.app.overlayText);
   const overlayVisible = useAppSelector((state) => state.app.overlayVisible);
+
+  // Attempt to parse structured card JSON if present
+  let parsedCard: AiProducerCard | null = null;
+  if (overlayText && overlayText.startsWith("{") && overlayText.endsWith("}")) {
+    try {
+      parsedCard = JSON.parse(overlayText);
+    } catch {}
+  }
 
   // Focus the container when it mounts to ensure keyboard events are captured
   useEffect(() => {
@@ -90,14 +100,25 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            {/<[a-z][\s\S]*>/i.test(overlayText) ? (
+            {parsedCard ? (
               <motion.div
                 key={overlayText}
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                exit={{ opacity: 0, scale: 0.92, y: 24 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-4xl px-8 flex items-center justify-center pointer-events-auto drop-shadow-2xl"
+                className="w-full max-w-4xl px-6 flex items-center justify-center pointer-events-auto"
+              >
+                <DynamicBroadcastCard card={parsedCard} />
+              </motion.div>
+            ) : /<[a-z][\s\S]*>/i.test(overlayText) ? (
+              <motion.div
+                key={overlayText}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 24 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-4xl px-6 flex items-center justify-center pointer-events-auto drop-shadow-2xl"
                 dangerouslySetInnerHTML={{
                   __html: overlayText
                     .replace(/\bclassName=/gi, "class=")
@@ -105,63 +126,20 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
                 }}
               />
             ) : (
-              <div
+              <motion.div
                 key={overlayText}
-                className="text-white font-black text-center px-16"
-                style={{
-                  fontSize: "clamp(2rem, 5vw, 5rem)",
-                  lineHeight: 1.3,
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                  alignItems: "baseline",
-                  gap: "0.25em 0.3em",
-                }}
+                initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 24 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-4xl px-6 flex items-center justify-center pointer-events-auto drop-shadow-2xl"
               >
-                {overlayText.split(" ").map((word, wi) => (
-                  <motion.span
-                    key={`${overlayText}-${wi}`}
-                    style={{
-                      display: "inline-block",
-                      textShadow:
-                        "0 4px 32px rgba(0,0,0,0.95), 0 0 60px rgba(0,0,0,0.7)",
-                    }}
-                    initial={{
-                      opacity: 0,
-                      y: -(70 + (wi % 3) * 30),
-                      x: wi % 2 === 0 ? -(12 + (wi % 4) * 8) : 12 + (wi % 4) * 8,
-                      rotate:
-                        wi % 2 === 0 ? -(10 + (wi % 3) * 6) : 10 + (wi % 3) * 6,
-                      scale: 0.4,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                      x: 0,
-                      rotate: 0,
-                      scale: 1,
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: 80,
-                      rotate: wi % 2 === 0 ? -12 : 12,
-                      scale: 0.5,
-                      transition: {
-                        delay: wi * 0.04,
-                        duration: 0.3,
-                        ease: "easeIn",
-                      },
-                    }}
-                    transition={{
-                      delay: wi * 0.06,
-                      duration: 0.5,
-                      ease: [0.34, 1.56, 0.64, 1],
-                    }}
-                  >
-                    {word}
-                  </motion.span>
-                ))}
-              </div>
+                <div className="bg-white/95 backdrop-blur-2xl border border-white/80 rounded-[32px] p-8 sm:p-12 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.35)] max-w-3xl w-full text-center">
+                  <p className="text-neutral-950 font-black text-3xl sm:text-4xl md:text-5xl leading-snug tracking-tight">
+                    {overlayText}
+                  </p>
+                </div>
+              </motion.div>
             )}
           </motion.div>
         )}

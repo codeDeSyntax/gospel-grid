@@ -1,4 +1,4 @@
-import { desktopCapturer, NativeImage } from "electron";
+import { desktopCapturer, NativeImage, type DesktopCapturerSource } from "electron";
 import { createHash } from "node:crypto";
 import { thumbnailCache } from "./thumbnailCache";
 
@@ -259,7 +259,17 @@ export async function captureHighQualityThumbnail(
  *
  * This version does ONE getSources() call and extracts all needed thumbnails
  * from the result set in-memory. One WGC session batch instead of N.
+ *
+ * REQUEST COALESCING: If a getSources() call is already in-flight, all
+ * concurrent callers share the same promise instead of spawning duplicate
+ * WGC sessions. This is critical during projection startup where multiple
+ * effects may fire simultaneously.
  */
+
+// ── In-flight coalescing state ────────────────────────────────────────────────
+let _batchSourcesInFlight: Promise<DesktopCapturerSource[]> | null = null;
+let _batchSourcesKey = "";
+
 export async function batchCaptureThumbnails(
   windowIds: string[],
   options: ThumbnailOptions = {},
@@ -283,15 +293,42 @@ export async function batchCaptureThumbnails(
     0.1,
   );
 
+  // ── Cap resolution for batch mode ───────────────────────────────────────
+  // Slide-change detection only needs modest resolution. Capping at 640×360
+  // drastically reduces GPU readback time vs. full 1920×1080 per window.
+  const captureWidth = Math.min(Math.floor(validWidth * validScaleFactor), 640);
+  const captureHeight = Math.min(Math.floor(validHeight * validScaleFactor), 360);
+
+  // ── Request coalescing ────────────────────────────────────────────────────
+  // If a getSources() call is already running for the same resolution,
+  // share its promise instead of spawning a second concurrent WGC session.
+  const coalescingKey = `${captureWidth}x${captureHeight}`;
+
+  if (!_batchSourcesInFlight || _batchSourcesKey !== coalescingKey) {
+    _batchSourcesKey = coalescingKey;
+    _batchSourcesInFlight = desktopCapturer
+      .getSources({
+        types: ["window"],
+        thumbnailSize: { width: captureWidth, height: captureHeight },
+        // fetchWindowIcons intentionally omitted — icons are already captured
+        // during window enumeration and don't need to be re-fetched on every
+        // thumbnail batch. Omitting this saves a GPU readback per window.
+        fetchWindowIcons: false,
+      })
+      .finally(() => {
+        // Release so the next call gets a fresh snapshot
+        _batchSourcesInFlight = null;
+      });
+  }
+
+  // Hold a local reference so TypeScript knows it's non-null and we're
+  // immune to the module-level variable being cleared by the .finally() of
+  // a concurrent call that finishes before our await resolves.
+  const pendingSources = _batchSourcesInFlight!;
+
   // ── Single getSources() call for ALL requested windows ──────────────
-  const sources = await desktopCapturer.getSources({
-    types: ["window"],
-    thumbnailSize: {
-      width: Math.min(Math.floor(validWidth * validScaleFactor), 3840),
-      height: Math.min(Math.floor(validHeight * validScaleFactor), 2160),
-    },
-    fetchWindowIcons: true,
-  });
+  const sources = await pendingSources;
+
 
   // Build a lookup map for O(1) access
   const sourceMap = new Map(sources.map((s) => [s.id, s]));
