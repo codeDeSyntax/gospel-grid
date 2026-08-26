@@ -267,6 +267,7 @@ export const FeatureCaptionsView: React.FC = () => {
             <LiveCaptionsSpeechDisplay
               text={captionsState.text}
               isDarkMode={isDarkMode}
+              sizeVariant="large"
             />
           </div>
         </div>

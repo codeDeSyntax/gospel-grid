@@ -371,7 +371,11 @@ export const TitleBar: React.FC<TitleBarProps> = ({
             className="flex h-6 w-6 items-center justify-center rounded-lg border border-theme-primary-700/30 bg-theme-primary-850/60 transition-all hover:bg-theme-primary-750 hover:border-theme-primary-500/40 active:scale-95"
             style={noDragRegionStyle}
           >
-            <img src="./wingrid.png" alt="App Icon" className="h-4 w-4" />
+            <img
+              src="./wingrid.png"
+              alt="App Icon"
+              className="h-4 w-4 object-contain"
+            />
           </button>
           <span className="text-[13px] text-theme-primary-100 font-[impact] tracking-wide">
             Wingrid Workspace

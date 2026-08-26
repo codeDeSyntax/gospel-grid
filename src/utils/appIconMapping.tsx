@@ -745,6 +745,8 @@ export const getAppGradient = (appName: string): string => {
 
 export const getWindowFallbackIcon = (
   windowInfo: {
+    id?: string;
+    icon?: string;
     app?: string;
     name?: string;
     executablePath?: string;
@@ -752,9 +754,70 @@ export const getWindowFallbackIcon = (
   },
   size: number = 16,
 ): React.ReactNode => {
+  // 1. If explicit icon image path is provided (e.g. ./countdown.png, ./caption.png, ./gallery.png)
+  if (windowInfo.icon) {
+    return (
+      <img
+        src={windowInfo.icon}
+        alt={windowInfo.name || windowInfo.app || "icon"}
+        style={{ width: size, height: size }}
+        className="object-contain pointer-events-none select-none"
+      />
+    );
+  }
+
+  // 2. Feature Window ID and Name detection
+  const id = windowInfo.id ?? "";
+  const name = (windowInfo.name ?? "").toLowerCase();
+  const app = (windowInfo.app ?? "").toLowerCase();
+
+  if (
+    id.startsWith("feature:timer") ||
+    name.includes("timer") ||
+    name.includes("countdown")
+  ) {
+    return (
+      <img
+        src="./countdown.png"
+        alt="Timer Icon"
+        style={{ width: size, height: size }}
+        className="object-contain pointer-events-none select-none"
+      />
+    );
+  }
+
+  if (
+    id === "feature:captions-window" ||
+    name.includes("caption") ||
+    name.includes("speech") ||
+    app.includes("speech")
+  ) {
+    return (
+      <img
+        src="./caption.png"
+        alt="Captions Icon"
+        style={{ width: size, height: size }}
+        className="object-contain pointer-events-none select-none"
+      />
+    );
+  }
+
+  if (id.startsWith("feature:image") || name.includes("gallery")) {
+    return (
+      <img
+        src="./gallery.png"
+        alt="Image Feature Icon"
+        style={{ width: size, height: size }}
+        className="object-contain pointer-events-none select-none"
+      />
+    );
+  }
+
+  // 3. Fallback to standard app icon resolution
   const iconData = getWindowFallbackIconData(windowInfo);
   return React.cloneElement(iconData.icon as React.ReactElement, {
     size,
     className: iconData.color,
   });
 };
+

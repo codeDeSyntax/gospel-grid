@@ -1,6 +1,8 @@
 import React from "react";
 import type { FeatureTimerProjectionTheme } from "../RightPanel/featureTimerState";
 
+export type TimerSizeVariant = "hero" | "large" | "medium" | "compact";
+
 interface TimerProjectionScreenProps {
   days: string;
   hours: string;
@@ -9,33 +11,72 @@ interface TimerProjectionScreenProps {
   theme: FeatureTimerProjectionTheme;
   compact?: boolean;
   layoutMode?: "single" | "dual" | "triple" | "quad" | "empty";
+  sizeVariant?: TimerSizeVariant;
 }
 
 interface TimerBlockProps {
   value: string;
   label: string;
   theme: FeatureTimerProjectionTheme;
-  compact?: boolean;
+  sizeVariant: TimerSizeVariant;
 }
 
 const TimerBlock: React.FC<TimerBlockProps> = ({
   value,
   label,
   theme,
-  compact = false,
+  sizeVariant,
 }) => {
   const isDark = theme === "dark";
 
+  const blockClasses = (() => {
+    switch (sizeVariant) {
+      case "hero":
+        return "rounded-2xl w-[clamp(120px,16vw,250px)] h-[clamp(120px,16vw,250px)] shadow-[0_16px_38px_rgba(0,0,0,0.45)]";
+      case "large":
+        return "rounded-xl w-[clamp(76px,10.5vw,150px)] h-[clamp(76px,10.5vw,150px)] shadow-[0_10px_25px_rgba(0,0,0,0.35)]";
+      case "medium":
+        return "rounded-lg w-[clamp(44px,6vw,80px)] h-[clamp(44px,6vw,80px)] shadow-md";
+      case "compact":
+      default:
+        return "rounded-md w-[clamp(22px,2.8vw,36px)] h-[clamp(22px,2.8vw,36px)] shadow-sm";
+    }
+  })();
+
+  const textClasses = (() => {
+    switch (sizeVariant) {
+      case "hero":
+        return "text-[clamp(56px,8.8vw,150px)] tracking-[0.08em]";
+      case "large":
+        return "text-[clamp(34px,5.2vw,86px)] tracking-[0.06em] font-bold";
+      case "medium":
+        return "text-[clamp(20px,2.8vw,42px)] tracking-normal font-bold";
+      case "compact":
+      default:
+        return "text-[clamp(10px,1.3vw,16px)] tracking-normal font-bold";
+    }
+  })();
+
+  const labelClasses = (() => {
+    switch (sizeVariant) {
+      case "hero":
+        return "text-[clamp(13px,1.5vw,24px)] tracking-[0.12em] font-bold";
+      case "large":
+        return "text-[clamp(10px,1.1vw,16px)] tracking-wider font-semibold";
+      case "medium":
+        return "text-[clamp(7.5px,0.8vw,11px)] tracking-wide font-semibold";
+      case "compact":
+      default:
+        return "text-[clamp(6px,0.6vw,8px)] tracking-tight font-semibold leading-none";
+    }
+  })();
+
+  const gapClasses = sizeVariant === "hero" ? "gap-2 sm:gap-3" : sizeVariant === "large" ? "gap-1.5" : "gap-0.5";
+
   return (
-    <div
-      className={`flex flex-col items-center ${compact ? "gap-0.5" : "gap-2"}`}
-    >
+    <div className={`flex flex-col items-center min-w-0 ${gapClasses}`}>
       <div
-        className={`relative overflow-hidden border shadow-[0_16px_38px_rgba(0,0,0,0.35)] ${
-          compact
-            ? "rounded-[8px] w-[clamp(28px,4.2vw,72px)] h-[clamp(28px,4.2vw,72px)]"
-            : "rounded-[20px] w-[clamp(120px,17vw,230px)] h-[clamp(120px,17vw,230px)]"
-        } ${
+        className={`relative overflow-hidden border ${blockClasses} ${
           isDark
             ? "border-theme-primary-200/25 bg-gradient-to-b from-theme-primary-700/70 via-theme-primary-800/85 to-theme-primary-900"
             : "border-theme-primary-300/60 bg-gradient-to-b from-theme-primary-50 via-theme-primary-100 to-theme-primary-200"
@@ -43,22 +84,20 @@ const TimerBlock: React.FC<TimerBlockProps> = ({
       >
         <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent pointer-events-none" />
         <div
-          className={`absolute inset-x-0 top-1/2 ${compact ? "h-px" : "h-[2px]"} ${
+          className={`absolute inset-x-0 top-1/2 ${sizeVariant === "hero" ? "h-[2px]" : "h-px"} ${
             isDark ? "bg-black/65" : "bg-theme-primary-500/45"
           }`}
         />
         <div
-          className={`absolute inset-x-0 ${compact ? "top-[calc(50%-1px)] h-px" : "top-[calc(50%-2px)] h-[3px]"} ${
+          className={`absolute inset-x-0 ${sizeVariant === "hero" ? "top-[calc(50%-2px)] h-[3px]" : "top-[calc(50%-1px)] h-px"} ${
             isDark ? "bg-white/15" : "bg-white/35"
           }`}
         />
 
         <div
-          className={`absolute inset-0 flex items-center justify-center font-[impact] leading-none tracking-[0.08em] ${
-            compact
-              ? "text-[clamp(18px,2.6vw,48px)]"
-              : "text-[clamp(58px,8.2vw,150px)]"
-          } ${isDark ? "theme-text-on-overlay" : "theme-text-main"}`}
+          className={`absolute inset-0 flex items-center justify-center font-[impact] leading-none ${textClasses} ${
+            isDark ? "theme-text-on-overlay" : "theme-text-main"
+          }`}
           style={{ opacity: 0.95 }}
         >
           {value}
@@ -66,7 +105,7 @@ const TimerBlock: React.FC<TimerBlockProps> = ({
       </div>
 
       <p
-        className={`${compact ? "text-[clamp(6px,0.72vw,11px)]" : "text-[clamp(11px,1.2vw,30px)]"} tracking-[0.1em] uppercase font-semibold ${
+        className={`${labelClasses} uppercase truncate ${
           isDark ? "theme-text-soft" : "theme-text-muted"
         }`}
       >
@@ -84,9 +123,66 @@ export const TimerProjectionScreen: React.FC<TimerProjectionScreenProps> = ({
   theme,
   compact = false,
   layoutMode = "single",
+  sizeVariant: explicitSizeVariant,
 }) => {
   const isDark = theme === "dark";
-  const isSharedLayout = layoutMode !== "single";
+
+  // Derive sizeVariant smartly if not explicitly supplied
+  const effectiveSizeVariant: TimerSizeVariant = (() => {
+    if (explicitSizeVariant) return explicitSizeVariant;
+    if (compact) return "compact";
+    if (layoutMode === "single") return "hero";
+    if (layoutMode === "dual") return "large";
+    return "medium";
+  })();
+
+  const outerPadding = (() => {
+    switch (effectiveSizeVariant) {
+      case "hero":
+        return "p-[clamp(16px,3vw,56px)]";
+      case "large":
+        return "p-[clamp(10px,1.8vw,28px)]";
+      case "medium":
+        return "p-[clamp(6px,1vw,14px)]";
+      case "compact":
+      default:
+        return "p-[clamp(3px,0.5vw,7px)]";
+    }
+  })();
+
+  const innerCardClasses = (() => {
+    switch (effectiveSizeVariant) {
+      case "hero":
+        return "rounded-[28px] p-[clamp(16px,2.5vw,48px)]";
+      case "large":
+        return "rounded-[20px] p-[clamp(10px,1.5vw,26px)]";
+      case "medium":
+        return "rounded-[14px] p-[clamp(6px,0.8vw,14px)]";
+      case "compact":
+      default:
+        return "rounded-[8px] p-[clamp(3px,0.4vw,6px)]";
+    }
+  })();
+
+  const gridCols = (() => {
+    if (effectiveSizeVariant === "compact" || effectiveSizeVariant === "medium") return "grid-cols-4";
+    if (layoutMode === "dual") return "grid-cols-2";
+    return "grid-cols-4";
+  })();
+
+  const gridGap = (() => {
+    switch (effectiveSizeVariant) {
+      case "hero":
+        return "gap-[clamp(12px,2vw,36px)]";
+      case "large":
+        return "gap-[clamp(8px,1.4vw,22px)]";
+      case "medium":
+        return "gap-[clamp(4px,0.8vw,12px)]";
+      case "compact":
+      default:
+        return "gap-[clamp(2px,0.4vw,6px)]";
+    }
+  })();
 
   return (
     <div
@@ -111,54 +207,38 @@ export const TimerProjectionScreen: React.FC<TimerProjectionScreenProps> = ({
         } to-transparent`}
       />
 
-      <div
-        className={`absolute inset-0 flex items-center justify-center ${compact ? "p-[clamp(5px,0.7vw,10px)]" : isSharedLayout ? "p-[clamp(8px,1.2vw,20px)]" : "p-[clamp(18px,2.3vw,60px)]"}`}
-      >
+      <div className={`absolute inset-0 flex items-center justify-center ${outerPadding}`}>
         <div
-          className={`relative w-full h-full border flex flex-col items-center justify-center ${
-            compact
-              ? "rounded-[10px] p-[clamp(5px,0.8vw,12px)]"
-              : isSharedLayout
-                ? "rounded-[18px] p-[clamp(8px,1vw,22px)]"
-                : "rounded-[24px] p-[clamp(14px,2vw,40px)]"
-          } ${
+          className={`relative w-full h-full border flex flex-col items-center justify-center ${innerCardClasses} ${
             isDark
               ? "border-theme-primary-300/20 bg-[linear-gradient(180deg,rgba(var(--theme-primary-100),0.05),rgba(0,0,0,0.22))]"
               : "border-theme-primary-300/55 bg-[linear-gradient(180deg,rgba(var(--theme-primary-50),0.82),rgba(var(--theme-primary-100),0.56))]"
           }`}
         >
-          <div
-            className={`grid ${compact || isSharedLayout ? "grid-cols-2" : "grid-cols-4"} w-full place-items-center ${
-              compact
-                ? "gap-[clamp(4px,0.55vw,8px)]"
-                : isSharedLayout
-                  ? "gap-[clamp(6px,1vw,18px)]"
-                  : "gap-[clamp(8px,1.5vw,28px)]"
-            }`}
-          >
+          <div className={`grid ${gridCols} w-full max-w-full place-items-center ${gridGap}`}>
             <TimerBlock
               value={days}
-              label="Days"
+              label={effectiveSizeVariant === "compact" ? "Days" : "Days"}
               theme={theme}
-              compact={compact}
+              sizeVariant={effectiveSizeVariant}
             />
             <TimerBlock
               value={hours}
-              label="Hours"
+              label={effectiveSizeVariant === "compact" ? "Hrs" : "Hours"}
               theme={theme}
-              compact={compact}
+              sizeVariant={effectiveSizeVariant}
             />
             <TimerBlock
               value={minutes}
-              label="Minutes"
+              label={effectiveSizeVariant === "compact" ? "Min" : "Minutes"}
               theme={theme}
-              compact={compact}
+              sizeVariant={effectiveSizeVariant}
             />
             <TimerBlock
               value={seconds}
-              label="Seconds"
+              label={effectiveSizeVariant === "compact" ? "Sec" : "Seconds"}
               theme={theme}
-              compact={compact}
+              sizeVariant={effectiveSizeVariant}
             />
           </div>
         </div>

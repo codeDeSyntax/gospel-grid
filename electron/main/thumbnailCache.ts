@@ -24,9 +24,9 @@ class ThumbnailCache {
     totalSize: 0,
   };
 
-  constructor(maxSize = 50, maxAgeMinutes = 1) {
+  constructor(maxSize = 50, maxAgeSeconds = 2) {
     this.maxSize = maxSize;
-    this.maxAge = maxAgeMinutes * 60 * 1000;
+    this.maxAge = maxAgeSeconds * 1000;
   }
 
   /**

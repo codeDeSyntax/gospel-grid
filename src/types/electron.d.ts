@@ -228,6 +228,21 @@ export interface ElectronAPI {
   // Tray action events
   onTrayAction: (callback: (action: string) => void) => () => void;
   onPublishedLayoutUpdated: (callback: (payload: any) => void) => () => void;
+  updateProjectionState?: (state: {
+    isBlackout?: boolean;
+    isFrozen?: boolean;
+    overlayText?: string;
+    overlayVisible?: boolean;
+    targetDisplayId?: number | null;
+  }) => Promise<any>;
+  batchCaptureThumbnails?: (
+    windowIds: string[],
+    options?: any,
+  ) => Promise<{
+    success: boolean;
+    thumbnails?: Array<{ windowId: string; dataUrl: string; title?: string }>;
+    error?: string;
+  }>;
 
   remoteScreen: RemoteScreenAPI;
 }
@@ -308,11 +323,34 @@ export interface SpeechToTextAPI {
   ) => () => void;
 }
 
+export interface ContextIntelligenceKeyStatus {
+  success: boolean;
+  openai?: boolean;
+  groq?: boolean;
+  safeStorageAvailable?: boolean;
+  error?: string;
+}
+
+export interface ContextIntelligenceAnalyzeResult {
+  success: boolean;
+  cards?: any[];
+  error?: string;
+}
+
+export interface ContextIntelligenceAPI {
+  setKey: (provider: string, apiKey: string) => Promise<{ success: boolean; error?: string }>;
+  clearKey: (provider: string) => Promise<{ success: boolean; error?: string }>;
+  getKeyStatus: () => Promise<ContextIntelligenceKeyStatus>;
+  analyze: (payload: { provider: string; transcript: string }) => Promise<ContextIntelligenceAnalyzeResult>;
+  test: (provider: string) => Promise<ContextIntelligenceAnalyzeResult>;
+}
+
 declare global {
   interface Window {
     windowControls: WindowControls;
     electronAPI: ElectronAPI;
     speechToTextAPI: SpeechToTextAPI;
+    contextIntelligenceAPI: ContextIntelligenceAPI;
     ipcRenderer: {
       on: (
         channel: string,

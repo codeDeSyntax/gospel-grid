@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { WindowPicker, type WindowInfo } from "./picker/WindowPicker";
 import { CosmicBackground } from "./background/CosmicBackground";
-import { FloatingCaptionsOrb } from "./captions/FloatingCaptionsOrb";
 import { InspectorPanel } from "./inspector/InspectorPanel";
+import { ContextIntelligenceFullModal } from "./ai/ContextIntelligenceFullModal";
+import { useContextIntelligence } from "@/hooks/useContextIntelligence";
+import { Sparkles, Loader2 } from "lucide-react";
 import type { PanelView } from "./inspector/types";
 import { TitleBar } from "@/shared/TitleBar";
 import { DepthSurface } from "@/shared/DepthSurface";
@@ -43,7 +45,14 @@ import {
   getImageFeatureWindowId,
   loadFeatureImageCollection,
 } from "./inspector/featureImageState";
-import { CAPTIONS_FEATURE_WINDOW_ID } from "./inspector/featureCaptionsState";
+import { replaceCaptionsState } from "@/store/slices/captionsSlice";
+import {
+  CAPTIONS_FEATURE_WINDOW_ID,
+  FEATURE_CAPTIONS_EVENT,
+  loadFeatureCaptionsState,
+  saveFeatureCaptionsState,
+  mergeRecentCaptionWords,
+} from "./RightPanel/featureCaptionsState";
 
 interface DashboardState {
   windows: WindowInfo[];
@@ -145,6 +154,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
   const refreshIntervalSetting = useAppSelector(
     (state) => state.app.refreshInterval,
   );
+  const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
 
   const {
     windows: enumeratedWindows,
@@ -199,6 +209,138 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     windowName: string | null;
   } | null>(null);
   const captionsFeatureWindow = useMemo(() => buildCaptionsFeatureWindow(), []);
+
+  // ── AI Context Intelligence & Captions Modal State ────────────────────────
+  const [isContextModalOpen, setIsContextModalOpen] = useState(false);
+  const [activeAiProvider, setActiveAiProvider] = useState<"groq" | "openai">(() => {
+    const stored = localStorage.getItem("wingrid:ai-provider");
+    return stored === "openai" ? "openai" : "groq";
+  });
+
+  useEffect(() => {
+    const detectProvider = async () => {
+      try {
+        const stored = localStorage.getItem("wingrid:ai-provider");
+        if (stored === "groq" || stored === "openai") {
+          setActiveAiProvider(stored);
+          return;
+        }
+        if (window.contextIntelligenceAPI?.getKeyStatus) {
+          const st = await window.contextIntelligenceAPI.getKeyStatus();
+          if (st.success) {
+            if (st.groq) setActiveAiProvider("groq");
+            else if (st.openai) setActiveAiProvider("openai");
+          }
+        }
+      } catch {}
+    };
+
+    void detectProvider();
+
+    const handleProviderChange = () => {
+      void detectProvider();
+    };
+
+    const handleGlobalShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setIsContextModalOpen((prev) => !prev);
+      }
+    };
+
+    const handleOpenEvent = () => {
+      setIsContextModalOpen(true);
+    };
+
+    window.addEventListener("wingrid:ai-provider-changed", handleProviderChange);
+    window.addEventListener("storage", handleProviderChange);
+    window.addEventListener("keydown", handleGlobalShortcut);
+    window.addEventListener("wingrid:open-context-intelligence-modal", handleOpenEvent);
+
+    return () => {
+      window.removeEventListener("wingrid:ai-provider-changed", handleProviderChange);
+      window.removeEventListener("storage", handleProviderChange);
+      window.removeEventListener("keydown", handleGlobalShortcut);
+      window.removeEventListener("wingrid:open-context-intelligence-modal", handleOpenEvent);
+    };
+  }, []);
+
+  const {
+    cards: aiCards,
+    status: aiStatus,
+    mode: aiMode,
+    setMode: setAiMode,
+    dismissCard: handleDismissAiCard,
+    clearCards: handleClearAiCards,
+    pushCardToOverlay: handlePushAiCard,
+    generateFromText: handleGenerateFromText,
+  } = useContextIntelligence({
+    provider: activeAiProvider,
+    enabled: true,
+  });
+
+  // Global speech recognition coordinator for live captions & AI
+  useEffect(() => {
+    const sync = () => {
+      dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+    };
+
+    const offSpeech = window.speechToTextAPI?.onSpeechResult?.(
+      (result: { success?: boolean; text?: string; error?: string }) => {
+        if (!result?.success) {
+          const current = loadFeatureCaptionsState();
+          saveFeatureCaptionsState({
+            ...current,
+            isStreaming: false,
+            isPaused: false,
+            lastError: result?.error || "Speech service error",
+            updatedAtMs: Date.now(),
+          });
+          dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+          return;
+        }
+
+        const incoming = result?.text?.trim();
+        if (incoming) {
+          const current = loadFeatureCaptionsState();
+          const nextText = mergeRecentCaptionWords(current.text, incoming);
+          saveFeatureCaptionsState({
+            ...current,
+            text: nextText,
+            lastError: null,
+            updatedAtMs: Date.now(),
+          });
+          dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+        }
+      },
+    );
+
+    const offStatus = window.speechToTextAPI?.onWhisperStatus?.(
+      (status: { isConnected?: boolean; isConnecting?: boolean }) => {
+        const current = loadFeatureCaptionsState();
+        const isConnected = Boolean(status?.isConnected);
+        const isConnecting = Boolean(status?.isConnecting);
+
+        saveFeatureCaptionsState({
+          ...current,
+          isStreaming: isConnected || isConnecting,
+          isPaused: !isConnected && !isConnecting,
+          updatedAtMs: Date.now(),
+        });
+        dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+      },
+    );
+
+    window.addEventListener(FEATURE_CAPTIONS_EVENT, sync);
+    window.addEventListener("storage", sync);
+
+    return () => {
+      offSpeech?.();
+      offStatus?.();
+      window.removeEventListener(FEATURE_CAPTIONS_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -820,7 +962,7 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
   const handleWindowAdd = useCallback(
     (windowInfo: WindowInfo): boolean => {
       if (isFeatureWindowId(windowInfo.id)) {
-        return false;
+        return true;
       }
 
       const existingWindow = state.windows.find((w) => w.id === windowInfo.id);
@@ -1216,8 +1358,63 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
         onClose={() => setWindowLimitModal(null)}
       />
 
-      {/* Global floating captions control */}
-      <FloatingCaptionsOrb />
+      {/* Floating Circular Toggler Button (Original Orb Design) */}
+      <div className="fixed bottom-3 right-3 z-50 pointer-events-auto">
+        <DepthSurface
+          className={`relative rounded-full w-11 h-11 flex items-center justify-center transition-all duration-300 ${
+            aiCards.length > 0
+              ? "border border-emerald-300/80 bg-emerald-400/20 shadow-[0_0_0_5px_rgba(16,185,129,0.18),0_12px_30px_rgba(16,185,129,0.25)]"
+              : "border border-theme-primary-300/50 bg-theme-primary-500/18 shadow-[0_10px_24px_rgba(0,0,0,0.4)]"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setIsContextModalOpen(true)}
+            className="group relative flex h-11 w-11 items-center justify-center rounded-full active:scale-95 transition-transform"
+            aria-label="Toggle Live Captions & AI Intelligence"
+            title="Live Captions & AI Intelligence (Ctrl+K)"
+          >
+            <span
+              className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
+                aiStatus === "analyzing" || aiCards.length > 0
+                  ? "animate-ping bg-emerald-300/20 opacity-90"
+                  : "opacity-0"
+              }`}
+            />
+            <img
+              src="./caption.png"
+              alt="Live Captions & AI"
+              className="relative z-10 h-7 w-7 rounded-full object-cover drop-shadow-sm"
+            />
+
+            {aiCards.length > 0 && (
+              <span
+                className={`absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[9px] font-black shadow-md ${
+                  isDarkMode ? "bg-white text-black" : "bg-neutral-900 text-white"
+                }`}
+              >
+                {aiCards.length}
+              </span>
+            )}
+          </button>
+        </DepthSurface>
+      </div>
+
+      {/* Centered Large Modern Modal */}
+      <ContextIntelligenceFullModal
+        isOpen={isContextModalOpen}
+        onClose={() => setIsContextModalOpen(false)}
+        cards={aiCards}
+        status={aiStatus}
+        mode={aiMode}
+        onToggleMode={() => setAiMode(aiMode === "auto" ? "manual" : "auto")}
+        isDarkMode={isDarkMode}
+        provider={activeAiProvider}
+        onDismiss={handleDismissAiCard}
+        onClear={handleClearAiCards}
+        onPush={handlePushAiCard}
+        onGenerateFromText={handleGenerateFromText}
+      />
     </div>
   );
 };

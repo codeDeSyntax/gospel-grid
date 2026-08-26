@@ -43,6 +43,7 @@ import { getWindowsWithThumbnails } from "./windowMapper";
 import { detectInternalDisplay, detectExternalDisplay } from "./displayManager";
 import { registerAssemblyAiIpc, shutdownAssemblyAiIpc } from "./assemblyAiIpc";
 import { registerRemoteScreenIpc, shutdownRemoteScreenIpc } from "./remoteScreenIpc";
+import { registerContextIntelligenceIpc, shutdownContextIntelligenceIpc } from "./contextIntelligenceIpc";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -325,44 +326,7 @@ async function createWindow() {
 
   const db = controllerDisplay.bounds;
 
-  // ── 1. Splash window — centered, transparent, pure HTML, appears instantly ─
-  const SPLASH_W = 460; // 420px card + shadow space
-  const SPLASH_H = 310; // 270px card + shadow space
-  const splashX = Math.round(db.x + (db.width  - SPLASH_W) / 2);
-  const splashY = Math.round(db.y + (db.height - SPLASH_H) / 2);
-
-  splashWindow = new BrowserWindow({
-    title: "Wingrid",
-    icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
-    x: splashX,
-    y: splashY,
-    width: SPLASH_W,
-    height: SPLASH_H,
-    frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    resizable: false,
-    movable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    show: false,
-    hasShadow: false,
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
-  });
-
-  splashWindow.setMenuBarVisibility(false);
-
-  const splashHtml = VITE_DEV_SERVER_URL
-    ? path.join(process.env.APP_ROOT || "", "public", "splash.html")
-    : path.join(RENDERER_DIST, "splash.html");
-
-  splashWindow.loadFile(splashHtml);
-  splashWindow.webContents.on("did-finish-load", () => {
-    splashWindow?.show();
-    console.log("🪟 Splash shown");
-  });
-
-  // ── 2. Main window — hidden, loads React in background ────────────────────
+  // ── Main window — opens maximized seamlessly with in-app WhatsApp-style splash ──
   win = new BrowserWindow({
     title: "Wingrid",
     icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
@@ -378,6 +342,12 @@ async function createWindow() {
   });
 
   win.setMenuBarVisibility(false);
+  win.maximize();
+
+  win.once("ready-to-show", () => {
+    win?.show();
+    console.log("🪟 Main window ready and shown");
+  });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
@@ -397,53 +367,15 @@ async function createWindow() {
   update(win);
 }
 
-// ── IPC: React app ready → crossfade splash → main window ───────────────────
+// ── IPC: React app ready ───────────────────────────────────────────────────
 ipcMain.handle("splash-ready", () => {
-  if (!win || win.isDestroyed()) return;
-
-  // Open DevTools before showing so they don't cause a flash
-  if (VITE_DEV_SERVER_URL) {
-    win.webContents.openDevTools();
-  }
-
-  // Step 1: maximise & show the window fully INVISIBLE first
-  win.maximize();
-  win.setOpacity(0);
-  win.showInactive(); // show without stealing focus or triggering a visual pop
-
-  // Step 2: Crossfade — 30 steps × 16ms ≈ 480ms smooth fade
-  const STEPS = 30;
-  const INTERVAL_MS = 16;
-  let step = 0;
-
-  const fadeTimer = setInterval(() => {
-    step++;
-    const t = step / STEPS;
-    // Cubic ease-in-out for a polished feel
-    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    if (!win!.isDestroyed()) win!.setOpacity(eased);
-    if (splashWindow && !splashWindow.isDestroyed()) {
-      splashWindow.setOpacity(1 - eased);
-    }
-
-    if (step >= STEPS) {
-      clearInterval(fadeTimer);
-      if (!win!.isDestroyed()) {
-        win!.setOpacity(1);
-        win!.focus();
-      }
-      if (splashWindow && !splashWindow.isDestroyed()) {
-        splashWindow.close();
-        splashWindow = null;
-      }
-    }
-  }, INTERVAL_MS);
+  return true;
 });
 
 app.whenReady().then(createWindow);
 registerAssemblyAiIpc();
 registerRemoteScreenIpc();
+registerContextIntelligenceIpc();
 
 app.whenReady().then(() => {
   protocol.handle("local-image", (request) => {
@@ -1116,7 +1048,6 @@ ipcMain.handle("publish-layout", async (event, layoutData) => {
       await publishWindow.loadURL(
         `${VITE_DEV_SERVER_URL}?layoutId=${layoutId}`,
       );
-      publishWindow.webContents.openDevTools();
     } else {
       await publishWindow.loadFile(indexHtml, {
         query: { layoutId: layoutId },
@@ -1242,54 +1173,16 @@ ipcMain.handle(
 // Batch thumbnail capture with throttling and debouncing
 ipcMain.handle(
   "batch-capture-thumbnails",
-  async (event, windowIds: string[], options: ThumbnailOptions = {}) => {
-    // Create a unique key for this request based on window IDs
-    const key = windowIds.sort().join(",");
-
-    // Return a promise that will be resolved when the debounced capture completes
-    return new Promise((resolve, reject) => {
-      // If there's an existing debounce entry, add to its resolvers
-      const existing = captureDebounceMap.get(key);
-
-      if (existing) {
-        // Clear the existing timeout and add this resolver to the list
-        clearTimeout(existing.timeout);
-        existing.resolvers.push(resolve);
-        existing.rejecters.push(reject);
-      } else {
-        // Create new debounce entry
-        captureDebounceMap.set(key, {
-          timeout: null as any,
-          resolvers: [resolve],
-          rejecters: [reject],
-        });
-      }
-
-      // Get the current entry
-      const entry = captureDebounceMap.get(key)!;
-
-      // Set up debounced execution
-      entry.timeout = setTimeout(async () => {
-        try {
-          const thumbnails = await batchCaptureThumbnails(windowIds, options);
-          const result = { success: true, thumbnails };
-
-          // Resolve all pending promises
-          entry.resolvers.forEach((r) => r(result));
-        } catch (error) {
-          const errorResult = {
-            success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-          };
-
-          // Reject all pending promises
-          entry.rejecters.forEach((r) => r(errorResult));
-        } finally {
-          // Clean up
-          captureDebounceMap.delete(key);
-        }
-      }, 300); // 300ms debounce window — lets rapid IPC calls coalesce
-    });
+  async (_event, windowIds: string[], options: ThumbnailOptions = {}) => {
+    try {
+      const thumbnails = await batchCaptureThumbnails(windowIds, options);
+      return { success: true, thumbnails };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   },
 );
 
@@ -1448,6 +1341,7 @@ app.on("will-quit", () => {
   stopPowerSaveBlocker();
   void shutdownAssemblyAiIpc();
   void shutdownRemoteScreenIpc();
+  void shutdownContextIntelligenceIpc();
   if (tray && !tray.isDestroyed()) {
     tray.destroy();
     tray = null;

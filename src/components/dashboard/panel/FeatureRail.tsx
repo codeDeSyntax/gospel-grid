@@ -21,7 +21,6 @@ const railItems: RailItem[] = [
   { id: "autofit", title: "Main Layout", isCustomIcon: true },
   { id: "overlay", title: "Text Overlay", iconSrc: "./sendmessage.png" },
   { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
-  { id: "captions", title: "Live Captions", iconSrc: "./caption.png" },
   { id: "remote", title: "Remote Screens", iconSrc: "./smart-tv.png" },
   { id: "image", title: "Images", iconSrc: "./gallery.png" },
 ];

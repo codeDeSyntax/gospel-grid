@@ -18,6 +18,9 @@ import {
   Tv,
   CheckCircle2,
   AlertCircle,
+  ZapOff,
+  Play,
+  Clapperboard,
   type LucideIcon,
 } from "lucide-react";
 import { DepthButton } from "@/shared/DepthButton";
@@ -31,6 +34,7 @@ import {
   resetQualitySettings,
 } from "@/store/slices/appSlice";
 import type { SettingsPanelProps } from "../RightPanel/types";
+import { AiSettingsSection } from "../ai/AiSettingsSection";
 
 const REFRESH_OPTIONS = [
   { value: 30000, label: "30 seconds" },
@@ -185,6 +189,22 @@ const SectionContent: React.FC<{
   dispatch,
 }) => {
   const [showApiKey, setShowApiKey] = useState(false);
+  const [directorMode, setDirectorMode] = useState<"off" | "suggest" | "auto">(() => {
+    return (
+      (localStorage.getItem("wingrid:auto-director-mode") as
+        | "off"
+        | "suggest"
+        | "auto") || "suggest"
+    );
+  });
+
+  const handleDirectorModeChange = (mode: "off" | "suggest" | "auto") => {
+    setDirectorMode(mode);
+    localStorage.setItem("wingrid:auto-director-mode", mode);
+    window.dispatchEvent(
+      new CustomEvent("wingrid:auto-director-mode-changed", { detail: mode }),
+    );
+  };
 
   const cardClasses = isDarkMode
     ? "bg-white/[0.03] backdrop-blur-sm border border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.2)]"
@@ -249,7 +269,13 @@ const SectionContent: React.FC<{
         </section>
       );
 
-    case "window":
+    case "window": {
+      const directorModes = [
+        { mode: "off" as const, label: "Off", icon: ZapOff },
+        { mode: "suggest" as const, label: "Suggest", icon: Eye },
+        { mode: "auto" as const, label: "Auto Cut", icon: Play },
+      ];
+
       return (
         <section className="space-y-6">
           <div>
@@ -270,6 +296,43 @@ const SectionContent: React.FC<{
           </div>
 
           <div className={`rounded-2xl sm:rounded-3xl p-6 ${cardClasses}`}>
+            {/* Auto-Director Mode Setting */}
+            <SettingRow
+              title="Auto-Director Switching"
+              description="Automatically detect slide advances and scene changes to route or suggest window focus."
+              isDarkMode={isDarkMode}
+            >
+              <div className="grid grid-cols-3 gap-2 w-full sm:w-72">
+                {directorModes.map((item) => {
+                  const isSelected = directorMode === item.mode;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.mode}
+                      type="button"
+                      onClick={() => handleDirectorModeChange(item.mode)}
+                      className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border text-xs font-bold transition-all ${
+                        isSelected
+                          ? isDarkMode
+                            ? "border-primary-500/60 bg-primary-500/20 text-white shadow-sm"
+                            : "border-primary-500 bg-primary-50 text-primary-950 shadow-sm"
+                          : isDarkMode
+                            ? "border-white/10 bg-white/[0.04] text-white/50 hover:bg-white/[0.08]"
+                            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                      }`}
+                    >
+                      <Icon
+                        className={`h-3.5 w-3.5 ${
+                          isSelected ? "text-primary-400" : "opacity-60"
+                        }`}
+                      />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </SettingRow>
+
             <SettingRow
               title="Window Scan Interval"
               description="Frequency for detecting newly opened or closed applications on your system."
@@ -315,6 +378,7 @@ const SectionContent: React.FC<{
           </div>
         </section>
       );
+    }
 
     case "projection":
       return (
@@ -578,6 +642,11 @@ const SectionContent: React.FC<{
                 MediaStream (Native)
               </span>
             </SettingRow>
+          </div>
+
+          {/* AI Producer Intelligence Section */}
+          <div className="pt-2">
+            <AiSettingsSection isDarkMode={isDarkMode} />
           </div>
         </section>
       );

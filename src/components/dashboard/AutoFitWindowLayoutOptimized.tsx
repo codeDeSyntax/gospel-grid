@@ -19,6 +19,7 @@ import {
   Mic,
   Radio,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { FcDeleteRow } from "react-icons/fc";
 import { type WindowInfo } from "./picker/WindowPicker";
@@ -37,10 +38,14 @@ import {
   showWindowOnDisplay,
 } from "@/store/slices/gridSlice";
 import { WindowLimitModal } from "./modals/WindowLimitModal";
-import { publishDisplayLayout } from "@/store/slices/notificationSlice";
-import { setProjectionOn } from "@/store/slices/appSlice";
-import { TimerProjectionScreen } from "./projection/TimerProjectionScreen";
 import {
+  publishDisplayLayout,
+  showNotification,
+} from "@/store/slices/notificationSlice";
+import { setProjectionOn } from "@/store/slices/appSlice";
+import { TimerTileCard, CaptionsTileCard } from "./tiles";
+import {
+  TIMER_FEATURE_WINDOW_PREFIX,
   getCountdownRemainingMs,
   getTimerFeatureWindowId,
   loadFeatureTimerCollection,
@@ -51,9 +56,9 @@ import {
   loadFeatureCaptionsState,
 } from "./RightPanel/featureCaptionsState";
 import { ManageDisplayMenu } from "./ManageDisplayMenu";
-import { LiveCaptionsSpeechDisplay } from "./captions";
 import { MdDeleteSweep } from "react-icons/md";
 import { FiRefreshCcw } from "react-icons/fi";
+import type { AutoDirectorMode } from "./ai/AutoDirectorBar";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -92,7 +97,6 @@ interface AutoFitWindowLayoutProps {
   isProjectionOn?: boolean;
 }
 
-const TIMER_FEATURE_WINDOW_PREFIX = "feature:timer-window:";
 const IMAGE_FEATURE_WINDOW_PREFIX = "feature:image-window:";
 const isFeatureWindowId = (id: string) => id.startsWith("feature:");
 
@@ -136,6 +140,37 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const windowThumbnails =
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
   const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
+
+  // ── AI Context Intelligence & Auto-Director ────────────────────────────
+  const [autoDirectorMode, setAutoDirectorMode] = useState<AutoDirectorMode>(() => {
+    return (localStorage.getItem("wingrid:auto-director-mode") as AutoDirectorMode) || "suggest";
+  });
+  const [directorSceneChanges, setDirectorSceneChanges] = useState<
+    Array<{ windowId: string; windowName: string; state: any }>
+  >([]);
+
+  useEffect(() => {
+    const handleDirectorChange = () => {
+      const mode =
+        (localStorage.getItem("wingrid:auto-director-mode") as AutoDirectorMode) ||
+        "suggest";
+      setAutoDirectorMode(mode);
+    };
+
+    window.addEventListener("storage", handleDirectorChange);
+    window.addEventListener(
+      "wingrid:auto-director-mode-changed",
+      handleDirectorChange,
+    );
+
+    return () => {
+      window.removeEventListener("storage", handleDirectorChange);
+      window.removeEventListener(
+        "wingrid:auto-director-mode-changed",
+        handleDirectorChange,
+      );
+    };
+  }, []);
 
   const timerPreviewMap = useMemo(() => {
     const collection = loadFeatureTimerCollection();
@@ -297,33 +332,71 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const windowMap = useMemo(() => {
     const map = new Map<string, WindowInfo>();
     windows.forEach((w) => map.set(w.id, w));
+
+    // Register synthetic feature windows so they resolve when dropped
+    map.set(CAPTIONS_FEATURE_WINDOW_ID, {
+      id: CAPTIONS_FEATURE_WINDOW_ID,
+      name: "Live AI Captions",
+      app: "Live Captions",
+      isSelected: false,
+    });
+
+    try {
+      const timerCollection = loadFeatureTimerCollection();
+      timerCollection.timers.forEach((timer) => {
+        const timerWindowId = getTimerFeatureWindowId(timer.id);
+        map.set(timerWindowId, {
+          id: timerWindowId,
+          name: timer.name || "Timer",
+          app: "Timer Projection",
+          isSelected: false,
+        });
+      });
+    } catch {
+      // Silently skip if unavailable
+    }
+
     return map;
   }, [windows]);
 
-  useEffect(() => {
-    let cancelled = false;
+  // ── Auto-Director Active Frame & Slide Change Monitor ─────────────────────
+  const prevThumbnailsRef = useRef<Record<string, string>>({});
+  const prevTitlesRef = useRef<Record<string, string>>({});
+  const isCapturingRef = useRef<boolean>(false);
 
-    const requestMissingThumbnails = async () => {
+  useEffect(() => {
+    let isCancelled = false;
+    let timerId: NodeJS.Timeout | null = null;
+
+    const monitorFrames = async () => {
+      if (isCancelled) return;
+
+      // Skip if a capture is already in-flight or if user is interacting with display menus
+      if (isCapturingRef.current || openManageDisplayId !== null || openScreenMenuId !== null) {
+        if (!isCancelled) {
+          timerId = setTimeout(monitorFrames, 1500);
+        }
+        return;
+      }
+
       const assignedWindowIds = Array.from(
         new Set(Object.values(displayAssignments).flat()),
+      ).filter(
+        (id) =>
+          !id.startsWith(TIMER_FEATURE_WINDOW_PREFIX) &&
+          !id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX) &&
+          id !== CAPTIONS_FEATURE_WINDOW_ID &&
+          windowMap.has(id),
       );
 
-      const missingIds = assignedWindowIds.filter((windowId) => {
-        if (windowId.startsWith(TIMER_FEATURE_WINDOW_PREFIX)) return false;
-        if (windowId.startsWith(IMAGE_FEATURE_WINDOW_PREFIX)) return false;
-        if (windowId === CAPTIONS_FEATURE_WINDOW_ID) return false;
-        if (!windowMap.has(windowId)) return false;
-        if (windowThumbnails[windowId]) return false;
-        if (thumbnailRequestsInFlightRef.current.has(windowId)) return false;
-        return true;
-      });
+      if (assignedWindowIds.length === 0) {
+        if (!isCancelled) {
+          timerId = setTimeout(monitorFrames, 2000);
+        }
+        return;
+      }
 
-      if (missingIds.length === 0) return;
-
-      // Prefer the batch API for every missing thumbnail. The single-window
-      // capture path is kept only as a fallback because it is unreliable
-      // bundled builds.
-      missingIds.forEach((id) => thumbnailRequestsInFlightRef.current.add(id));
+      isCapturingRef.current = true;
 
       try {
         if (
@@ -331,76 +404,120 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
           typeof window.electronAPI.batchCaptureThumbnails === "function"
         ) {
           const result = await window.electronAPI.batchCaptureThumbnails(
-            missingIds,
+            assignedWindowIds,
             {
-              width: 1280,
-              height: 720,
-              scaleFactor: 1.5,
-              quality: 95,
+              width: 640,
+              height: 360,
+              scaleFactor: 1.0,
+              quality: 80,
               forceRefresh: true,
             },
           );
 
-          if (result?.success && Array.isArray(result.thumbnails)) {
-            const payload: Record<string, string> = {};
+          if (!isCancelled && result?.success && Array.isArray(result.thumbnails)) {
+            const nextPayload: Record<string, string> = {};
+            let hasAnyChange = false;
+
             result.thumbnails.forEach((t: any) => {
-              if (t && t.windowId && t.dataUrl) {
-                payload[t.windowId] = t.dataUrl;
+              if (!t?.windowId || !t?.dataUrl) return;
+              const prev = prevThumbnailsRef.current[t.windowId];
+              const prevTitle = prevTitlesRef.current[t.windowId];
+              const win = windowMap.get(t.windowId);
+              const currentTitle = t.title || win?.name || win?.app || "Window";
+              nextPayload[t.windowId] = t.dataUrl;
+
+              // Check if thumbnail content OR window title changed (e.g. Chrome tab change, slide flip)
+              const hasVisualChange = Boolean(prev && prev !== t.dataUrl);
+              const hasTitleChange = Boolean(prevTitle && currentTitle && prevTitle !== currentTitle);
+
+              if (hasVisualChange || hasTitleChange) {
+                hasAnyChange = true;
+                const winName = currentTitle;
+                const isNew = !directorSceneChanges.some((c) => c.windowId === t.windowId);
+
+                if (autoDirectorMode !== "off") {
+                  setDirectorSceneChanges((existing) => {
+                    if (existing.some((c) => c.windowId === t.windowId)) return existing;
+                    return [
+                      ...existing,
+                      {
+                        windowId: t.windowId,
+                        windowName: winName,
+                        state: { isSlideChange: true, lastChangeAt: Date.now() },
+                      },
+                    ];
+                  });
+
+                  if (autoDirectorMode === "auto") {
+                    onWindowFocus(t.windowId);
+                  } else if (autoDirectorMode === "suggest" && isNew) {
+                    dispatch(
+                      showNotification({
+                        type: "info",
+                        title: "Content Change Detected",
+                        message: `New content in ${winName}. Bring to focus for the audience?`,
+                        autoClose: 7000,
+                        buttons: [
+                          {
+                            text: "Focus Window",
+                            action: "confirm",
+                            variant: "primary",
+                          },
+                          {
+                            text: "Dismiss",
+                            action: "dismiss",
+                            variant: "secondary",
+                          },
+                        ],
+                        onAction: (action) => {
+                          if (action === "confirm") {
+                            onWindowFocus(t.windowId);
+                            setDirectorSceneChanges((existing) =>
+                              existing.filter((c) => c.windowId !== t.windowId),
+                            );
+                          }
+                        },
+                      }),
+                    );
+                  }
+                }
               }
+
+              prevThumbnailsRef.current[t.windowId] = t.dataUrl;
+              prevTitlesRef.current[t.windowId] = currentTitle;
             });
 
-            if (!cancelled && Object.keys(payload).length > 0) {
-              dispatch(setWindowThumbnails(payload));
+            // Only trigger Redux dispatch if thumbnail data actually changed or first load
+            if (Object.keys(nextPayload).length > 0 && (hasAnyChange || Object.keys(prevThumbnailsRef.current).length === 0)) {
+              dispatch(setWindowThumbnails(nextPayload));
             }
-            return;
           }
         }
-
-        await Promise.all(
-          missingIds.map(async (windowId) => {
-            try {
-              const result = await window.electronAPI.getWindowThumbnail(
-                windowId,
-                {
-                  width: 1280,
-                  height: 720,
-                  scaleFactor: 1.5,
-                  quality: 95,
-                  forceRefresh: true,
-                },
-              );
-              const dataUrl = result?.thumbnail?.dataUrl ?? result?.thumbnail;
-              if (!cancelled && result?.success && dataUrl) {
-                dispatch(
-                  setWindowThumbnails({
-                    [windowId]: dataUrl,
-                  }),
-                );
-              }
-            } catch (error) {
-              console.error("Failed to load display thumbnail:", error);
-            } finally {
-              thumbnailRequestsInFlightRef.current.delete(windowId);
-            }
-          }),
-        );
-      } catch (error) {
-        console.error("Batch thumbnail capture failed:", error);
+      } catch {
+        // Silently skip
       } finally {
-        missingIds.forEach((id) =>
-          thumbnailRequestsInFlightRef.current.delete(id),
-        );
+        isCapturingRef.current = false;
+        if (!isCancelled) {
+          timerId = setTimeout(monitorFrames, 1500);
+        }
       }
     };
 
-    requestMissingThumbnails();
-    const retryTimer = window.setInterval(requestMissingThumbnails, 800);
+    void monitorFrames();
 
     return () => {
-      cancelled = true;
-      window.clearInterval(retryTimer);
+      isCancelled = true;
+      if (timerId) clearTimeout(timerId);
     };
-  }, [displayAssignments, windowMap, windowThumbnails, dispatch]);
+  }, [
+    autoDirectorMode,
+    displayAssignments,
+    windowMap,
+    dispatch,
+    onWindowFocus,
+    openManageDisplayId,
+    openScreenMenuId,
+  ]);
 
   useEffect(() => {
     const next: Record<number, string[]> = {};
@@ -634,18 +751,22 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   const getWindowTileClasses = (assignedCount: number, isFocused: boolean) => {
+    const focusRing = isFocused
+      ? "ring-2 ring-theme-primary-300/70"
+      : "hover:ring-1 hover:ring-theme-primary-400/40";
+
     const base =
-      "group relative min-w-0 max-h-full overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-stone-100 dark:bg-black border-0 aspect-[16/9] w-full h-auto";
+      "group relative min-w-0 overflow-hidden rounded-xl transition-all duration-200 bg-stone-100 dark:bg-black border-0";
 
     if (assignedCount === 1) {
-      return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+      return `${base} w-full h-full aspect-[16/9] ${focusRing}`;
     }
 
     if (assignedCount === 2) {
-      return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+      return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
     }
 
-    return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+    return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
   };
 
   const routedDisplayCount = displays.filter(
@@ -675,7 +796,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 <p className="truncate text-sm font-bold tracking-tight text-theme-primary-50">
                   Display Workspace
                 </p>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary-500/20 text-primary-300 border border-primary-500/30">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-normal uppercase tracking-wider bg-primary-100/80 dark:bg-primary-900/60 text-primary-950 dark:text-primary-300 border border-primary-500/30">
                   Live Multi-Display
                 </span>
               </div>
@@ -720,6 +841,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 </p>
               </div>
             </div>
+
+
 
             {/* Refresh Displays Action */}
             <button
@@ -896,16 +1019,33 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`absolute inset-0 p-3 grid gap-2 ${getGridClasses(assignedIds.length)} auto-rows-fr content-stretch  overflow-hidden`}
+                    className={`absolute inset-0 p-2.5 grid gap-2.5 ${getGridClasses(assignedIds.length)} content-start items-start overflow-hidden`}
                   >
                     {assignedIds.map((windowId) => {
-                      const win = windowMap.get(windowId);
-                      if (!win) return null;
                       const isTimerFeature = windowId.startsWith(
                         TIMER_FEATURE_WINDOW_PREFIX,
                       );
                       const isCaptionsFeature =
                         windowId === CAPTIONS_FEATURE_WINDOW_ID;
+                      const win =
+                        windowMap.get(windowId) ||
+                        (isCaptionsFeature
+                          ? {
+                              id: windowId,
+                              name: "Live AI Captions",
+                              app: "Live Captions",
+                              isSelected: false,
+                            }
+                          : isTimerFeature
+                            ? {
+                                id: windowId,
+                                name: "Timer Projection",
+                                app: "Timer",
+                                isSelected: false,
+                              }
+                            : null);
+
+                      if (!win) return null;
                       const thumbnail =
                         windowThumbnails[windowId] || win.thumbnail || null;
                       const isHidden = hiddenIds.has(windowId);
@@ -929,92 +1069,25 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           title={`${win.app} • ${win.name}`}
                         >
                           {isCaptionsFeature ? (
-                            <div
-                              className={`absolute inset-0 z-0 flex flex-col items-center justify-between p-3.5 sm:p-4 overflow-hidden select-none transition-colors duration-200 ${
-                                isDarkMode
-                                  ? "bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]"
-                                  : "bg-gradient-to-b from-stone-100 via-neutral-50 to-stone-200"
-                              }`}
-                            >
-                              {/* Subtle top ambient glow */}
-                              <div
-                                className="absolute -top-10 inset-x-0 h-28 blur-2xl opacity-35 pointer-events-none"
-                                style={{
-                                  background: isDarkMode
-                                    ? "radial-gradient(circle, rgb(var(--primary-500) / 0.7) 0%, transparent 70%)"
-                                    : "radial-gradient(circle, rgb(var(--primary-500) / 0.25) 0%, transparent 70%)",
-                                }}
-                              />
-
-                              {/* Top Header Live Pill & Waveform */}
-                              <div className="relative z-10 w-full flex items-center justify-between">
-                                <div
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border shadow-sm ${
-                                    isDarkMode
-                                      ? "border-primary-500/30 bg-primary-500/15 text-primary-300"
-                                      : "border-primary-500/40 bg-primary-100/90 text-primary-900 font-bold"
-                                  }`}
-                                >
-                                  <span
-                                    className={`h-1.5 w-1.5 rounded-full animate-pulse ${
-                                      isDarkMode ? "bg-primary-400" : "bg-primary-600"
-                                    }`}
-                                  />
-                                  <span className="text-[9px] font-bold tracking-wider uppercase">
-                                    Live AI Captions
-                                  </span>
-                                </div>
-
-                                {/* Simulated Audio Equalizer Bars */}
-                                <div className="flex items-center gap-0.5">
-                                  <span
-                                    className={`w-0.5 h-2 rounded-full animate-pulse ${
-                                      isDarkMode ? "bg-primary-400/70" : "bg-primary-600/70"
-                                    }`}
-                                  />
-                                  <span
-                                    className={`w-0.5 h-3.5 rounded-full animate-pulse ${
-                                      isDarkMode ? "bg-primary-400" : "bg-primary-600"
-                                    }`}
-                                  />
-                                  <span
-                                    className={`w-0.5 h-2.5 rounded-full animate-pulse ${
-                                      isDarkMode ? "bg-primary-400/90" : "bg-primary-600/90"
-                                    }`}
-                                  />
-                                  <span
-                                    className={`w-0.5 h-1.5 rounded-full animate-pulse ${
-                                      isDarkMode ? "bg-primary-400/60" : "bg-primary-600/60"
-                                    }`}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Floating Live Speech Transcription with Audio Waveform */}
-                              <div className="relative z-10 my-auto w-full flex items-center justify-center">
-                                <LiveCaptionsSpeechDisplay
-                                  text={captionsText}
-                                  isDarkMode={isDarkMode}
-                                  compact
-                                />
-                              </div>
-                            </div>
+                            <CaptionsTileCard
+                              text={captionsText}
+                              isDarkMode={isDarkMode}
+                              totalTiles={assignedIds.length}
+                            />
                           ) : isTimerFeature ? (
-                            <div className="absolute inset-0 z-0">
-                              <TimerProjectionScreen
-                                days={timerPreview.days}
-                                hours={timerPreview.hours}
-                                minutes={timerPreview.minutes}
-                                seconds={timerPreview.seconds}
-                                theme={timerPreview.theme}
-                                compact
-                              />
-                            </div>
+                            <TimerTileCard
+                              days={timerPreview.days}
+                              hours={timerPreview.hours}
+                              minutes={timerPreview.minutes}
+                              seconds={timerPreview.seconds}
+                              theme={timerPreview.theme}
+                              isDarkMode={isDarkMode}
+                            />
                           ) : thumbnail ? (
                             <img
                               src={thumbnail}
                               alt={`${win.app} thumbnail`}
-                              className="absolute inset-0 h-full w-full object-fit bg-primary-50 dark:bg-primary-950/50 z-0"
+                              className="absolute inset-0 h-full w-full object-cover bg-primary-50 dark:bg-primary-950/50 z-0"
                               draggable={false}
                             />
                           ) : (
@@ -1144,6 +1217,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         windowName={windowLimitModal?.windowName}
         onClose={() => setWindowLimitModal(null)}
       />
+
     </div>
   );
 };

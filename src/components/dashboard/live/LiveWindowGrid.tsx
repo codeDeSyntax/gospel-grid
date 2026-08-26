@@ -7,7 +7,8 @@ import { SingleWindowLayoutLive } from "../layouts/live/SingleWindowLayoutLive";
 import { DualWindowLayoutLive } from "../layouts/live/DualWindowLayoutLive";
 import { TripleWindowLayoutLive } from "../layouts/live/TripleWindowLayoutLive";
 import { QuadWindowLayoutLive } from "../layouts/live/QuadWindowLayoutLive";
-import { TimerProjectionScreen } from "../projection/TimerProjectionScreen";
+import { TimerStageProjection } from "../projection/TimerStageProjection";
+import { CaptionsStageProjection } from "../projection/CaptionsStageProjection";
 import {
   TIMER_FEATURE_WINDOW_PREFIX,
   getCountdownRemainingMs,
@@ -23,7 +24,6 @@ import {
   loadFeatureCaptionsState,
   type FeatureCaptionsState,
 } from "../RightPanel/featureCaptionsState";
-import { LiveCaptionsSpeechDisplay } from "../captions";
 
 /**
  * PERFORMANCE ARCHITECTURE — GPU-ACCELERATED VIDEO PIPELINE
@@ -179,6 +179,57 @@ export function LiveWindowGrid({
     };
   }, []);
 
+  const [liveTitles, setLiveTitles] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // In published projection windows, avoid aggressive 1s Win32 enumeration IPC polling
+    if (layoutId) return;
+
+    let isCancelled = false;
+
+    const pollWindowTitles = async () => {
+      if (!window.electronAPI?.enumerateWindows) return;
+      try {
+        const res = await window.electronAPI.enumerateWindows({
+          includeMinimized: false,
+          includeSystemWindows: false,
+        });
+        if (isCancelled || !res?.success || !Array.isArray(res.windows)) return;
+
+        const updated: Record<string, string> = {};
+        for (const win of res.windows) {
+          if (win.id && win.name) {
+            updated[win.id] = win.name;
+          }
+          if (win.handle && win.name) {
+            updated[`handle:${win.handle}`] = win.name;
+          }
+        }
+
+        setLiveTitles((prev) => {
+          let hasDiff = false;
+          for (const [k, v] of Object.entries(updated)) {
+            if (prev[k] !== v) {
+              hasDiff = true;
+              break;
+            }
+          }
+          return hasDiff ? { ...prev, ...updated } : prev;
+        });
+      } catch {
+        // Polling catch
+      }
+    };
+
+    const timer = setInterval(pollWindowTitles, 3000);
+    pollWindowTitles();
+
+    return () => {
+      isCancelled = true;
+      clearInterval(timer);
+    };
+  }, [layoutId]);
+
   // ── MediaStream hook — one live GPU stream per window ──────────────────
   const sourceIds = useMemo(
     () =>
@@ -236,22 +287,37 @@ export function LiveWindowGrid({
     const isImageFeature = win.id.startsWith(IMAGE_FEATURE_WINDOW_PREFIX);
     const isCaptionsFeature = win.id === CAPTIONS_FEATURE_WINDOW_ID;
 
+    const liveSizeVariant = (() => {
+      switch (type) {
+        case "single":
+          return "hero" as const;
+        case "dual":
+          return "large" as const;
+        case "triple":
+        case "quad":
+        default:
+          return "medium" as const;
+      }
+    })();
+
+    const isSingle = type === "single";
+    const cellBorderClass = isSingle
+      ? ""
+      : "border-2 border-solid border-neutral-700/90 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.5)]";
+
     if (isCaptionsFeature) {
       return (
         <div
           key={win.id}
-          className="relative overflow-hidden bg-black flex items-center justify-center p-8 select-none"
+          className={`relative w-full h-full overflow-hidden bg-black flex items-center justify-center select-none ${cellBorderClass}`}
           style={{
             ...customStyle,
           }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_50%)] pointer-events-none" />
-          <div className="relative z-10 w-full max-w-4xl">
-            <LiveCaptionsSpeechDisplay
-              text={captionsState.text}
-              isDarkMode={true}
-            />
-          </div>
+          <CaptionsStageProjection
+            text={captionsState.text}
+            layoutMode={type}
+          />
         </div>
       );
     }
@@ -267,12 +333,12 @@ export function LiveWindowGrid({
       return (
         <div
           key={win.id}
-          className="relative overflow-hidden bg-black"
+          className={`relative w-full h-full overflow-hidden bg-black ${cellBorderClass}`}
           style={{
             ...customStyle,
           }}
         >
-          <TimerProjectionScreen
+          <TimerStageProjection
             days={timerView.days}
             hours={timerView.hours}
             minutes={timerView.minutes}
@@ -289,7 +355,7 @@ export function LiveWindowGrid({
       return (
         <div
           key={win.id}
-          className="relative overflow-hidden bg-black"
+          className={`relative overflow-hidden bg-black ${cellBorderClass}`}
           style={{
             ...customStyle,
           }}
@@ -312,12 +378,15 @@ export function LiveWindowGrid({
 
     const stream = streams[win.id] || null;
     const status = statuses[win.id] || "pending";
-    const isSingle = type === "single";
+    const liveName =
+      liveTitles[win.id] ||
+      (win.handle ? liveTitles[`handle:${win.handle}`] : undefined) ||
+      win.name;
 
     return (
       <div
         key={win.id}
-        className="relative overflow-hidden bg-black"
+        className={`relative overflow-hidden bg-black ${cellBorderClass}`}
         style={{
           ...customStyle,
         }}
@@ -325,7 +394,7 @@ export function LiveWindowGrid({
         <VideoWindow
           stream={stream}
           status={status}
-          windowName={win.name}
+          windowName={liveName}
           appName={win.app}
           contrast={publishedQuality.contrast}
           brightness={publishedQuality.brightness}

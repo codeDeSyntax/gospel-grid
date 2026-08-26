@@ -16,8 +16,8 @@ export const QuadWindowLayoutLive: React.FC<QuadWindowLayoutLiveProps> = ({
 }) => {
   return (
     <div
-      className="w-full h-full grid grid-cols-2 grid-rows-2"
-      style={{ gap: "2px" }}
+      className="w-full h-full grid grid-cols-2 grid-rows-2 bg-black"
+      style={{ gap: "4px" }}
     >
       {renderWindow(windows[0], { width: "100%", height: "100%" })}
       {renderWindow(windows[1], { width: "100%", height: "100%" })}

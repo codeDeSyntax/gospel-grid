@@ -16,19 +16,32 @@ export const TripleWindowLayoutLive: React.FC<TripleWindowLayoutLiveProps> = ({
 }) => {
   return (
     <div
-      className="w-full h-full grid grid-cols-2 grid-rows-2"
-      style={{ gap: "2px" }}
+      className="w-full h-full grid grid-cols-2 grid-rows-2 bg-black"
+      style={{ gap: "4px" }}
     >
-      {/* Top-left */}
-      {renderWindow(windows[0], { width: "100%", height: "100%" })}
-      {/* Top-right */}
-      {renderWindow(windows[1], { width: "100%", height: "100%" })}
-      {/* Bottom — spans full width, centered content */}
-      <div className="col-span-2 flex justify-center">
-        <div className="w-1/2 h-full">
-          {renderWindow(windows[2], { width: "100%", height: "100%" })}
-        </div>
-      </div>
+      {/* Slot 1: Top-Left (Top) */}
+      {windows[0] &&
+        renderWindow(windows[0], {
+          width: "100%",
+          height: "100%",
+        })}
+
+      {/* Slot 2: Top-Right */}
+      {windows[1] &&
+        renderWindow(windows[1], {
+          width: "100%",
+          height: "100%",
+        })}
+
+      {/* Slot 3: Bottom-Left (Down) */}
+      {windows[2] &&
+        renderWindow(windows[2], {
+          width: "100%",
+          height: "100%",
+        })}
+
+      {/* Slot 4: Bottom-Right (Empty black placeholder with matching border) */}
+      <div className="w-full h-full bg-black border border-solid border-neutral-800/80" />
     </div>
   );
 };

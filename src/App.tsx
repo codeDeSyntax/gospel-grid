@@ -46,7 +46,9 @@ const slideVariants = {
 function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("dashboard");
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(
+    () => !new URLSearchParams(window.location.search).get("layoutId"),
+  );
   const [navigationDirection, setNavigationDirection] = useState(1);
   const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] =
     useState(false);
@@ -188,13 +190,13 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    // TEMP: splashReady disabled so splash stays open for design review
+    if (!showSplash) return;
     const timer = window.setTimeout(() => {
-      (window as any).windowControls?.splashReady?.();
       setShowSplash(false);
-    }, 1000);
+      (window as any).windowControls?.splashReady?.();
+    }, 1400);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [showSplash]);
 
   const handleGetStarted = () => {
     systemLogger.log(

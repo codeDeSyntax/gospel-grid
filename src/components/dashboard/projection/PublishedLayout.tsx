@@ -84,70 +84,85 @@ export const PublishedLayout: React.FC<PublishedLayoutProps> = ({
         {overlayVisible && overlayText && !isBlackout && (
           <motion.div
             key="overlay-backdrop"
-            className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center bg-black/60"
+            className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            <div
-              key={overlayText}
-              className="text-white font-black text-center px-16"
-              style={{
-                fontSize: "clamp(2rem, 5vw, 5rem)",
-                lineHeight: 1.3,
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                alignItems: "baseline",
-                gap: "0.25em 0.3em",
-              }}
-            >
-              {overlayText.split(" ").map((word, wi) => (
-                <motion.span
-                  key={`${overlayText}-${wi}`}
-                  style={{
-                    display: "inline-block",
-                    textShadow:
-                      "0 4px 32px rgba(0,0,0,0.95), 0 0 60px rgba(0,0,0,0.7)",
-                  }}
-                  initial={{
-                    opacity: 0,
-                    y: -(70 + (wi % 3) * 30),
-                    x: wi % 2 === 0 ? -(12 + (wi % 4) * 8) : 12 + (wi % 4) * 8,
-                    rotate:
-                      wi % 2 === 0 ? -(10 + (wi % 3) * 6) : 10 + (wi % 3) * 6,
-                    scale: 0.4,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    x: 0,
-                    rotate: 0,
-                    scale: 1,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: 80,
-                    rotate: wi % 2 === 0 ? -12 : 12,
-                    scale: 0.5,
-                    transition: {
-                      delay: wi * 0.04,
-                      duration: 0.3,
-                      ease: "easeIn",
-                    },
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 220,
-                    damping: 22,
-                    delay: wi * 0.09,
-                  }}
-                >
-                  {word}
-                </motion.span>
-              ))}
-            </div>
+            {/<[a-z][\s\S]*>/i.test(overlayText) ? (
+              <motion.div
+                key={overlayText}
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-4xl px-8 flex items-center justify-center pointer-events-auto drop-shadow-2xl"
+                dangerouslySetInnerHTML={{
+                  __html: overlayText
+                    .replace(/\bclassName=/gi, "class=")
+                    .replace(/\bclss=/gi, "class="),
+                }}
+              />
+            ) : (
+              <div
+                key={overlayText}
+                className="text-white font-black text-center px-16"
+                style={{
+                  fontSize: "clamp(2rem, 5vw, 5rem)",
+                  lineHeight: 1.3,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  alignItems: "baseline",
+                  gap: "0.25em 0.3em",
+                }}
+              >
+                {overlayText.split(" ").map((word, wi) => (
+                  <motion.span
+                    key={`${overlayText}-${wi}`}
+                    style={{
+                      display: "inline-block",
+                      textShadow:
+                        "0 4px 32px rgba(0,0,0,0.95), 0 0 60px rgba(0,0,0,0.7)",
+                    }}
+                    initial={{
+                      opacity: 0,
+                      y: -(70 + (wi % 3) * 30),
+                      x: wi % 2 === 0 ? -(12 + (wi % 4) * 8) : 12 + (wi % 4) * 8,
+                      rotate:
+                        wi % 2 === 0 ? -(10 + (wi % 3) * 6) : 10 + (wi % 3) * 6,
+                      scale: 0.4,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      x: 0,
+                      rotate: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 80,
+                      rotate: wi % 2 === 0 ? -12 : 12,
+                      scale: 0.5,
+                      transition: {
+                        delay: wi * 0.04,
+                        duration: 0.3,
+                        ease: "easeIn",
+                      },
+                    }}
+                    transition={{
+                      delay: wi * 0.06,
+                      duration: 0.5,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

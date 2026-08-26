@@ -14,6 +14,7 @@ export interface WindowThumbnail {
   windowId: string;
   dataUrl: string;
   timestamp: number;
+  title?: string;
 }
 
 /**
@@ -124,6 +125,7 @@ export async function captureWindowThumbnail(
       windowId,
       dataUrl,
       timestamp: Date.now(),
+      title: windowTitle,
     };
 
     // Cache the thumbnail using the computed image hash if available
@@ -330,6 +332,7 @@ export async function batchCaptureThumbnails(
       windowId,
       dataUrl,
       timestamp: Date.now(),
+      title: source.name,
     };
 
     // Cache it (include image hash if we computed one)

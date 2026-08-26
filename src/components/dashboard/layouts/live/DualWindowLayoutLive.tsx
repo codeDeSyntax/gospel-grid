@@ -15,7 +15,7 @@ export const DualWindowLayoutLive: React.FC<DualWindowLayoutLiveProps> = ({
   renderWindow,
 }) => {
   return (
-    <div className="w-full h-full grid grid-cols-2" style={{ gap: "2px" }}>
+    <div className="w-full h-full grid grid-cols-2 bg-black" style={{ gap: "4px" }}>
       {windows[0] &&
         renderWindow(windows[0], {
           width: "100%",

@@ -22,7 +22,7 @@ import {
 } from "@/store/slices/gridSlice";
 import { publishDisplayLayout } from "@/store/slices/notificationSlice";
 import { setProjectionOn } from "@/store/slices/appSlice";
-import { TimerProjectionScreen } from "../projection/TimerProjectionScreen";
+import { TimerTileCard, CaptionsTileCard } from "../tiles";
 import {
   getCountdownRemainingMs,
   getTimerFeatureWindowId,
@@ -34,7 +34,6 @@ import {
   loadFeatureCaptionsState,
 } from "../RightPanel/featureCaptionsState";
 import { ManageDisplayMenu } from "../ManageDisplayMenu";
-import { LiveCaptionsSpeechDisplay } from "../captions";
 
 /**
  * PREVIEW PANEL — one-time snapshot approach (debounced).
@@ -657,18 +656,22 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   const getWindowTileClasses = (assignedCount: number, isFocused: boolean) => {
+    const focusRing = isFocused
+      ? "ring-2 ring-theme-primary-300/70"
+      : "hover:ring-1 hover:ring-theme-primary-400/40";
+
     const base =
-      "group relative min-w-0 max-h-full overflow-hidden rounded-xl transition-all duration-200 flex items-center justify-center bg-black border-0 aspect-[16/9] w-full h-auto";
+      "group relative min-w-0 overflow-hidden rounded-xl transition-all duration-200 bg-stone-100 dark:bg-black border-0";
 
     if (assignedCount === 1) {
-      return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+      return `${base} w-full h-full aspect-[16/9] ${focusRing}`;
     }
 
     if (assignedCount === 2) {
-      return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+      return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
     }
 
-    return `${base} ${isFocused ? "ring-2 ring-theme-primary-300/70" : "hover:ring-1 hover:ring-theme-primary-400/40"}`;
+    return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
   };
 
   return (
@@ -883,7 +886,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`absolute inset-0 p-3 grid gap-2 ${getGridClasses(assignedIds.length)} auto-rows-fr content-stretch items-stretch overflow-hidden`}
+                    className={`absolute inset-0 p-2.5 grid gap-2.5 ${getGridClasses(assignedIds.length)} content-start items-start overflow-hidden`}
                   >
                     {assignedIds.map((windowId) => {
                       const win = windowMap.get(windowId);
@@ -925,24 +928,20 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             </div>
                           )}
                           {isCaptionsFeature ? (
-                            <div className="absolute inset-0 z-0 flex items-center justify-center p-4 text-center bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_50%)]">
-                              <LiveCaptionsSpeechDisplay
-                                text={captionsText}
-                                isDarkMode={isDarkMode}
-                                compact
-                              />
-                            </div>
+                            <CaptionsTileCard
+                              text={captionsText}
+                              isDarkMode={isDarkMode}
+                              totalTiles={assignedIds.length}
+                            />
                           ) : isTimerFeature ? (
-                            <div className="absolute inset-0 z-0">
-                              <TimerProjectionScreen
-                                days={timerPreview.days}
-                                hours={timerPreview.hours}
-                                minutes={timerPreview.minutes}
-                                seconds={timerPreview.seconds}
-                                theme={timerPreview.theme}
-                                compact
-                              />
-                            </div>
+                            <TimerTileCard
+                              days={timerPreview.days}
+                              hours={timerPreview.hours}
+                              minutes={timerPreview.minutes}
+                              seconds={timerPreview.seconds}
+                              theme={timerPreview.theme}
+                              isDarkMode={isDarkMode}
+                            />
                           ) : thumbnail ? (
                             <img
                               src={thumbnail}

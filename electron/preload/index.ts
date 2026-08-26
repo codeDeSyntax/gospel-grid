@@ -406,6 +406,20 @@ contextBridge.exposeInMainWorld("speechAPI", {
   },
 });
 
+// --------- AI Context Intelligence API ---------
+contextBridge.exposeInMainWorld("contextIntelligenceAPI", {
+  setKey: (provider: string, apiKey: string) =>
+    ipcRenderer.invoke("ai-context-set-key", provider, apiKey),
+  clearKey: (provider: string) =>
+    ipcRenderer.invoke("ai-context-clear-key", provider),
+  getKeyStatus: () =>
+    ipcRenderer.invoke("ai-context-get-key-status"),
+  analyze: (payload: { provider: string; transcript: string }) =>
+    ipcRenderer.invoke("ai-context-analyze", payload),
+  test: (provider: string) =>
+    ipcRenderer.invoke("ai-context-test", provider),
+});
+
 // --------- Preload scripts loading ---------
 function domReady(
   condition: DocumentReadyState[] = ["complete", "interactive"],
