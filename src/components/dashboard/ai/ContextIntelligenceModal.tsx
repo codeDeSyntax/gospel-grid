@@ -66,19 +66,28 @@ const CARD_STYLES: Record<
     badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     border: "border-l-emerald-500",
   },
+  custom_ui: {
+    icon: Sparkles,
+    label: "UI Block",
+    badge: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+    border: "border-l-cyan-500",
+  },
 };
 
 function getCardHeadline(card: AiProducerCard): string {
   switch (card.type) {
     case "lower_third":
     case "key_metric":
-      return card.headline;
+    case "custom_ui":
+      return card.headline || (card as any).item || "Highlight";
     case "quote":
-      return `"${card.quote}"`;
+      return card.quote ? `"${card.quote}"` : (card.headline || "");
     case "citation":
-      return card.reference;
+      return card.reference || card.headline || "";
     case "agenda_item":
-      return card.item;
+      return card.item || card.headline || "";
+    default:
+      return (card as any).headline || "";
   }
 }
 
@@ -86,12 +95,15 @@ function getCardSubline(card: AiProducerCard): string | null {
   switch (card.type) {
     case "lower_third":
     case "key_metric":
-      return card.subline;
+    case "custom_ui":
+      return card.subline ?? null;
     case "quote":
       return card.attribution ? `— ${card.attribution}` : null;
     case "citation":
       return card.body ?? null;
     case "agenda_item":
+      return null;
+    default:
       return null;
   }
 }

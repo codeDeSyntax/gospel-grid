@@ -307,8 +307,10 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
   const inputRef = useRef<HTMLInputElement>(null);
   const micCaptureRef = useRef<{ stop: () => void } | null>(null);
 
-  // Listen for speech recognition results & update captions + input instantly
+  // Listen for speech recognition results & update captions + input only while modal is open
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleCaptionsUpdate = () => {
       try {
         const state = loadFeatureCaptionsState();
@@ -331,14 +333,12 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
 
     handleCaptionsUpdate();
     window.addEventListener(FEATURE_CAPTIONS_EVENT, handleCaptionsUpdate);
-    window.addEventListener("storage", handleCaptionsUpdate);
 
     return () => {
       offSpeech?.();
       window.removeEventListener(FEATURE_CAPTIONS_EVENT, handleCaptionsUpdate);
-      window.removeEventListener("storage", handleCaptionsUpdate);
     };
-  }, []);
+  }, [isOpen]);
 
   // Keyboard shortcut listener (Escape to close)
   useEffect(() => {
@@ -457,12 +457,11 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
             exit={{ opacity: 0, scale: 0.92, y: 12 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className={`pointer-events-auto relative w-[92vw] sm:w-[540px] max-w-xl max-h-[60vh] flex flex-col rounded-[24px] border shadow-[0_24px_70px_rgba(0,0,0,0.45)] overflow-hidden origin-bottom-right transition-colors duration-200 ${
+            className={`pointer-events-auto relative w-[92vw] sm:w-[540px] max-w-xl max-h-[60vh] flex flex-col rounded-[24px] border shadow-[0_24px_70px_rgba(0,0,0,0.45)] overflow-hidden origin-bottom-right transition-colors duration-200 backdrop-blur-md ${
               isDarkMode
                 ? "border-white/[0.12] bg-[#141414]/95 text-white"
                 : "border-neutral-200 bg-white/95 text-neutral-900"
             }`}
-            style={{ backdropFilter: "blur(28px)" }}
           >
             {/* ── Top Header Bar ───────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-5 pt-3.5 pb-1 shrink-0">

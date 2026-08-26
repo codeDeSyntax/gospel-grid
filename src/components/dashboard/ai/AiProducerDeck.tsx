@@ -70,6 +70,14 @@ const CARD_CONFIG: Record<AiProducerCard["type"], CardConfig> = {
     badgeLight: "bg-primary-50 text-primary-700 border-primary-200",
     badgeDark: "bg-primary-900/40 text-primary-300 border-primary-700/50",
   },
+  custom_ui: {
+    icon: Sparkles,
+    label: "UI Block",
+    accentLight: "border-l-cyan-500",
+    accentDark: "border-l-cyan-400",
+    badgeLight: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    badgeDark: "bg-cyan-900/40 text-cyan-300 border-cyan-700/50",
+  },
 };
 
 // ─── Card Primary Text Helpers ────────────────────────────────────────────────
@@ -78,13 +86,16 @@ function getCardHeadline(card: AiProducerCard): string {
   switch (card.type) {
     case "lower_third":
     case "key_metric":
-      return card.headline;
+    case "custom_ui":
+      return card.headline || (card as any).item || "Highlight";
     case "quote":
-      return `"${card.quote}"`;
+      return card.quote ? `"${card.quote}"` : (card.headline || "");
     case "citation":
-      return card.reference;
+      return card.reference || card.headline || "";
     case "agenda_item":
-      return card.item;
+      return card.item || card.headline || "";
+    default:
+      return (card as any).headline || "";
   }
 }
 
@@ -92,12 +103,15 @@ function getCardSubline(card: AiProducerCard): string | null {
   switch (card.type) {
     case "lower_third":
     case "key_metric":
-      return card.subline;
+    case "custom_ui":
+      return card.subline ?? null;
     case "quote":
       return card.attribution ? `— ${card.attribution}` : null;
     case "citation":
       return card.body ?? null;
     case "agenda_item":
+      return null;
+    default:
       return null;
   }
 }

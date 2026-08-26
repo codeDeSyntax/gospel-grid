@@ -160,12 +160,10 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     };
 
     syncCaptions();
-    const timer = window.setInterval(syncCaptions, 500);
     window.addEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
     window.addEventListener("storage", syncCaptions);
 
     return () => {
-      window.clearInterval(timer);
       window.removeEventListener(FEATURE_CAPTIONS_EVENT, syncCaptions);
       window.removeEventListener("storage", syncCaptions);
     };
