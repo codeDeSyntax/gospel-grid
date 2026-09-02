@@ -645,7 +645,7 @@ const SectionContent: React.FC<{
           </div>
 
           {/* AI Producer Intelligence Section */}
-          <div className="pt-2">
+          <div className="pt-2 pb-16">
             <AiSettingsSection isDarkMode={isDarkMode} />
           </div>
         </section>

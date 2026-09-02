@@ -2,7 +2,9 @@ import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { WindowPicker, type WindowInfo } from "./picker/WindowPicker";
 import { CosmicBackground } from "./background/CosmicBackground";
 import { InspectorPanel } from "./inspector/InspectorPanel";
+import { AiCardToast } from "./ai/AiCardToast";
 import { ContextIntelligenceFullModal } from "./ai/ContextIntelligenceFullModal";
+import type { FeatureView } from "./RightPanel/types";
 import { useContextIntelligence } from "@/hooks/useContextIntelligence";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { PanelView } from "./inspector/types";
@@ -31,6 +33,7 @@ import {
   useSelectionHistory,
   type SelectionMap,
 } from "@/hooks/useSelectionHistory";
+import type { AiProvider } from "@/services/ai/types";
 import {
   FEATURE_TIMER_EVENT,
   type FeatureTimerItem,
@@ -142,9 +145,15 @@ const buildCaptionsFeatureWindow = (): WindowInfo => ({
 
 interface DashboardProps {
   onHomeClick?: () => void;
+  isSplashLoading?: boolean;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
+export const Dashboard: React.FC<DashboardProps> = ({
+  onHomeClick,
+  isSplashLoading = false,
+}) => {
+  const [activeFeatureView, setActiveFeatureView] =
+    useState<FeatureView>("autofit");
   // Redux hooks
   const dispatch = useAppDispatch();
   const publishedQuality = useAppSelector(
@@ -212,23 +221,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
 
   // ── AI Context Intelligence & Captions Modal State ────────────────────────
   const [isContextModalOpen, setIsContextModalOpen] = useState(false);
-  const [activeAiProvider, setActiveAiProvider] = useState<"groq" | "openai">(() => {
+  const [activeAiProvider, setActiveAiProvider] = useState<AiProvider>(() => {
     const stored = localStorage.getItem("wingrid:ai-provider");
-    return stored === "openai" ? "openai" : "groq";
+    if (stored === "gemini" || stored === "openai") return stored as AiProvider;
+    return "groq";
   });
 
   useEffect(() => {
     const detectProvider = async () => {
       try {
         const stored = localStorage.getItem("wingrid:ai-provider");
-        if (stored === "groq" || stored === "openai") {
-          setActiveAiProvider(stored);
+        if (stored === "groq" || stored === "gemini" || stored === "openai") {
+          setActiveAiProvider(stored as AiProvider);
           return;
         }
         if (window.contextIntelligenceAPI?.getKeyStatus) {
           const st = await window.contextIntelligenceAPI.getKeyStatus();
           if (st.success) {
             if (st.groq) setActiveAiProvider("groq");
+            else if (st.gemini) setActiveAiProvider("gemini");
             else if (st.openai) setActiveAiProvider("openai");
           }
         }
@@ -289,15 +300,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onHomeClick }) => {
     const offSpeech = window.speechToTextAPI?.onSpeechResult?.(
       (result: { success?: boolean; text?: string; error?: string }) => {
         if (!result?.success) {
-          const current = loadFeatureCaptionsState();
-          saveFeatureCaptionsState({
-            ...current,
-            isStreaming: false,
-            isPaused: false,
-            lastError: result?.error || "Speech service error",
-            updatedAtMs: Date.now(),
-          });
-          dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+          if (result?.error) {
+            console.warn("🎙️ [Dashboard:Speech] Non-fatal speech event:", result.error);
+          }
           return;
         }
 
@@ -1032,8 +1037,9 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
 
   const windowsForPicker = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
-    return [captionsFeatureWindow, ...timerFeatureWindows, ...baseWindows];
-  }, [state.windows, timerFeatureWindows, captionsFeatureWindow]);
+    // Temporarily removed timerFeatureWindows from window picker list
+    return [captionsFeatureWindow, ...baseWindows];
+  }, [state.windows, captionsFeatureWindow]);
 
   const windowsForInspector = useMemo(() => {
     const baseWindows = state.windows.filter((w) => !isFeatureWindowId(w.id));
@@ -1345,6 +1351,20 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
             onWindowRemove={handleWindowRemove}
             onWindowAdd={handleWindowAdd}
             activePanel={activePanel}
+            contextIntelligence={{
+              cards: aiCards,
+              status: aiStatus,
+              mode: aiMode,
+              setMode: setAiMode,
+              dismissCard: handleDismissAiCard,
+              clearCards: handleClearAiCards,
+              pushCardToOverlay: handlePushAiCard,
+              hideOverlay: handleHideAiCardOverlay,
+              generateFromText: handleGenerateFromText,
+              provider: activeAiProvider,
+              activeView: activeFeatureView,
+              setActiveView: setActiveFeatureView,
+            }}
           />
         </div>
       </div>
@@ -1359,63 +1379,82 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
         onClose={() => setWindowLimitModal(null)}
       />
 
-      {/* Floating Circular Toggler Button (Original Orb Design) */}
-      <div className="fixed bottom-3 right-3 z-50 pointer-events-auto">
-        <DepthSurface
-          className={`relative rounded-full w-11 h-11 flex items-center justify-center transition-all duration-300 ${
-            aiCards.length > 0
-              ? "border border-emerald-300/80 bg-emerald-400/20 shadow-[0_0_0_5px_rgba(16,185,129,0.18),0_12px_30px_rgba(16,185,129,0.25)]"
-              : "border border-theme-primary-300/50 bg-theme-primary-500/18 shadow-[0_10px_24px_rgba(0,0,0,0.4)]"
-          }`}
-        >
+      {/* Floating AI orb toggler */}
+      {!isSplashLoading && activeFeatureView !== "captions" && (
+        <div className="fixed bottom-3 right-3 z-50 pointer-events-auto">
           <button
             type="button"
-            onClick={() => setIsContextModalOpen(true)}
-            className="group relative flex h-11 w-11 items-center justify-center rounded-full active:scale-95 transition-transform"
-            aria-label="Toggle Live Captions & AI Intelligence"
-            title="Live Captions & AI Intelligence (Ctrl+K)"
+            onClick={() => setActiveFeatureView("captions")}
+            aria-label="AI Context Cards"
+            title="AI Context Cards"
+            className={`relative flex h-10 w-10 p-0.5 items-center justify-center rounded-full transition-all duration-300 cursor-pointer active:scale-90 shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-visible ${
+              aiCards.length > 0
+                ? "bg-primary-500/20 shadow-[0_0_0_3px_rgba(94,172,36,0.25),0_4px_20px_rgba(0,0,0,0.5)]"
+                : isDarkMode
+                  ? "bg-white/8 hover:bg-white/14"
+                  : "bg-black/6 hover:bg-black/10"
+            }`}
           >
+            {/* Subtle frosted ring */}
             <span
-              className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
-                aiStatus === "analyzing" || aiCards.length > 0
-                  ? "animate-ping bg-emerald-300/20 opacity-90"
-                  : "opacity-0"
+              className={`absolute inset-0 rounded-full border border-solid transition-colors ${
+                aiCards.length > 0
+                  ? "border-primary-500/40"
+                  : isDarkMode
+                  ? "border-white/10"
+                  : "border-black/10"
               }`}
             />
+
             <img
               src="./caption.png"
-              alt="Live Captions & AI"
-              className="relative z-10 h-7 w-7 rounded-full object-cover drop-shadow-sm"
+              alt="AI"
+              className={`relative z-10 w-full h-full rounded-full object-cover p-0.5 transition-opacity ${
+                aiCards.length > 0 ? "opacity-100" : "opacity-85"
+              }`}
             />
 
+            {/* Card count badge */}
             {aiCards.length > 0 && (
-              <span
-                className={`absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[9px] font-black shadow-md ${
-                  isDarkMode ? "bg-white text-black" : "bg-neutral-900 text-white"
-                }`}
-              >
+              <span className="absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[8.5px] font-black bg-primary-500 text-white shadow-md">
                 {aiCards.length}
               </span>
             )}
-          </button>
-        </DepthSurface>
-      </div>
 
-      {/* Centered Large Modern Modal */}
+            {/* Pulse ring when analyzing */}
+            {aiStatus === "analyzing" && (
+              <span className="absolute inset-0 rounded-full animate-ping bg-primary-400/25" />
+            )}
+          </button>
+        </div>
+      )}
+
+      {!isSplashLoading && activeFeatureView !== "captions" && (
+        <AiCardToast
+          cards={aiCards}
+          isDarkMode={isDarkMode}
+          onDismiss={handleDismissAiCard}
+          onClearAll={handleClearAiCards}
+          onPush={handlePushAiCard}
+          onHide={handleHideAiCardOverlay}
+        />
+      )}
+
+      {/* Context Intelligence Live Modal */}
       <ContextIntelligenceFullModal
         isOpen={isContextModalOpen}
         onClose={() => setIsContextModalOpen(false)}
         cards={aiCards}
         status={aiStatus}
+        isDarkMode={isDarkMode}
         mode={aiMode}
         onToggleMode={() => setAiMode(aiMode === "auto" ? "manual" : "auto")}
-        isDarkMode={isDarkMode}
-        provider={activeAiProvider}
         onDismiss={handleDismissAiCard}
         onClear={handleClearAiCards}
         onPush={handlePushAiCard}
         onHide={handleHideAiCardOverlay}
         onGenerateFromText={handleGenerateFromText}
+        provider={activeAiProvider}
       />
     </div>
   );

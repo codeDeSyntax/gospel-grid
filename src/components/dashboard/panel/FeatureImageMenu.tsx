@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { DepthButton } from "@/shared/DepthButton";
+import { FolderOpen, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import {
   addImagesToCollection,
   loadFeatureImageCollection,
@@ -14,6 +14,7 @@ import {
 
 interface FeatureImageMenuProps {
   isOpen: boolean;
+  onClose?: () => void;
 }
 
 const buildDragPayload = (image: FeatureImageItem) => {
@@ -37,6 +38,7 @@ const buildDragPayload = (image: FeatureImageItem) => {
 
 export const FeatureImageMenu: React.FC<FeatureImageMenuProps> = ({
   isOpen,
+  onClose,
 }) => {
   const [imageCollection, setImageCollection] =
     useState<FeatureImageCollection>(() => loadFeatureImageCollection());
@@ -76,6 +78,12 @@ export const FeatureImageMenu: React.FC<FeatureImageMenuProps> = ({
     return `${count} image${count === 1 ? "" : "s"}`;
   }, [imageCollection.images.length]);
 
+  const folderName = useMemo(() => {
+    if (!imageCollection.directoryPath) return "Select Folder";
+    const parts = imageCollection.directoryPath.split(/[/\\]/);
+    return parts[parts.length - 1] || imageCollection.directoryPath;
+  }, [imageCollection.directoryPath]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -106,107 +114,127 @@ export const FeatureImageMenu: React.FC<FeatureImageMenuProps> = ({
 
   return (
     <div
-      className={` f absolute left-0 right-0 top-0 overflow-hidden rounded-2xl border-dotted border-1 border-theme-primary-500 bg-theme-primary-950  transition-all duration-200 ${
+      className={`absolute left-0 right-0 top-0 z-30 overflow-hidden rounded-2xl border-2 border-dotted border-theme-primary-500 bg-theme-primary-950 transition-all duration-200 ${
         isOpen
-          ? "h-[80px] opacity-100 pointer-events-auto"
-          : "h-0 opacity-0 pointer-events-none"
+          ? "h-[80px] opacity-100 translate-y-0 pointer-events-auto"
+          : "h-0 opacity-0 -translate-y-2 pointer-events-none"
       }`}
       aria-hidden={!isOpen}
     >
-      <aside className="h-full px-3 py-2 ">
-        <div className="flex h-full min-h-0 items-center  rounded-2xl border-theme-primary-600 px-2 gap-2">
-          <div className="flex shrink-0 items-center  gap-2 pt-0.5">
-            <DepthButton
-              onClick={handlePickDirectory}
-              disabled={isLoading}
-              sizeClassName="h-8 rounded-lg px-3"
-              inactiveClassName="text-theme-primary-100 border-theme-primary-500/35"
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wide">
-                {isLoading ? "Loading..." : "Select"}
-              </span>
-            </DepthButton>
-
-            <span className="text-[10px] text-theme-primary-300/75 whitespace-nowrap">
+      <div className="flex h-full min-h-0 items-center px-3 py-2 gap-3">
+        {/* Left: Folder selection button */}
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={handlePickDirectory}
+            disabled={isLoading}
+            className="flex items-center gap-2 h-9 px-3 rounded-xl border border-theme-primary-600 bg-theme-primary-800 hover:bg-theme-primary-700 text-theme-primary-100 hover:text-white transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+            title={imageCollection.directoryPath || "Select image directory"}
+          >
+            {isLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-400" />
+            ) : (
+              <FolderOpen className="w-3.5 h-3.5 text-primary-400" />
+            )}
+            <span className="text-[11px] font-bold max-w-[110px] truncate">
+              {isLoading ? "Loading..." : folderName}
+            </span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-theme-primary-700 text-theme-primary-300 font-semibold">
               {countLabel}
             </span>
-          </div>
+          </button>
+        </div>
 
-          <div className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden no-scrollbar">
-            <div className="flex items-center gap-1.5 pr-1">
-              {imageCollection.images.map((image) => {
-                const isActive = image.id === imageCollection.activeImageId;
-                return (
-                  <div
-                    key={image.id}
-                    draggable
-                    onDragStart={(e) => {
-                      const payload = buildDragPayload(image);
-                      e.dataTransfer.setData(
-                        "text/plain",
-                        JSON.stringify(payload),
-                      );
-                      e.dataTransfer.effectAllowed = "copy";
-                    }}
-                    className={`relative overflow-hidden transition-all duration-200 h-14  shrink-0 rounded-lg border group cursor-grab active:cursor-grabbing ${
-                      isActive
-                        ? " border-theme-primary-300/55"
-                        : " border-theme-primary-500/30 hover:bg-theme-primary-800/30"
-                    }`}
-                    title={image.name}
+        {/* Center: Image thumbnails strip */}
+        <div className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden no-scrollbar">
+          <div className="flex items-center gap-2 py-0.5 pr-1">
+            {imageCollection.images.map((image) => {
+              const isActive = image.id === imageCollection.activeImageId;
+              return (
+                <div
+                  key={image.id}
+                  draggable
+                  onDragStart={(e) => {
+                    const payload = buildDragPayload(image);
+                    e.dataTransfer.setData(
+                      "text/plain",
+                      JSON.stringify(payload),
+                    );
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  className={`group relative overflow-hidden h-14 w-20 shrink-0 rounded-xl border transition-all duration-200 cursor-grab active:cursor-grabbing shadow-sm ${
+                    isActive
+                      ? "border-primary-400 ring-2 ring-primary-500/40"
+                      : "border-theme-primary-700 hover:border-theme-primary-500 bg-theme-primary-950"
+                  }`}
+                  title={`${image.name} — Drag to any display screen`}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      applyCollection(
+                        setActiveImageId(imageCollection, image.id),
+                      )
+                    }
+                    className="h-full w-full text-left min-w-0 z-10 block"
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        applyCollection(
-                          setActiveImageId(imageCollection, image.id),
-                        )
+                    <img
+                      src={
+                        failedPreviewIds[image.id]
+                          ? "/fileexp.png"
+                          : image.url
                       }
-                      className="h-full w-full text-left min-w-0 z-10"
-                    >
-                      <img
-                        src={
-                          failedPreviewIds[image.id]
-                            ? "/fileexp.png"
-                            : image.url
-                        }
-                        alt={image.name}
-                        className="h-full w-full object-cover"
-                        draggable={false}
-                        onError={() =>
-                          setFailedPreviewIds((prev) => ({
-                            ...prev,
-                            [image.id]: true,
-                          }))
-                        }
-                      />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        applyCollection(
-                          removeImageFromCollection(imageCollection, image.id),
-                        )
+                      alt={image.name}
+                      className="h-full w-full object-cover"
+                      draggable={false}
+                      onError={() =>
+                        setFailedPreviewIds((prev) => ({
+                          ...prev,
+                          [image.id]: true,
+                        }))
                       }
-                      className="absolute right-1 top-1 z-20 h-4 w-4 rounded bg-black/50 text-white/90 text-[9px] leading-none hover:bg-black/70"
-                      title="Remove image"
-                    >
-                      x
-                    </button>
-                  </div>
-                );
-              })}
+                    />
+                  </button>
 
-              {imageCollection.images.length === 0 && (
-                <div className="flex h-16 items-center rounded-lg border border-theme-primary-500/25 bg-theme-primary-900/20 px-3 text-[10px] text-theme-primary-300/75 whitespace-nowrap">
-                  Select a directory, then drag images to a display.
+                  {/* Remove button (revealed on hover) */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      applyCollection(
+                        removeImageFromCollection(imageCollection, image.id),
+                      );
+                    }}
+                    className="opacity-0 group-hover:opacity-100 absolute right-1 top-1 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-black/70 text-white/90 hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+                    title="Remove from workspace"
+                  >
+                    <X size={10} />
+                  </button>
                 </div>
-              )}
-            </div>
+              );
+            })}
+
+            {imageCollection.images.length === 0 && (
+              <div className="flex h-14 items-center gap-2 rounded-xl border border-dashed border-theme-primary-700 bg-theme-primary-950/60 px-4 text-xs text-theme-primary-300">
+                <ImageIcon className="w-4 h-4 text-theme-primary-400 opacity-70 shrink-0" />
+                <span>Select a folder to load and drag images onto displays.</span>
+              </div>
+            )}
           </div>
         </div>
-      </aside>
+
+        {/* Right: Close button */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-theme-primary-400 hover:text-white hover:bg-theme-primary-750 transition-all cursor-pointer"
+            title="Close image bar"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

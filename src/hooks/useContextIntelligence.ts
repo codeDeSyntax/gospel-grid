@@ -15,7 +15,8 @@ import {
   clearAllCards as clearAllFromService,
   generateFromCustomText,
   setDisabled,
-  destroyContextIntelligenceService,
+  subscribeCards,
+  subscribeStatus,
 } from "@/services/ai/contextIntelligenceService";
 
 export interface UseContextIntelligenceOptions {
@@ -40,8 +41,8 @@ export function useContextIntelligence({
   enabled = true,
 }: UseContextIntelligenceOptions): UseContextIntelligenceReturn {
   const dispatch = useAppDispatch();
-  const [cards, setCards] = useState<AiProducerCard[]>([]);
-  const [status, setStatus] = useState<IntelligenceStatus>("idle");
+  const [cards, setCards] = useState<AiProducerCard[]>(() => getCards());
+  const [status, setStatus] = useState<IntelligenceStatus>(() => getStatus());
   const [mode, setModeState] = useState<"auto" | "manual">(() => getExtractionMode());
 
   const setMode = useCallback((nextMode: "auto" | "manual") => {
@@ -53,32 +54,34 @@ export function useContextIntelligence({
   const providerRef = useRef<AiProvider>(provider);
   providerRef.current = provider;
 
+  // ── Multi-subscriber Card & Status Sync ─────────────────────────────────────
+  useEffect(() => {
+    const unsubCards = subscribeCards((updated) => setCards(updated));
+    const unsubStatus = subscribeStatus((s) => setStatus(s));
+    return () => {
+      unsubCards();
+      unsubStatus();
+    };
+  }, []);
+
   // ── Initialize service ─────────────────────────────────────────────────────
   useEffect(() => {
     initContextIntelligenceService({
       provider: providerRef.current,
-      debounceMs: 4_000,
-      minNewWords: 10,
+      debounceMs: 2_500,
+      minNewWords: 5,
       maxCards: 50,
       onCards: (updated) => setCards(updated),
       onStatusChange: (s) => setStatus(s),
     });
-
-    // Sync initial state
-    setCards(getCards());
-    setStatus(getStatus());
-
-    return () => {
-      destroyContextIntelligenceService();
-    };
-  }, []); // Only on mount/unmount — provider changes handled below
+  }, []); // Only on mount
 
   // ── React to provider changes ──────────────────────────────────────────────
   useEffect(() => {
     initContextIntelligenceService({
       provider,
-      debounceMs: 4_000,
-      minNewWords: 10,
+      debounceMs: 2_500,
+      minNewWords: 5,
       maxCards: 50,
       onCards: (updated) => setCards(updated),
       onStatusChange: (s) => setStatus(s),
@@ -87,7 +90,9 @@ export function useContextIntelligence({
 
   // ── React to enabled toggle ────────────────────────────────────────────────
   useEffect(() => {
-    setDisabled(!enabled);
+    if (enabled) {
+      setDisabled(false);
+    }
   }, [enabled]);
 
   // ── Subscribe to live speech results ───────────────────────────────────────
@@ -105,46 +110,16 @@ export function useContextIntelligence({
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const dismissCard = useCallback((index: number) => {
-    const updated = dismissCardFromService(index);
-    setCards(updated);
+    dismissCardFromService(index);
   }, []);
 
   const clearCards = useCallback(() => {
     clearAllFromService();
-    setCards([]);
   }, []);
 
   const pushCardToOverlay = useCallback((card: AiProducerCard) => {
-    // Build overlay text/html/json from card content
-    let text = "";
-    if (card.layoutVariant || (card.blocks && card.blocks.length > 0)) {
-      text = JSON.stringify(card);
-    } else if (card.htmlCode && card.htmlCode.trim().length > 0) {
-      text = card.htmlCode.trim();
-    } else {
-      switch (card.type) {
-        case "lower_third":
-        case "key_metric":
-        case "custom_ui":
-          text = `${card.headline || ""}${card.subline ? `\n${card.subline}` : ""}`;
-          break;
-        case "quote":
-          text = card.attribution
-            ? `"${card.quote || card.headline || ""}"\n— ${card.attribution}`
-            : `"${card.quote || card.headline || ""}"`;
-          break;
-        case "citation":
-          text = card.body
-            ? `${card.reference || card.headline || ""}\n${card.body}`
-            : (card.reference || card.headline || "");
-          break;
-        case "agenda_item":
-          text = `▶ ${card.item || card.headline || ""}`;
-          break;
-        default:
-          text = card.headline || "";
-      }
-    }
+    // Push the full card as JSON so DynamicBroadcastCard renders with rich verified styling
+    const text = JSON.stringify(card);
 
     // Push to Redux store
     dispatch(setOverlayText(text));

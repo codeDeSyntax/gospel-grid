@@ -2,7 +2,7 @@
  * Shared AI type definitions used across the renderer and main process.
  */
 
-export type AiProvider = "openai" | "groq";
+export type AiProvider = "groq" | "gemini" | "openai";
 
 export type AiProducerCardTheme =
   | "emerald"

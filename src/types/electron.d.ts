@@ -327,6 +327,7 @@ export interface ContextIntelligenceKeyStatus {
   success: boolean;
   openai?: boolean;
   groq?: boolean;
+  gemini?: boolean;
   safeStorageAvailable?: boolean;
   error?: string;
 }

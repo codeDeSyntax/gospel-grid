@@ -248,7 +248,12 @@ function App() {
       case "welcome":
         return <Welcome onGetStarted={handleGetStarted} />;
       case "dashboard":
-        return <Dashboard onHomeClick={handleBackToWelcome} />;
+        return (
+          <Dashboard
+            onHomeClick={handleBackToWelcome}
+            isSplashLoading={showSplash}
+          />
+        );
       case "published":
         return isPublishedLayoutLoading || !publishedLayoutData ? (
           <PublishedLayoutLoadingScreen />

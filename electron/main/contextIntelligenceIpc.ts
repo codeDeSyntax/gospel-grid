@@ -11,7 +11,7 @@ import https from "node:https";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type AiProvider = "openai" | "groq";
+export type AiProvider = "groq" | "gemini" | "openai";
 
 export type AiProducerCard =
   | { type: "lower_third"; headline: string; subline: string; confidence: number }
@@ -23,6 +23,7 @@ export type AiProducerCard =
 interface ApiKeySet {
   openai?: string;
   groq?: string;
+  gemini?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -30,6 +31,7 @@ interface ApiKeySet {
 const KEY_FILE_NAME = "ai_context_keys.enc";
 const OPENAI_ENDPOINT = "api.openai.com";
 const GROQ_ENDPOINT = "api.groq.com";
+const GEMINI_ENDPOINT = "generativelanguage.googleapis.com";
 
 // Circuit-breaker: after 3 consecutive failures, pause 60s
 const CIRCUIT_BREAKER_THRESHOLD = 3;
@@ -533,6 +535,15 @@ function parseCards(raw: string): AiProducerCard[] {
           c.imageUrl,
         );
 
+        let body = c.body;
+        let quote = c.quote;
+        if (!body && !quote && c.htmlCode) {
+          const pMatch = c.htmlCode.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+          if (pMatch && pMatch[1]) {
+            body = pMatch[1].replace(/^[“"']+|[”"']+$/g, "").trim();
+          }
+        }
+
         const enrichedCard = {
           ...c,
           type,
@@ -540,6 +551,9 @@ function parseCards(raw: string): AiProducerCard[] {
           imageUrl,
           headline,
           subline,
+          body,
+          quote: quote || (type === "quote" ? body : undefined),
+          reference: c.reference || (type === "citation" ? subline : undefined),
           layoutVariant: c.layoutVariant,
           blocks: Array.isArray(c.blocks) ? c.blocks : undefined,
           metadata: c.metadata && typeof c.metadata === "object" ? c.metadata : undefined,
@@ -559,7 +573,76 @@ function parseCards(raw: string): AiProducerCard[] {
   }
 }
 
-// ─── Core Analyze Function ───────────────────────────────────────────────────
+// ─── Core Analyze Functions ──────────────────────────────────────────────────
+
+async function analyzeTranscriptWithGemini(
+  apiKey: string,
+  transcript: string,
+): Promise<{ cards: AiProducerCard[]; error?: string }> {
+  const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+  let lastError = "";
+
+  const payload = {
+    system_instruction: {
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `Extract visual cards with colorful dynamic HTML+Tailwind UI code blocks on a sleek, large white soft card from this speech text:\n\n"${transcript.slice(-2000)}"`,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      response_mime_type: "application/json",
+      temperature: 0.2,
+    },
+  };
+
+  const bodyFinal = JSON.stringify(payload);
+
+  for (const model of modelsToTry) {
+    try {
+      console.log(`🧠 [AI Context Intelligence] Requesting Gemini with model: ${model}...`);
+      const raw = await httpsPost(
+        GEMINI_ENDPOINT,
+        `/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          "Content-Type": "application/json",
+        },
+        bodyFinal,
+      );
+
+      const json = JSON.parse(raw);
+      const content: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "[]";
+      console.log(`🧠 [AI Context Intelligence] Response from Gemini (${model}):`, content);
+
+      const cards = parseCards(content);
+      recordSuccess();
+      return { cards };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      lastError = message;
+      console.warn(`🧠 [AI Context Intelligence] Gemini model ${model} error (${message}), trying next...`);
+
+      if (
+        message.includes("400") ||
+        message.includes("403") ||
+        message.includes("API_KEY_INVALID") ||
+        message.includes("PERMISSION_DENIED")
+      ) {
+        recordFailure();
+        return { cards: [], error: message };
+      }
+    }
+  }
+
+  recordFailure();
+  return { cards: [], error: lastError || "All Gemini models failed." };
+}
 
 async function analyzeTranscript(
   provider: AiProvider,
@@ -567,16 +650,20 @@ async function analyzeTranscript(
   transcript: string,
 ): Promise<{ cards: AiProducerCard[]; error?: string }> {
   if (isCircuitOpen()) {
-    const remaining = Math.ceil(
-      (CIRCUIT_BREAKER_COOLDOWN_MS - (Date.now() - circuitOpenedAt!)) / 1000,
-    );
-    return { cards: [], error: `Circuit open — paused for ${remaining}s after repeated failures.` };
+    return {
+      cards: [],
+      error: "Circuit breaker open: AI service paused briefly after consecutive errors. Retrying in 60s.",
+    };
   }
 
-  const messages = buildMessages(transcript);
+  if (provider === "gemini") {
+    return analyzeTranscriptWithGemini(apiKey, transcript);
+  }
+
   const isGroq = provider === "groq";
   const hostname = isGroq ? GROQ_ENDPOINT : OPENAI_ENDPOINT;
   const apiPath = isGroq ? "/openai/v1/chat/completions" : "/v1/chat/completions";
+  const messages = buildMessages(transcript);
 
   // Dynamically query live models from Groq API endpoint
   const modelsToTry = isGroq
@@ -670,6 +757,7 @@ export function registerContextIntelligenceIpc() {
       success: true,
       openai: Boolean(keys.openai),
       groq: Boolean(keys.groq),
+      gemini: Boolean(keys.gemini),
       safeStorageAvailable: isSafeStorageAvailable(),
     };
   });

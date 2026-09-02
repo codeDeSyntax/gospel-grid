@@ -23,7 +23,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import type { AiProducerCard } from "@/services/ai/types";
+import type { AiProducerCard, AiProvider } from "@/services/ai/types";
 import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setOverlayText, setOverlayVisible } from "@/store/slices/appSlice";
@@ -42,38 +42,38 @@ const CARD_STYLES: Record<
   lower_third: {
     icon: User,
     label: "Speaker / Title",
-    badge: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    border: "border-l-blue-500",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   key_metric: {
     icon: BarChart2,
     label: "Key Metric",
-    badge: "bg-[#76cb01]/15 text-[#76cb01] border-[#76cb01]/30",
-    border: "border-l-[#76cb01]",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   quote: {
     icon: Quote,
     label: "Quote",
-    badge: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    border: "border-l-purple-500",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   citation: {
     icon: BookOpen,
     label: "Citation",
-    badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    border: "border-l-amber-500",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   agenda_item: {
     icon: List,
     label: "Topic / Agenda",
-    badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    border: "border-l-emerald-500",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   custom_ui: {
     icon: Sparkles,
     label: "UI Block",
-    badge: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-    border: "border-l-cyan-500",
+    badge: "bg-neutral-800 text-neutral-200 border-neutral-700",
+    border: "border-l-neutral-700",
   },
   concept: {
     icon: Lightbulb,
@@ -124,7 +124,7 @@ export interface ContextIntelligenceModalProps {
   cards: AiProducerCard[];
   status: IntelligenceStatus;
   isDarkMode: boolean;
-  provider: "groq" | "openai";
+  provider: AiProvider;
   onDismiss: (index: number) => void;
   onClear: () => void;
   onPush: (card: AiProducerCard) => void;
@@ -285,14 +285,14 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
             {/* ── Modal Header ─────────────────────────────────────────────── */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#76cb01]/15 text-[#76cb01]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-800 text-white border border-neutral-700">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold tracking-tight flex items-center gap-2">
                     <span>Context Intelligence</span>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#76cb01]/15 text-[#76cb01] border border-[#76cb01]/30">
-                      {provider === "groq" ? "Groq • Llama 3.1" : "ChatGPT • GPT-4o"}
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-200 border border-neutral-700">
+                      {provider === "gemini" ? "Gemini" : "Groq"}
                     </span>
                   </h2>
                 </div>
@@ -300,7 +300,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
 
               <div className="flex items-center gap-2">
                 {status === "analyzing" && (
-                  <span className="flex items-center gap-1 text-[11px] text-[#76cb01] animate-pulse font-medium">
+                  <span className="flex items-center gap-1 text-[11px] text-neutral-400 animate-pulse font-medium">
                     <Loader2 className="w-3 h-3 animate-spin" /> Analyzing speech...
                   </span>
                 )}
@@ -320,11 +320,11 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
               <div
                 className={`relative flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all ${
                   isDarkMode
-                    ? "bg-[#141414] border-white/12 focus-within:border-[#76cb01]/60 focus-within:ring-1 focus-within:ring-[#76cb01]/30"
-                    : "bg-neutral-50 border-neutral-300 focus-within:border-[#76cb01]"
+                    ? "bg-[#141414] border-white/12 focus-within:border-neutral-500 focus-within:ring-1 focus-within:ring-neutral-600/30"
+                    : "bg-neutral-50 border-neutral-300 focus-within:border-neutral-700"
                 }`}
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-[#76cb01]">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-neutral-300">
                   <Mic className="h-3.5 w-3.5 animate-pulse" />
                 </div>
 
@@ -358,7 +358,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                   type="button"
                   onClick={handlePushInputToOverlay}
                   disabled={!inputText.trim()}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold bg-[#76cb01] text-black hover:bg-[#88e003] transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold bg-white text-black hover:bg-neutral-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
                   title="Push to screen overlay (Enter)"
                 >
                   <span>Push</span>
@@ -367,7 +367,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
               </div>
             </div>
 
-            {/* ── Suggestions Section Underneath ──────────────────────────── */}
+            {/* ── Suggestions Section Underneath (Latest 3 Cards) ─────────── */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-3 min-h-[220px]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -376,7 +376,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                   </span>
                   {cards.length > 0 && (
                     <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-white/80">
-                      {cards.length}
+                      {Math.min(cards.length, 3)}
                     </span>
                   )}
                 </div>
@@ -396,7 +396,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
               {/* Cards List or Empty State */}
               {cards.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-8 text-center text-white/40">
-                  <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-2.5 text-[#76cb01]/70">
+                  <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center mb-2.5 text-neutral-400">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-medium text-white/70">No context suggestions yet</p>
@@ -406,7 +406,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-2.5">
-                  {cards.map((card, index) => {
+                  {cards.slice(0, 3).map((card, index) => {
                     const style = CARD_STYLES[card.type] ?? CARD_STYLES.agenda_item;
                     const IconComponent = style.icon;
                     const headline = getCardHeadline(card);
@@ -476,8 +476,8 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                             onClick={() => handleCardPushOrToggle(card)}
                             className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold shadow-sm transition-all cursor-pointer ${
                               isCardLive(card)
-                                ? "bg-emerald-500 hover:bg-red-500 text-white"
-                                : "bg-[#76cb01] text-black hover:bg-[#88e003]"
+                                ? "bg-neutral-800 border border-neutral-700 hover:bg-red-500 text-white"
+                                : "bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700"
                             }`}
                             title={isCardLive(card) ? "Currently live on projection screen. Click to hide." : "Push to screen overlay"}
                           >
@@ -493,7 +493,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                           <button
                             type="button"
                             onClick={() => handleInsertCard(card)}
-                            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                             title="Insert into prompt input"
                           >
                             <Copy className="w-3.5 h-3.5" />

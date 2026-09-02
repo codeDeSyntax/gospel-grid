@@ -1,5 +1,23 @@
 import { type WindowInfo } from "../picker/WindowPicker";
 
+import type { AiProducerCard, AiProvider } from "@/services/ai/types";
+import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceService";
+
+export interface ContextIntelligenceProps {
+  cards: AiProducerCard[];
+  status: IntelligenceStatus;
+  mode: "auto" | "manual";
+  setMode: (mode: "auto" | "manual") => void;
+  dismissCard: (index: number) => void;
+  clearCards: () => void;
+  pushCardToOverlay: (card: AiProducerCard) => void;
+  hideOverlay: () => void;
+  generateFromText: (text: string) => Promise<void>;
+  provider: AiProvider;
+  activeView?: FeatureView;
+  setActiveView?: (view: FeatureView) => void;
+}
+
 export type PanelView = "layout" | "settings" | "overlay";
 
 export interface RightPanelProps {
@@ -12,6 +30,7 @@ export interface RightPanelProps {
   onWindowRemove: (windowId: string) => void;
   onWindowAdd: (window: WindowInfo) => boolean | void;
   activePanel: PanelView;
+  contextIntelligence?: ContextIntelligenceProps;
 }
 
 export interface WindowLayoutCardProps {

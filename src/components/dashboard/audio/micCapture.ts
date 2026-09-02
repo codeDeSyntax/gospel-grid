@@ -76,6 +76,12 @@ export async function startRendererMicStreaming({
   const queuedChunks: Int16Array[] = [];
   let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
+  audioContext.onstatechange = () => {
+    if (audioContext.state === "suspended" && !closed) {
+      void audioContext.resume();
+    }
+  };
+
   const flushQueuedChunks = () => {
     flushTimer = null;
     if (closed || queuedChunks.length === 0) {
@@ -103,8 +109,18 @@ export async function startRendererMicStreaming({
     if (closed || chunkBuffer.byteLength === 0) return;
     queuedChunks.push(new Int16Array(chunkBuffer));
 
-    if (!flushTimer) {
-      flushTimer = setTimeout(flushQueuedChunks, 100);
+    const totalSamples = queuedChunks.reduce(
+      (sum, chunk) => sum + chunk.length,
+      0,
+    );
+    if (totalSamples >= 1600) {
+      if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+      }
+      flushQueuedChunks();
+    } else if (!flushTimer) {
+      flushTimer = setTimeout(flushQueuedChunks, 60);
     }
   };
 

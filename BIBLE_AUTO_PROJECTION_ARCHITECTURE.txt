@@ -1,0 +1,290 @@
+================================================================================
+  REAL-TIME AUTOMATED BIBLE SCRIPTURE LISTENING & PROJECTION ARCHITECTURE
+  Engine Blueprint: AssemblyAI (Streaming STT) + Groq (Llama 3.1 LLM) + Local Data
+================================================================================
+
+1. SYSTEM ARCHITECTURE & HIGH-LEVEL WORKFLOW
+--------------------------------------------------------------------------------
+The objective of this system is to listen to live spoken sermon audio in real-time,
+detect scripture references (e.g., "Open your Bibles to John 3 verse 16", "Romans 8:28"),
+query a local Bible database (offline, 0ms latency), format a broadcast-ready visual slide,
+and project it automatically (or with 1-click confirmation) onto external display screens.
+
+The complete data pipeline operates in 5 pipeline stages:
+
+  [STAGE 1: Audio Ingestion]
+      Live Microphone (16kHz PCM audio captured via Web Audio API in Renderer)
+              │ (IPC Binary / Uint8Array chunks every 250ms)
+              ▼
+  [STAGE 2: Real-time Transcription (AssemblyAI)]
+      Electron Main Process ──(WebSocket)──> AssemblyAI Realtime API
+      Stream: wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000
+      Output: Live transcript turns with high accuracy and punctuation
+              │
+              ▼
+  [STAGE 3: Intelligent Scripture Reference Extraction (Groq AI)]
+      Rolling Transcript Buffer (Debounced 3-4s or on punctuation sentence breaks)
+      Payload sent to Groq API (model: llama-3.3-70b-versatile or llama-3.1-8b-instant)
+      Extracted JSON: { book: "John", chapter: 3, verseStart: 16, verseEnd: 17, version: "KJV" }
+              │
+              ▼
+  [STAGE 4: Offline Local Scripture Database Lookup]
+      Local SQLite / JSON Bible DB indexed by [Book_ID + Chapter + Verse]
+      Retrieves text in <2ms without relying on internet connectivity
+              │
+              ▼
+  [STAGE 5: GPU Accelerated Display Projection]
+      Electron IPC `update-projection-state` -> PublishedLayout (Secondary Display)
+      Renders full-screen animated typographic scripture slide via Framer Motion
+
+
+2. AUDIO CAPTURE & ASSEMBLYAI STREAMING TRANSCRIPTION ENGINE
+--------------------------------------------------------------------------------
+How AssemblyAI works in this architecture:
+- Audio Capture: The renderer process initializes `navigator.mediaDevices.getUserMedia({ audio: true })`.
+- Resampling to 16kHz PCM Mono: AssemblyAI requires 16,000 Hz, single-channel 16-bit linear PCM audio.
+- Audio Pipeline:
+    AudioContext (sampleRate: 16000)
+       -> MediaStreamAudioSourceNode
+       -> ScriptProcessorNode (bufferSize: 4096) / AudioWorklet
+       -> Converts Float32Array audio samples to Int16Array (linear PCM buffer)
+       -> Dispatches buffer to Electron Main via `ipcRenderer.send("speech-to-text:stream-chunk", buffer)`.
+
+- WebSocket Communication (in Electron Main `assemblyAiTranscriber.ts`):
+    * Connects to `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000`
+    * Headers: `{ "Authorization": ASSEMBLYAI_API_KEY }`
+    * Sends `{ "audio_data": "<base64_pcm_chunk>" }` continuously.
+    * Receives JSON events:
+        - `PartialTranscript`: Real-time interim hypothesis while speaker talks.
+        - `FinalTranscript`: Formatted, punctuated sentence turn when speech pauses.
+    * Broadcasts back to React UI via `webContents.send("speech-to-text:result", { text, isFinal })`.
+
+
+3. GROQ AI ENGINE (LLAMA 3.1) - SCRIPTURE CONTEXT INTELLIGENCE
+--------------------------------------------------------------------------------
+Why Groq?
+- Groq's custom LPU (Language Processing Unit) delivers inference speeds of 300 - 800 tokens/second.
+- Time to First Token (TTFT) is under 150ms.
+- This allows scripture parsing in ~200ms right after the preacher utters the reference.
+
+How the Extraction Prompt is Structured:
+-----------------------------------------
+Endpoint: `https://api.groq.com/openai/v1/chat/completions`
+Model: `llama-3.3-70b-versatile` or `llama-3.1-8b-instant`
+Temperature: `0.1` (low temperature for deterministic, accurate parsing)
+Response Format: `{ "type": "json_object" }`
+
+System Prompt Example:
+```text
+You are an expert Bible reference extraction assistant for live church services.
+Analyze the live sermon transcript and detect if the speaker mentioned or quoted a scripture passage.
+Extract the exact Bible book, chapter, starting verse, and optional ending verse.
+
+Respond ONLY with a JSON object adhering to this schema:
+{
+  "detected": true,
+  "reference": "John 3:16",
+  "book": "John",
+  "chapter": 3,
+  "verseStart": 16,
+  "verseEnd": 16,
+  "confidence": 0.95,
+  "contextSummary": "God's love for the world through His only begotten Son"
+}
+
+If no scripture is detected in the transcript snippet, respond with:
+{
+  "detected": false
+}
+```
+
+Sliding Window & Debounce Buffer:
+- Transcripts stream continuously word-by-word.
+- A rolling buffer accumulates new words (min 8-12 new words or after a pause).
+- Debounce timer (3.5 seconds) fires the Groq API call, preventing redundant requests while the preacher is mid-sentence.
+- Includes a Circuit-Breaker: If 3 consecutive network/rate-limit failures occur, the service pauses for 60 seconds to protect API limits and main thread performance.
+
+
+4. SECURE API KEY STORAGE ARCHITECTURE
+--------------------------------------------------------------------------------
+In Electron desktop applications, hardcoding API keys or storing them in plaintext is unsafe.
+This architecture uses a 3-tier security model:
+
+Tier 1: OS-Level Native Encryption (Electron safeStorage API)
+- Windows: Uses DPAPI (Data Protection API) via Windows CryptProtectData.
+- macOS: Uses Apple Keychain.
+- Linux: Uses Secret Service API or libsecret.
+
+Implementation (`contextIntelligenceIpc.ts`):
+```typescript
+import { safeStorage, app } from "electron";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+const KEY_FILE = path.join(app.getPath("userData"), "ai_context_keys.enc");
+
+// Saving Key:
+export async function saveEncryptedApiKey(provider: "groq" | "assemblyai", key: string) {
+  const existing = await loadAllKeys();
+  existing[provider] = key.trim();
+  
+  const jsonStr = JSON.stringify(existing);
+  if (safeStorage.isEncryptionAvailable()) {
+    const encryptedBuffer = safeStorage.encryptString(jsonStr);
+    await fs.writeFile(KEY_FILE, encryptedBuffer);
+  } else {
+    // Fallback if OS safeStorage not supported
+    await fs.writeFile(KEY_FILE, Buffer.from(jsonStr).toString("base64"), "utf8");
+  }
+}
+
+// Loading Key:
+export async function loadEncryptedApiKey(provider: "groq" | "assemblyai"): Promise<string | null> {
+  try {
+    const buffer = await fs.readFile(KEY_FILE);
+    let decryptedJson = "";
+    if (safeStorage.isEncryptionAvailable()) {
+      decryptedJson = safeStorage.decryptString(buffer);
+    } else {
+      decryptedJson = Buffer.from(buffer.toString(), "base64").toString("utf8");
+    }
+    const keys = JSON.parse(decryptedJson);
+    return keys[provider] || null;
+  } catch {
+    return null;
+  }
+}
+```
+
+Tier 2: Environment Variable Fallback (`.env`)
+- If no user-entered key exists in `userData`, the main process reads `process.env.ASSEMBLYAI_API_KEY` and `process.env.GROQ_API_KEY` loaded via `dotenv`.
+
+Tier 3: IPC Security Boundary
+- API keys NEVER cross the IPC bridge to the renderer window in plain form.
+- The renderer requests AI extraction via `ipcRenderer.invoke("ai:generate-context", { transcript })`.
+- The main process loads the encrypted key from disk, executes the HTTPS request in Node.js, and returns only the sanitized JSON result back to the renderer.
+
+
+5. CONNECTING YOUR LOCAL BIBLE DATABASE (0ms Latency)
+--------------------------------------------------------------------------------
+Instead of fetching scripture text from slow internet APIs, maintain a local SQLite or JSON database.
+
+Recommended Local Schema (e.g. `bible_kjv.db` or `bible_esv.db` in SQLite):
+```sql
+CREATE TABLE verses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_name TEXT NOT NULL,       -- e.g. 'John', 'Genesis', '1 Corinthians'
+    book_number INTEGER NOT NULL,  -- 1 to 66 (for canonical ordering)
+    chapter INTEGER NOT NULL,      -- Chapter number
+    verse INTEGER NOT NULL,        -- Verse number
+    text TEXT NOT NULL             -- "For God so loved the world..."
+);
+
+CREATE INDEX idx_bible_lookup ON verses(book_name, chapter, verse);
+```
+
+TypeScript Local Database Query Handler (in Electron Main or local service):
+```typescript
+import Database from "better-sqlite3";
+import path from "node:path";
+
+const db = new Database(path.join(__dirname, "../data/bible_kjv.db"));
+
+export function getScriptureVerses(book: string, chapter: number, startVerse: number, endVerse?: number) {
+  const finalEnd = endVerse || startVerse;
+  const stmt = db.prepare(`
+    SELECT verse, text 
+    FROM verses 
+    WHERE LOWER(book_name) = LOWER(?) 
+      AND chapter = ? 
+      AND verse BETWEEN ? AND ? 
+    ORDER BY verse ASC
+  `);
+  
+  const rows = stmt.all(book, chapter, startVerse, finalEnd) as Array<{ verse: number; text: string }>;
+  
+  if (rows.length === 0) return null;
+  
+  const combinedText = rows.map(r => `[${r.verse}] ${r.text}`).join(" ");
+  return {
+    reference: `${book} ${chapter}:${startVerse}${finalEnd > startVerse ? `-${finalEnd}` : ""}`,
+    text: combinedText,
+    verses: rows
+  };
+}
+```
+
+
+6. AUTOMATED PROJECTION PIPELINE (SENDING TO SCREEN)
+--------------------------------------------------------------------------------
+When Groq extracts the reference and local DB fetches the scripture text:
+
+A. Automated Mode vs. Assisted Mode:
+- Assisted Mode (Default / Recommended): The UI renders a scripture suggestion card with a 1-click `Push` button (e.g., in `ContextIntelligenceFullModal`).
+- Auto-Pilot Mode: If confidence >= 0.90, the system automatically pushes the scripture directly to live projection without operator intervention.
+
+B. Redux & Main Process Projection Dispatch:
+```typescript
+// Construct Broadcast Card Payload:
+const scriptureCard = {
+  type: "citation",
+  layoutVariant: "scripture_wisdom",
+  headline: scriptureData.reference, // e.g. "John 3:16-17"
+  body: scriptureData.text,
+  themeColor: "emerald",
+  confidence: 0.98,
+  metadata: {
+    reference: scriptureData.reference,
+    category: "Scripture",
+    version: "KJV"
+  }
+};
+
+// 1. Dispatch to Redux state (for UI reactivity):
+dispatch(setOverlayText(JSON.stringify(scriptureCard)));
+dispatch(setOverlayVisible(true));
+
+// 2. Transmit via Electron IPC to Projection Window:
+window.electronAPI.updateProjectionState({
+  overlayText: JSON.stringify(scriptureCard),
+  overlayVisible: true
+});
+```
+
+C. Secondary Display Rendering (`PublishedLayout.tsx`):
+- The fullscreen window running on the projector/secondary display parses the JSON payload.
+- Renders a clean, high-contrast visual layout:
+    * Scripture Reference Header (e.g. "JOHN 3:16 (KJV)") in bold modern typography.
+    * Passage Text in high-legibility 36pt-48pt serif/sans font.
+    * Smooth Framer Motion entrance (`opacity: 0, y: 20` -> `opacity: 1, y: 0`).
+    * When `overlayVisible: false` is triggered, smooth fade-out exit transition.
+
+
+7. STEP-BY-STEP CHECKLIST TO REPLICATE IN A NEW CHAT / PROJECT
+--------------------------------------------------------------------------------
+1. Audio:
+   - Copy `micCapture.ts` into renderer (16kHz PCM streaming).
+   - Set up `ipcRenderer.send("speech-to-text:stream-chunk", pcmBuffer)`.
+
+2. Transcription:
+   - Create `assemblyAiTranscriber.ts` in Electron Main with WebSocket streaming to AssemblyAI.
+   - Wire up `ipcMain.handle("speech-to-text:start-streaming")` and `stop-streaming`.
+
+3. AI Extraction:
+   - Create `contextIntelligenceIpc.ts` with Groq API integration (Llama 3.1).
+   - Use JSON response schema to output `{ book, chapter, verseStart, verseEnd }`.
+
+4. Local Bible DB:
+   - Include a lightweight SQLite Bible DB (`better-sqlite3`) in assets/data.
+   - Implement `getScriptureVerses(book, chapter, verseStart, verseEnd)`.
+
+5. Key Security:
+   - Use Electron `safeStorage.encryptString()` / `decryptString()` into `userData/ai_keys.enc`.
+
+6. Projection:
+   - In your projection window renderer (`PublishedLayout.tsx`), listen to `overlayText` & `overlayVisible`.
+   - Render the formatted scripture card over the live video or background grid.
+
+================================================================================
+  END OF BLUEPRINT
+================================================================================

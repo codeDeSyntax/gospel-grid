@@ -17,11 +17,16 @@ export const RightPanel: React.FC<RightPanelProps> = ({
   onWindowRemove,
   onWindowAdd,
   activePanel,
+  contextIntelligence,
 }) => {
   // Read projection state from Redux — no prop drilling
   const isProjectionOn = useAppSelector((s) => s.app.isProjectionOn);
-  const [activeFeatureView, setActiveFeatureView] =
+  const [internalFeatureView, setInternalFeatureView] =
     useState<FeatureView>("autofit");
+  const activeFeatureView =
+    contextIntelligence?.activeView ?? internalFeatureView;
+  const setActiveFeatureView =
+    contextIntelligence?.setActiveView ?? setInternalFeatureView;
   const [isImageMenuOpen, setIsImageMenuOpen] = useState(false);
   const remoteWebRtc = useRemoteWebRtc();
 
@@ -45,8 +50,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({
         ) : (
           <div className="flex h-full w-full items-stretch px-0 py-0">
             <div className="relative min-w-0 flex-1 overflow-hidden rounded-none">
-              <div className="absolute inset-x-2 top-2 z-20">
-                <FeatureImageMenu isOpen={isImageMenuOpen} />
+              <div className="absolute inset-x-2 top-2 z-30">
+                <FeatureImageMenu
+                  isOpen={isImageMenuOpen}
+                  onClose={() => setIsImageMenuOpen(false)}
+                />
               </div>
 
               <div className="h-full min-h-0 overflow-hidden p-0">
@@ -60,6 +68,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
                   onWindowAdd={onWindowAdd}
                   isProjectionOn={isProjectionOn}
                   remoteWebRtc={remoteWebRtc}
+                  contextIntelligence={contextIntelligence}
                 />
               </div>
             </div>
@@ -71,6 +80,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
               onToggleImageMenu={() =>
                 setIsImageMenuOpen((current) => !current)
               }
+              aiCardsCount={contextIntelligence?.cards?.length ?? 0}
             />
           </div>
         )}

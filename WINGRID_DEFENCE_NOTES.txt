@@ -1,16 +1,18 @@
-WINGRID FINAL YEAR PROJECT DEFENCE NOTES
-University of Ghana - Level 400 Final Year Project
-Application Version: v2.2.41
+================================================================================
+                    WINGRID FINAL YEAR PROJECT DEFENCE NOTES
+                University of Ghana - Level 400 Final Year Project
+                         Application Version: v2.2.46
+================================================================================
 
 Project Title Options
 ---------------------
 1. Wingrid: A Network-Aware Multi-Window Presentation Control System
 
-2. Wingrid: A Multi-Window Presentation Orchestration and Remote Viewing System
-   for Live Display Environments
+2. Wingrid: A Multi-Window Presentation Orchestration and Context-Aware 
+   Projection System for Live Display Environments
 
-3. Wingrid: A Desktop Application for Curated Multi-Window Projection and
-   Remote Screen Collaboration
+3. Wingrid: A Desktop Application for Curated Multi-Window Projection, 
+   AI Context Intelligence, and Remote Screen Collaboration
 
 Recommended Title:
 Wingrid: A Network-Aware Multi-Window Presentation Control System
@@ -18,431 +20,299 @@ Wingrid: A Network-Aware Multi-Window Presentation Control System
 
 Core Identity of the Project
 ----------------------------
-Wingrid is not simply a screen sharing application.
-Wingrid is not simply a remote desktop application.
-Wingrid is not simply a projection tool.
+Wingrid is NOT simply a screen sharing application.
+Wingrid is NOT simply a remote desktop application.
+Wingrid is NOT simply a standard projection tool.
 
-Wingrid is a multi-window presentation orchestration system designed for
-environments where one operator needs to select, arrange, project, and manage
-content from multiple live Windows applications without exposing the full
-desktop or repeatedly changing Windows display settings.
+Wingrid is a multi-window presentation orchestration and context-aware intelligence
+system designed for live environments where one operator needs to select, arrange,
+augment, project, and remotely collaborate with live Windows applications without
+exposing the full desktop or repeatedly switching Windows display settings.
 
-The main value of Wingrid is controlled presentation composition.
+The core value of Wingrid is CONTROLLED PRESENTATION COMPOSITION & LIVE INTELLIGENCE.
 
 
 Simple Project Description
 --------------------------
-Wingrid (v2.2.41) is an Electron-based desktop application that allows an operator
-to detect running Windows application windows, select specific live sources,
-arrange them into clean audience layouts, and project the curated output to
-secondary displays. It also supports network-aware features such as detecting
-nearby Wingrid devices on the local network and requesting permission-based
-remote screen viewing through WebRTC, alongside live speech-to-text captions,
-timers, overlay text, and media projection.
+Wingrid (v2.2.46) is a high-performance Electron desktop application that allows an
+operator to detect running Windows application windows natively, select specific live
+sources, arrange them into clean audience layouts (Single, Dual, Triple, Quad grids),
+and project the curated output to target secondary displays via GPU hardware acceleration.
+
+It integrates live presentation tools (countdown timers, image galleries, audience text
+overlays, live speech-to-text captions), a real-time AI Context Intelligence producer
+powered by AssemblyAI & Groq (Llama 3.1), and network-aware features such as local LAN
+device discovery and permission-gated WebRTC peer-to-peer remote screen viewing.
 
 
 Main Problem Statement
 ----------------------
-In live presentation environments such as churches, classrooms, teaching spaces,
-stream setups, and hybrid meetings, operators often need to present content from
-different applications at the same time.
+In live presentation environments such as churches, lecture halls, teaching spaces,
+stream setups, and hybrid meetings, operators frequently need to present content from
+multiple applications simultaneously (e.g., presentation slides, Bible software, live
+browser feeds, countdown timers, and speaker notes).
 
-However, existing tools usually create three major problems:
+Existing tools create four major bottlenecks:
 
-1. Different applications expect different display modes.
-   Some applications work better in extended display mode, while others are
-   easier to manage in duplicate mode. This forces the operator to keep changing
-   Windows display settings during live use.
+1. Display Mode Conflicts:
+   Different applications expect different Windows display modes. For example, some
+   worship or presentation tools require Extended mode, while others work best in
+   Duplicate mode. The operator is forced to repeatedly toggle Windows display settings
+   during live events, introducing delays, flickering, and human error.
 
-2. Online meeting platforms usually allow only one screen or one application
-   window to be shared at a time.
-   This makes it difficult for a host to present multiple live sources as one
-   curated layout.
+2. Single-Source Sharing Restrictions:
+   Standard video conferencing and presentation platforms generally restrict sharing to
+   one screen or one application window at a time. Presenting multiple live applications
+   forces the host to share the entire screen or manually switch windows live.
 
-3. Sharing the entire desktop can expose private or unwanted content.
-   Notifications, files, taskbars, desktop icons, or unrelated applications may
-   become visible to the audience.
+3. Privacy and Desktop Exposure:
+   Sharing the entire desktop exposes notifications, taskbars, private files, desktop icons,
+   and uncurated background windows to the audience.
 
-Wingrid solves these problems by allowing the operator to choose specific live
-application windows, compose them into a controlled layout, and project only the
-curated output.
+4. Manual Content Augmentation Overhead:
+   Displaying supporting information (speaker lower-thirds, key quotes, scriptures, timers,
+   or topic bullet points) traditionally requires dedicated production crew members manually
+   typing or switching OBS graphics layers in real time.
 
-
-Original Problems Identified
-----------------------------
-Problem 1:
-In presentation environments where different applications are used, different
-applications may require different display modes. For example, in a church
-setting, one application may require extended display mode while another may be
-easier to use in duplicate display mode. The operator is forced to keep switching
-between display modes, which wastes time and creates room for mistakes.
-
-Problem 2:
-On online meeting platforms, a host is usually limited to sharing one screen or
-one application window at a time. If the host wants to show multiple windows
-together, they often have to share the entire screen or manually switch between
-windows. This is inefficient and can expose unwanted desktop content.
+Wingrid solves these problems by allowing the operator to selectively compose multiple live
+application windows into a unified, curated layout, augmented by built-in presentation tiles
+and real-time AI context generation, while maintaining strict separation between the operator's
+control dashboard and the audience's view.
 
 
-Wingrid's Solution
-------------------
-Wingrid provides a controlled presentation workspace where an operator can:
+Wingrid's Solution & Architecture Pillars
+-----------------------------------------
+1. Native Windows Window Detection:
+   Enumerates capturable top-level application windows with live icons, metadata, and thumbnails.
 
-1. Detect available application windows on Windows operating system natively.
-2. Select only the windows needed for presentation.
-3. Arrange selected windows into curated layouts (Single, Dual, Triple, Quad grid).
-4. Project the final layout to an audience display or dedicated external monitor.
-5. Keep the controller view separate from the audience view (Two Windows, One Operator architecture).
-6. Avoid switching between Windows duplicate and extend display modes.
-7. Add supporting presentation features such as timers, images, captions, and text overlays.
-8. Stream live speech-to-text captions via AssemblyAI, local Whisper server, or Web Speech API.
-9. Detect nearby Wingrid devices on the same local network automatically.
-10. Request permission-based remote screen viewing from another Wingrid machine via WebRTC.
+2. Selective Multi-Window Layout Engine:
+   Arranges active application windows into customizable layouts (Single, Dual side-by-side,
+   Triple, and Quad 2x2 grid) with automatic aspect-ratio preservation and layout presets.
+
+3. Dual-Window Presentation Separation ("Two Windows, One Operator"):
+   The operator works on a rich control dashboard while the audience sees only a clean,
+   frameless fullscreen output (`PublishedLayout`) on the secondary monitor/projector.
+
+4. GPU-Accelerated Live Video Pipeline (30-60 FPS):
+   Directly captures window video feeds via Electron `desktopCapturer` and renders them
+   through Web Audio/Video APIs (`getUserMedia`) using GPU hardware acceleration.
+
+5. AI Context Intelligence & Automated Producer (New in v2.2.46):
+   Listens to live sermon/lecture speech via AssemblyAI WebSocket streaming and extracts
+   actionable broadcast cards (scriptures, speaker lower-thirds, key metrics, quotes, agenda items)
+   in ~200ms using Groq LPU inference (Llama 3.1 / 3.3). Features 1-click Push/Hide controls.
+
+6. Built-In Presentation Feature Tiles:
+   - Countdown Timers, Stopwatches, and Clock grid tiles.
+   - Local Image Gallery projection tile with fit/fill options.
+   - Real-time Speech-to-Text Captions rendered as a layout tile or floating draggable orb.
+   - Text Overlay Broadcast with display targeting and background opacity adjustments.
+
+7. Network-Aware LAN Discovery & WebRTC Remote Screen Viewing:
+   Discovers nearby Wingrid instances over local network (mDNS / LAN WebSocket signaling)
+   and enables secure, permission-gated peer-to-peer screen streaming via WebRTC without
+   granting remote keyboard/mouse access.
+
+8. Enterprise-Grade Security & Key Protection:
+   Encrypts API keys at rest using operating system native cryptography (Electron `safeStorage`
+   via Windows DPAPI `CryptProtectData`), maintaining a strict IPC security boundary.
 
 
 Strong Defence Summary
 ----------------------
-Wingrid solves the problem of fragmented presentation workflows. Instead of
-forcing operators to switch Windows display modes, expose their desktop, or
-share only one application at a time, Wingrid allows multiple live windows to be
-selected, arranged, projected, and remotely viewed in a controlled way. The
-system is designed for churches, classrooms, teaching spaces, streams, and hybrid
-presentation environments where speed, privacy, and display separation matter.
+Wingrid solves the problem of fragmented presentation workflows. Instead of forcing
+operators to switch Windows display modes, expose their desktop, or share only one application
+at a time, Wingrid allows multiple live windows to be selected, arranged, projected, and
+augmented with live AI context and remote network feeds in a controlled way. The system is
+designed specifically for churches, classrooms, teaching spaces, streams, and hybrid presentation
+environments where speed, privacy, visual quality, and display separation are paramount.
 
 
-What Makes Wingrid Different
-----------------------------
-Wingrid should not be presented as a normal screen sharing tool.
+What Makes Wingrid Unique
+-------------------------
+Wingrid is NOT an ordinary screen-sharing tool.
 
-The difference is that Wingrid focuses on curated multi-source presentation.
+Ordinary Screen Sharing / Meeting Tools (Zoom, Teams, Meet):
+- Shares one window or the entire screen.
+- Exposes desktop icons and notifications if full screen is shared.
+- Does not provide multi-window composition or native secondary display routing.
+- Does not provide live presentation tools (timers, lower-thirds, AI context extraction).
 
-Normal screen sharing:
-- Usually shares one screen or one application window.
-- Often exposes the desktop if full screen sharing is used.
-- Does not provide proper local projection control.
-- Does not solve display-mode switching for different applications.
+Broadcast Production Tools (OBS Studio, vMix):
+- Powerful, but steep learning curve, high CPU overhead, and designed for complex broadcast streaming.
+- Unnecessarily cumbersome for quick classroom or church projection where an operator just wants
+  to layout a few live windows on the projector.
 
 Wingrid:
-- Allows multiple live application windows to be selected.
-- Combines selected windows into one curated projection layout.
-- Keeps the operator/controller view separate from the audience view.
-- Routes projection output cleanly to target display monitors natively.
-- Provides high-performance GPU MediaStream rendering (30-60 FPS live projection).
-- Adds presentation-specific features like timers, images, live captions, and text overlays.
-- Adds LAN device detection and permission-based WebRTC remote viewing.
+- Specialized for presentation orchestration: zero-configuration window picker, instant grid layout.
+- Two-Window architecture (Control Dashboard vs. Audience View).
+- Native physical display routing (`electron.screen.getAllDisplays()`).
+- High-performance GPU pipeline (30-60 FPS with WGC request coalescing).
+- Live AI Context Extraction with 1-click Push/Hide live cards.
+- Integrated LAN peer discovery and WebRTC remote screen viewing.
 
 
-How to Respond if Asked: "Does This Already Exist?"
----------------------------------------------------
-Possible answer:
+Suitable FYP Technical Scope
+----------------------------
+Wingrid demonstrates mastery across multiple advanced software engineering domains:
 
-"Some tools solve parts of this problem, but Wingrid focuses on a specific
-presentation workflow. OBS is mainly a broadcast production tool, while Zoom and
-Teams are meeting communication platforms. Wingrid is designed for local and
-hybrid presentation control, where an operator needs to combine multiple live
-application windows, maintain controller/audience separation, avoid display-mode
-switching, and project a clean curated layout. The system also extends this into
-a local network environment by supporting Wingrid device detection, speech captioning,
-and permission-based remote screen viewing."
+1. Desktop Architecture: Electron 33, React 18, Vite, TypeScript, Tailwind CSS, Framer Motion.
+2. Operating System Integration: Windows Graphics Capture (WGC) enumeration, display metrics,
+   system power-save blocking, single-instance mutex locking, and system tray integration.
+3. Media Engineering: GPU-accelerated `getUserMedia` MediaStreams, canvas rendering, and
+   low-latency video pipelines.
+4. Concurrency & Performance Optimization: Request coalescing for `desktopCapturer`, non-blocking
+   asynchronous I/O, DWM composition stall prevention, and thumbnail caching.
+5. Distributed Systems & Networking: mDNS local service discovery, WebSocket signaling server,
+   and WebRTC P2P mesh streaming.
+6. Artificial Intelligence & Audio Pipelines: Real-time 16kHz PCM audio downsampling, AssemblyAI
+   streaming STT, Groq LPU fast LLM inference (Llama 3.1), sliding-window debounce, and circuit breakers.
+7. Cryptography & Security: Windows DPAPI (`safeStorage`) encryption for credentials, IPC isolation
+   with `contextBridge`, and permission-gated remote streaming.
+8. Application Distribution: Automated CI packaging (`electron-builder`), NSIS installers, and
+   delta auto-updating via GitHub Releases (`electron-updater`).
 
 
-Comparison With Existing Tools
+Detailed Feature Set (v2.2.46)
 ------------------------------
-OBS Studio:
-OBS can combine multiple sources, but it is designed mainly for broadcasting and
-recording. It is powerful, but it may be too complex for simple live projection
-workflows. Wingrid focuses on fast operator control, direct application-window
-selection, projection display routing, and presentation-specific use cases.
-
-Zoom / Microsoft Teams / Google Meet:
-These platforms are designed for meetings. They usually allow one window or one
-screen to be shared at a time. Wingrid focuses on preparing a composed
-multi-window layout before projection or sharing.
-
-Windows Display Settings:
-Windows allows duplicate and extended display modes, but it does not provide an
-application-level presentation composition workflow. Wingrid reduces the need to
-manually switch display modes for different applications.
-
-Remote Desktop Tools (AnyDesk / TeamViewer):
-Remote desktop tools are designed for controlling or viewing another computer's desktop.
-Wingrid's remote feature is not a full remote access tool; it supports presentation
-workflows by allowing Wingrid devices on the same network to discover each other and
-request approved screen/window viewing via WebRTC without granting remote keyboard/mouse control.
-
-
-Why the Project Is Suitable for a Final Year Project
-----------------------------------------------------
-Wingrid is suitable as a final year project because it combines several
-technical areas into one practical desktop software system:
-
-1. Desktop application architecture using Electron 33, React 18, Vite, and TypeScript.
-2. Native desktop integration for window enumeration, icons, and display metrics.
-3. High-performance live media capture & GPU stream rendering (`desktopCapturer` & `getUserMedia`).
-4. Multi-window layout composition algorithms (Single, Side-by-side Dual, Triple, Quad 2x2 grid).
-5. Native multi-display routing across target physical monitors.
-6. Inter-process communication (IPC) with security isolation (`contextBridge`).
-7. Complex state management using Redux Toolkit (app, grid, window, captions, notification, projection, ui slices).
-8. Real-time speech-to-text transcription via WebSocket streaming (AssemblyAI Node integration, local Whisper server, Web Speech API).
-9. Local network discovery of Wingrid devices via mDNS / LAN signaling.
-10. WebSocket signaling & WebRTC peer-to-peer media streaming.
-11. Permission-based remote screen viewing for user privacy and security.
-12. Application distribution engineering: `electron-builder` NSIS packaging, auto-updating via GitHub Releases (`electron-updater`), and system tray lifecycle integration.
-
-This demonstrates that Wingrid is a complete desktop system touching operating system
-APIs, media streaming pipelines, real-time networking, AI speech services, security decisions,
-and real-time user workflows.
-
-
-Main Features to Demonstrate (v2.2.41)
---------------------------------------
-1. Welcome and Dashboard Flow:
-   - Onboarding screen and main workspace navigation.
-   - 6 color themes (dark mode, light mode, cyberpunk, glassmorphism, midnight blue, emerald).
-
-2. Window Detection & Selection:
-   - Enumerating capturable Windows application windows with icons and thumbnails.
-   - Search filtering and sidebar window picker.
-   - Drag-and-drop / single-click assignment, window pinning, and focus toggle.
-   - Undo / Redo history for window selections and layout changes.
-
-3. Dynamic Layout Engine:
-   - Auto layout presets based on window count: Single, Dual (side-by-side), Triple (2-top, 1-bottom), Quad (2x2 grid).
-   - AutoFit multi-display layout preview (`AutoFitWindowLayoutOptimized`).
-
-4. Multi-Display Matrix & Projection Routing:
-   - Physical display detection via `electron.screen.getAllDisplays()`.
-   - Independent display layout assignment and publishing (`publishDisplayLayout`).
-   - Per-display hide/show window controls and display management menu.
-
-5. High-Performance GPU Projection Output:
-   - Dedicated audience projection window (`ProjectionLayout` / `LiveWindowGrid`).
-   - 30-60 FPS live video stream projection using GPU-accelerated `getUserMedia` MediaStreams.
-   - Projection quality settings (1080p, 720p, 480p).
-
-6. Live Presentation Controls:
-   - Projection toggle shortcut (F5).
-   - Blackout screen toggle shortcut (F6).
-   - Freeze frame toggle shortcut (F7).
-   - Display power-save blocker to prevent screen sleep during live presentations.
-   - Confidence monitor snapshots.
-
-7. Embedded Feature Tiles (Virtual Grid Elements):
-   - Timer Feature: Countdown timer, stopwatch, and clock tiles with presets.
-   - Image Projection Feature: Image directory gallery tile with fit/fill modes.
-   - Live Captions Feature: Real-time speech-to-text mic transcription rendered directly as a layout tile or floating orb.
-   - Audience Text Overlay Feature: Custom broadcast messages with text history, contrast adjustments, position, and background opacity.
-   - Remote Screen Tile: Live network peer feed rendered within grid layout.
-
-8. Speech & Caption Integration:
-   - Main-process AssemblyAI WebSocket streaming with secure API key storage.
-   - Optional local Whisper audio transcription server (`npm run start:audio`).
-   - Preload Web Speech API bridge fallback.
-
-9. Remote Collaboration & Network Discovery:
-   - Nearby Wingrid device discovery on local network (mDNS / LAN WebSocket signaling).
-   - Connected devices list and connection readiness status.
-   - Manual IP connection fallback.
-   - Permission-based viewing request flow (Request -> Recipient Dialog -> Window/Screen Selection -> Accept/Deny).
-   - WebRTC peer-to-peer live stream preview.
-
-10. Distribution & System Integration:
-    - Windows System Tray integration (quick blackout, freeze, projection toggle, quit).
-    - Single-instance application locking.
-    - Automatic app updating via `electron-updater` and GitHub Releases.
-
-
-How to Explain UI & Technical Architecture
-------------------------------------------
-1. Main Dashboard UI & Layout Structure:
-   - Screen State Machine in `App.tsx`: welcome -> dashboard -> published layout.
-   - Top Header (`TitleBar`): Displays active window count, search refresh countdown, live projection controls (Publish Layout, Close Projection, Blackout F6, Freeze F7, Undo/Redo), app settings toggle, and auto-update status indicator.
-   - Left Sidebar (`WindowPicker`): Resizable 300px–600px sidebar rendering all enumerated Windows application windows with live app icons, titles, thumbnails, pin/focus controls, and search filtering.
-   - Right Main Area (`InspectorPanel`): Contains the Feature Rail and active workspace panel.
-     - Feature Rail: Vertical icon bar providing one-click access to:
-       1. Main Layout (`autofit`): Multi-display composition canvas (`AutoFitWindowLayoutOptimized`) showing real detected physical monitors and layout grid assignments.
-       2. Text Overlay (`overlay`): Audience message banner composer with style and opacity options.
-       3. Timer Feature (`timer`): Countdown timers, stopwatches, and current clock virtual grid tiles.
-       4. Live Captions (`captions`): Speech-to-text microphone controls and caption customization.
-       5. Remote Screens (`remote`): LAN peer device discovery list, manual IP connection, and WebRTC streaming panel.
-       6. Image Projection (`image`): Local image directory selector for background/tile projection.
-   - Global Floating Controls: `FloatingCaptionsOrb` (floating draggable mic/caption orb) and `NotifierContainer` (toast notifications).
-
-2. Two Windows, One Operator Architecture:
-   - Control Window: Maximized dashboard on laptop/operator screen.
-   - Published Window(s): Frameless fullscreen `BrowserWindow` instances routed to target external monitors via `?layoutId=...`.
-   - Real-time IPC state sync ensures any dashboard change immediately reflects on the published projection window.
-
-3. High-Performance Media Pipeline:
-   - Initial versions polled base64 thumbnails across IPC, causing high CPU usage.
-   - Current architecture (v2.2.41) passes native window capture source IDs via `desktopCapturer` to renderer `navigator.mediaDevices.getUserMedia` MediaStreams.
-   - Video decoding, composition, and rendering are offloaded to GPU hardware acceleration.
-
-4. Remote Screen Viewing Pipeline:
-   - LAN Device Discovery: mDNS / UDP broadcast or embedded WebSocket server detects nearby instances automatically.
-   - WebSocket Signaling: Signaling server handles initial SDP offer/answer exchange and ICE candidates.
-   - WebRTC Peer Connection: Direct P2P media streaming between machines after approval, keeping video traffic off central servers.
-
-5. Speech-to-Text Architecture:
-   - AssemblyAI integration runs in the Electron main process via Node WebSocket to protect API keys from renderer exposure and bypass browser CORS restrictions.
-   - Microphone audio chunks are streamed to the backend transcriber service, which dispatches real-time text back to Redux `captionsSlice` over IPC.
-
-
-Security and Privacy Points
----------------------------
-Wingrid is designed around controlled visibility and privacy-conscious presentation:
-
-1. Selective Window Exposure: Does not automatically project or share full desktop; operator selects exact application windows.
-2. Controller/Audience Separation: Operator interface (dashboard, notifications, file browser) is never visible on the projection output.
-3. Permission-Gated Remote Viewing: Remote peers cannot view screens without explicit recipient confirmation.
-4. Selective Remote Sharing: The recipient chooses specifically which window or screen to stream to the requester.
-5. View-Only Remote Streaming: No remote keyboard, mouse, or system input control is granted to remote peers.
-
-Important Defence Line:
-"Wingrid is designed around controlled visibility. The audience or remote viewer
-should only see what the operator or sharing user intentionally exposes."
-
-
-Possible Defence Questions and Answers
---------------------------------------
-Question:
-What problem does Wingrid solve?
-
-Answer:
-Wingrid solves the problem of fragmented presentation workflows where operators
-need to use multiple applications, manage different display modes, and avoid
-exposing their entire desktop. It allows selected live windows to be composed
-into one clean projection layout routed to external monitors.
-
-
-Question:
-Is Wingrid just another screen sharing application?
-
-Answer:
-No. Screen sharing is only one part of the wider problem. Wingrid is a
-presentation orchestration system. It focuses on selecting multiple live
-application windows, arranging them into clean grid layouts, routing them to external
-projection displays, and maintaining controller/audience separation.
-
-
-Question:
-Why not just use OBS Studio?
-
-Answer:
-OBS is a powerful broadcast production tool, but Wingrid targets a simpler and
-more specific workflow: fast multi-window presentation control for churches,
-classrooms, teaching spaces, and hybrid presentations. Wingrid focuses on
-operator efficiency, native display routing, and controlled projection rather than full
-broadcast production complexity.
-
-
-Question:
-Why not just use Zoom or Teams screen sharing?
-
-Answer:
-Zoom and Teams are meeting platforms and usually allow one screen or one window
-to be shared at a time. Wingrid allows multiple live windows to be composed into
-one curated layout before projection or sharing.
-
-
-Question:
-How does Wingrid achieve high projection performance without high CPU usage?
-
-Answer:
-Wingrid utilizes a GPU-accelerated video pipeline. Instead of constantly capturing and
-transferring base64 images over IPC, the renderer requests native MediaStreams via
-`navigator.mediaDevices.getUserMedia` using window source IDs provided by `desktopCapturer`.
-The GPU handles hardware-accelerated video decoding and canvas composition at 30-60 FPS.
-
-
-Question:
-How does multi-display routing work technically?
-
-Answer:
-Electron's `screen.getAllDisplays()` queries native Windows display metrics. The main
-process calculates target monitor coordinates `(x, y)` and creates a frameless,
-fullscreen `BrowserWindow` on that monitor, passing a layout identifier (`?layoutId=...`).
-IPC events continuously broadcast layout state updates from the operator dashboard to
-the published window instance.
-
-
-Question:
-Why were speech-to-text live captions included and how do they work?
-
-Answer:
-Live captions improve accessibility in classrooms and church environments.
-Microphone audio is captured and streamed via WebSocket to AssemblyAI in the main
-Electron process (protecting API keys and bypassing CORS), with fallbacks for local
-Whisper transcription and Web Speech API. Transcribed text is broadcast via IPC to render
-as live caption tiles or floating overlays.
-
-
-Question:
-Why was remote viewing added?
-
-Answer:
-Remote viewing was added to extend Wingrid into a network-aware environment.
-It allows Wingrid machines on the same local network to discover each other and
-request permission-based screen viewing. This is useful in environments where
-content exists on a presenter's laptop but needs to be coordinated by an operator machine.
-
-
-Question:
-Why use WebRTC for remote screen sharing?
-
-Answer:
-WebRTC is designed for real-time peer-to-peer media streaming. After WebSocket
-signaling completes SDP exchange, video streams flow directly between the two machines over LAN.
-This minimizes latency and avoids routing high-bandwidth video through a central cloud server.
-
-
-Question:
-What makes the project technically challenging for a Final Year Project?
-
-Answer:
-The project combines desktop application architecture, native OS window capture,
-multi-display coordinate routing, GPU video rendering, Electron IPC security bridges,
-Redux state management, speech-to-text AI integration, LAN mDNS discovery,
-WebSocket signaling, WebRTC streaming, and production application packaging.
-
-
-Question:
-What is the target environment?
-
-Answer:
-The target environments are churches, classrooms, teaching spaces, seminars,
-small events, stream setups, and hybrid meeting rooms where one operator needs to manage
-multiple applications and present a clean audience view.
-
-
-Question:
-What is the main contribution of the project?
-
-Answer:
-The main contribution is a practical desktop system for controlled multi-window
-presentation composition. It reduces display-mode switching, improves
-presentation speed, protects privacy, and extends the workflow with local
-network device discovery, AI live captions, and approved remote viewing.
-
-
-Final Defence Pitch
--------------------
-Wingrid is a network-aware multi-window presentation control system. It was
-developed to solve a real problem in live presentation environments where
-operators use several applications and must constantly manage what the audience
-sees. Existing tools either share one screen, expose the entire desktop, or
-require manual switching between Windows display modes.
-
-Wingrid allows the operator to select multiple live application windows, arrange
-them into a clean layout, and project only the curated output to external displays.
-It also supports presentation features such as countdown timers, images, live AI captions,
-blackout, freeze, and overlay text. To extend the system into networked environments,
-Wingrid includes nearby device detection and permission-based WebRTC remote screen viewing.
-
-The goal is to improve speed, privacy, and control in real-time presentation
-workflows.
+1. Workspace Dashboard & Window Picker:
+   - Live enumerator of capturable Windows application windows with icons and preview thumbnails.
+   - Search filtering, window pinning, single-click grid assignment, and Undo/Redo history.
+   - Dynamic 6-palette design system with pure black OLED dark mode and glassmorphism.
+
+2. Dynamic Multi-Display Layout Engine:
+   - Single, Dual (side-by-side), Triple (2-top, 1-bottom), and Quad (2x2) auto-fit grid presets.
+   - Multi-display detection via `screen.getAllDisplays()` with independent per-display layout publishing.
+   - Live confidence monitor and AutoFit layout canvas (`AutoFitWindowLayoutOptimized`).
+
+3. Live Projection Controls:
+   - Fullscreen audience window (`PublishedLayout`) with smooth Framer Motion transitions.
+   - Keyboard shortcuts: F5 (Toggle Projection), F6 (Blackout Screen), F7 (Freeze Frame).
+   - Display sleep prevention blocker (`powerSaveBlocker`).
+
+4. AI Context Intelligence & Auto-Producer (v2.2.46):
+   - Real-time sermon & lecture speech listener (AssemblyAI streaming).
+   - Automatic extraction of Bible scriptures, speaker lower-thirds, statistics, quotes, and agenda items (Groq Llama 3.1).
+   - Suggestion card carousel in a dedicated pure black modal (`ContextIntelligenceFullModal`).
+   - 1-Click "Push to Live" and 1-Click "Hide Screen" controls (both on cards and in modal footer).
+   - 8+ Dynamic Broadcast Layout Variants (`split_comparison`, `hero_cover`, `scripture_wisdom`, `stat_spotlight`, `speaker_profile`, `top_banner`, `agenda_flow`).
+   - Clean data separation ensuring AI cards/HTML never leak into the manual text overlay input.
+
+5. Virtual Feature Grid Tiles:
+   - Timer Tile: Countdown timer, stopwatch, and current clock presets.
+   - Image Tile: Local image gallery directory projection with fit/fill modes.
+   - Caption Tile: Live real-time speech transcription rendered as a layout tile or floating orb.
+   - Text Overlay: Custom broadcast messages with text history and display targeting.
+   - Remote Screen Tile: Live network peer feed rendered inside the multi-window grid.
+
+6. Network Discovery & WebRTC Collaboration:
+   - Automatic mDNS LAN device discovery + manual IP connection fallback.
+   - Permission-gated request flow (Requester initiates -> Recipient receives pop-up -> Recipient selects window -> Approves/Denies).
+   - WebRTC P2P direct streaming over LAN (low latency, zero internet bandwidth consumption).
+
+7. Production & Security Infrastructure:
+   - Electron `safeStorage` (DPAPI) encrypted key store (`ai_context_keys.enc`).
+   - System tray controls, single-instance app lock, and auto-updater via `electron-updater`.
+
+
+Technical Deep-Dive: Key Architectural Subsystems
+-------------------------------------------------
+1. Two Windows, One Operator Model:
+   - The Controller Window runs the management dashboard with Redux Toolkit store.
+   - The Published Window(s) run as lightweight, borderless fullscreen renderer instances.
+   - State synchronization flows across Electron IPC (`update-projection-state`), ensuring zero
+     lag between operator clicks and audience view updates.
+
+2. WGC Capture & Performance Optimization:
+   - Previous versions experienced frame drops due to concurrent `desktopCapturer.getSources()` calls.
+   - In v2.2.46, an in-flight request coalescing registry shares promises across simultaneous capture
+     requests, thumbnail resolutions are capped to 640x360, and synchronous stdout I/O is eliminated.
+   - Video streaming relies on native GPU `getUserMedia` MediaStreams, maintaining 60 FPS without CPU strain.
+
+3. AI Context Intelligence Pipeline:
+   - Audio Capture: 16kHz 16-bit linear PCM downsampled in renderer via `AudioContext`.
+   - Streaming STT: Main process streams PCM chunks over WebSocket to AssemblyAI, receiving punctuated turns.
+   - Fast Extraction: Buffered transcript turns are debounced by 3.5s and dispatched to Groq API
+     (Llama 3.1) with strict JSON schema enforcement.
+   - Projection: Formatted JSON card is dispatched to Redux and transmitted via IPC to `PublishedLayout.tsx`.
+
+4. Secure Key Management (DPAPI):
+   - Keys are encrypted on disk via Electron's `safeStorage.encryptString()`, using Windows DPAPI.
+   - Raw keys are kept in the Node.js main process and never exposed to the renderer DOM.
+
+5. WebRTC Peer-to-Peer Streaming:
+   - Embedded WebSocket signaling server negotiates SDP offer/answers and ICE candidates over local LAN.
+   - Once connected, MediaStreams travel directly peer-to-peer via WebRTC DTLS/SRTP encryption.
+
+
+Frequently Asked Defence Questions & Expert Answers
+---------------------------------------------------
+Q: What is the core problem Wingrid solves?
+A: Wingrid eliminates fragmented presentation workflows. In multi-application environments like
+   churches and lecture halls, operators struggle with switching Windows display modes, exposing
+   unwanted desktop content, and being restricted to sharing single windows. Wingrid enables
+   curated multi-window composition, native display routing, AI context augmentation, and LAN collaboration.
+
+Q: How is Wingrid different from OBS Studio?
+A: OBS is designed for video recording and livestream broadcast mixing with complex scene graphs.
+   Wingrid is designed for presentation orchestration and display routing for non-technical operators:
+   instant window detection, single-click grid layouts, native monitor assignment, presentation tiles,
+   and automated AI context cards without complex scene engineering.
+
+Q: How is Wingrid different from Zoom or Microsoft Teams?
+A: Zoom and Teams are meeting communication platforms that typically share one window or the entire
+   desktop. Wingrid is a presentation compositor that allows multiple live application windows to be
+   selected, curated into custom grid layouts, and projected locally or shared over LAN before broadcasting.
+
+Q: How does Wingrid achieve high projection performance without freezing the system?
+A: Wingrid leverages a GPU-accelerated video pipeline. Application window feeds are captured via native
+   MediaStreams (`getUserMedia` with source IDs). Video decoding and composition are offloaded to the GPU.
+   Additionally, in v2.2.46, request coalescing on `desktopCapturer` prevents Windows Graphics Capture
+   session storms and DWM composition stalls.
+
+Q: How does multi-display routing work technically?
+A: Electron's `screen.getAllDisplays()` queries native Windows monitor coordinates. The main process
+   spawns a frameless fullscreen `BrowserWindow` on the target display coordinates `(x, y)` with
+   `?layoutId=...`. IPC broadcasts layout and state changes from the dashboard in real time.
+
+Q: How does the AI Context Intelligence engine work?
+A: The renderer captures microphone audio, resamples it to 16kHz PCM, and streams it to AssemblyAI via
+   WebSocket in the Electron main process. The resulting punctuated transcript is debounced and sent to
+   Groq (Llama 3.1) using structured JSON schema prompts. In ~200ms, Groq extracts scriptures, quotes,
+   lower-thirds, or statistics, which the operator can project with a single click.
+
+Q: How are API keys secured in the application?
+A: API keys are encrypted at rest using Electron's `safeStorage` API, which leverages Windows DPAPI
+   (`CryptProtectData`) tied to the user's OS credentials. The keys reside exclusively in the main
+   process and are never sent over IPC to the renderer DOM.
+
+Q: Why was WebRTC used for remote screen sharing?
+A: WebRTC enables direct peer-to-peer media streaming across the local area network. After WebSocket
+   signaling exchanges SDP descriptors, video streams flow directly between machines with ultra-low latency,
+   keeping high-bandwidth video off third-party cloud servers.
+
+Q: What makes this project challenging and worthy of a Level 400 Final Year Project?
+A: It integrates diverse computer science disciplines into one cohesive desktop system: native OS window
+   capture APIs, multi-monitor coordinate math, GPU-accelerated media streaming, real-time WebRTC
+   networking, mDNS service discovery, streaming speech recognition, LLM context extraction, DPAPI
+   cryptography, Redux state architectures, and production application packaging.
+
+
+Final Defence Pitch (Closing Statement)
+---------------------------------------
+"Wingrid is a network-aware multi-window presentation control system. It was engineered to solve
+a pervasive problem in live environments: the friction of switching Windows display modes, the privacy
+risks of full desktop sharing, and the limitation of single-source presentation tools.
+
+With Wingrid, an operator can effortlessly pick running application windows, compose them into clean
+audience layouts, and project them to target secondary displays at 60 FPS. With real-time AI Context
+Intelligence, speech-driven scriptures and lower-thirds are extracted live, while LAN device discovery
+and WebRTC enable seamless remote screen collaboration.
+
+Wingrid is about controlled presentation composition, privacy, and intelligent orchestration."
 
 
 Key Sentence to Remember
 ------------------------
-Wingrid is about controlled presentation composition, not ordinary screen sharing.
+"Wingrid is about controlled presentation composition, not ordinary screen sharing."
+================================================================================

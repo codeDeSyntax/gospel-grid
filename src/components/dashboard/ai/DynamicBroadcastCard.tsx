@@ -28,13 +28,13 @@ const THEME_ACCENTS: Record<
     quoteColor: "text-blue-600",
   },
   emerald: {
-    dot: "bg-emerald-600",
-    badgeBg: "bg-emerald-100",
-    badgeText: "text-emerald-800",
-    blockBg: "bg-emerald-50/90",
-    blockBorder: "border-emerald-200/80",
-    titleText: "text-emerald-900",
-    quoteColor: "text-emerald-600",
+    dot: "bg-neutral-700",
+    badgeBg: "bg-neutral-200",
+    badgeText: "text-neutral-900",
+    blockBg: "bg-neutral-100/90",
+    blockBorder: "border-neutral-300/80",
+    titleText: "text-neutral-900",
+    quoteColor: "text-neutral-700",
   },
   purple: {
     dot: "bg-purple-600",
@@ -220,31 +220,55 @@ function renderVariantBody(
       );
 
     case "scripture_wisdom":
-    case "hero_cover":
+    case "hero_cover": {
+      // Prioritize full quotation/verse body text
+      let verseText = card.body || card.quote;
+
+      // If missing, check if htmlCode has the full verse in a paragraph
+      if (!verseText && card.htmlCode) {
+        const pMatch = card.htmlCode.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+        if (pMatch && pMatch[1]) {
+          verseText = pMatch[1].replace(/^[“"']+|[”"']+$/g, "").trim();
+        }
+      }
+
+      // If still missing, fallback to headline
+      if (!verseText) {
+        verseText = headline;
+      }
+
+      const referenceText = card.reference || card.subline || (headline !== verseText ? headline : "") || "";
+
       return (
         <div className="flex flex-col sm:flex-row items-stretch gap-6">
           {card.imageUrl && (
             <img
               src={card.imageUrl}
               alt="Visual"
-              className="w-40 sm:w-48 self-stretch min-h-[140px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0"
+              className="w-44 sm:w-52 self-stretch min-h-[160px] rounded-2xl object-cover shadow-md border border-neutral-200/80 shrink-0"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = "none";
               }}
             />
           )}
-          <div className="flex flex-col justify-center gap-3 flex-1">
+          <div className="flex flex-col justify-center gap-3.5 flex-1 min-w-0">
+            {headline && headline !== verseText && (
+              <div className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-800">
+                {headline}
+              </div>
+            )}
             <p className="text-xl sm:text-2xl md:text-[26px] font-bold text-neutral-900 leading-snug tracking-tight">
-              “{headline || card.quote || card.body}”
+              “{verseText}”
             </p>
-            {subline && (
-              <div className="text-xs sm:text-sm font-semibold text-neutral-500">
-                — {subline}
+            {referenceText && (
+              <div className="text-xs sm:text-sm font-bold text-neutral-600">
+                — {referenceText}
               </div>
             )}
           </div>
         </div>
       );
+    }
 
     case "stat_spotlight":
       return (

@@ -21,8 +21,9 @@ import {
   Tv,
   Eye,
   EyeOff,
+  Layout,
 } from "lucide-react";
-import type { AiProducerCard } from "@/services/ai/types";
+import type { AiProducerCard, AiProvider } from "@/services/ai/types";
 import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceService";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import type { RootState } from "@/store";
@@ -67,92 +68,92 @@ interface ThemeVisual {
 
 const THEME_PALETTES: Record<string, ThemeVisual> = {
   emerald: {
-    gradientDark: "from-emerald-500/[0.14] via-[#0e0e0e] to-[#080808]",
-    gradientLight: "from-emerald-50 via-white to-white",
-    borderDark: "border-emerald-500/30 hover:border-emerald-500/50",
-    borderLight: "border-emerald-200 hover:border-emerald-400",
-    badgeBgDark: "bg-emerald-500/15 border-emerald-500/30",
-    badgeBgLight: "bg-emerald-100 border-emerald-200",
-    badgeTextDark: "text-emerald-300",
-    badgeTextLight: "text-emerald-800",
-    dotColor: "bg-emerald-400",
+    gradientDark: "bg-[#222226] hover:bg-[#2a2a2f]",
+    gradientLight: "from-neutral-100 via-white to-white",
+    borderDark: "border-neutral-700 hover:border-neutral-500",
+    borderLight: "border-neutral-300 hover:border-neutral-400",
+    badgeBgDark: "bg-neutral-700/80 border-neutral-600",
+    badgeBgLight: "bg-neutral-200 border-neutral-300",
+    badgeTextDark: "text-neutral-100",
+    badgeTextLight: "text-neutral-800",
+    dotColor: "bg-neutral-300",
   },
   rose: {
-    gradientDark: "from-rose-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#281e22] hover:bg-[#322429]",
     gradientLight: "from-rose-50 via-white to-white",
-    borderDark: "border-rose-500/30 hover:border-rose-500/50",
+    borderDark: "border-rose-500/40 hover:border-rose-400/70",
     borderLight: "border-rose-200 hover:border-rose-400",
-    badgeBgDark: "bg-rose-500/15 border-rose-500/30",
+    badgeBgDark: "bg-rose-500/25 border-rose-500/40",
     badgeBgLight: "bg-rose-100 border-rose-200",
-    badgeTextDark: "text-rose-300",
+    badgeTextDark: "text-rose-200",
     badgeTextLight: "text-rose-800",
     dotColor: "bg-rose-400",
   },
   purple: {
-    gradientDark: "from-purple-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#251e2c] hover:bg-[#2f2538]",
     gradientLight: "from-purple-50 via-white to-white",
-    borderDark: "border-purple-500/30 hover:border-purple-500/50",
+    borderDark: "border-purple-500/40 hover:border-purple-400/70",
     borderLight: "border-purple-200 hover:border-purple-400",
-    badgeBgDark: "bg-purple-500/15 border-purple-500/30",
+    badgeBgDark: "bg-purple-500/25 border-purple-500/40",
     badgeBgLight: "bg-purple-100 border-purple-200",
-    badgeTextDark: "text-purple-300",
+    badgeTextDark: "text-purple-200",
     badgeTextLight: "text-purple-800",
     dotColor: "bg-purple-400",
   },
   amber: {
-    gradientDark: "from-amber-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#28211a] hover:bg-[#332920]",
     gradientLight: "from-amber-50 via-white to-white",
-    borderDark: "border-amber-500/30 hover:border-amber-500/50",
+    borderDark: "border-amber-500/40 hover:border-amber-400/70",
     borderLight: "border-amber-200 hover:border-amber-400",
-    badgeBgDark: "bg-amber-500/15 border-amber-500/30",
+    badgeBgDark: "bg-amber-500/25 border-amber-500/40",
     badgeBgLight: "bg-amber-100 border-amber-200",
-    badgeTextDark: "text-amber-300",
+    badgeTextDark: "text-amber-200",
     badgeTextLight: "text-amber-800",
     dotColor: "bg-amber-400",
   },
   cyan: {
-    gradientDark: "from-cyan-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#1c262a] hover:bg-[#223035]",
     gradientLight: "from-cyan-50 via-white to-white",
-    borderDark: "border-cyan-500/30 hover:border-cyan-500/50",
+    borderDark: "border-cyan-500/40 hover:border-cyan-400/70",
     borderLight: "border-cyan-200 hover:border-cyan-400",
-    badgeBgDark: "bg-cyan-500/15 border-cyan-500/30",
+    badgeBgDark: "bg-cyan-500/25 border-cyan-500/40",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
-    badgeTextDark: "text-cyan-300",
+    badgeTextDark: "text-cyan-200",
     badgeTextLight: "text-cyan-800",
     dotColor: "bg-cyan-400",
   },
   orange: {
-    gradientDark: "from-orange-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#29201a] hover:bg-[#342820]",
     gradientLight: "from-orange-50 via-white to-white",
-    borderDark: "border-orange-500/30 hover:border-orange-500/50",
+    borderDark: "border-orange-500/40 hover:border-orange-400/70",
     borderLight: "border-orange-200 hover:border-orange-400",
-    badgeBgDark: "bg-orange-500/15 border-orange-500/30",
+    badgeBgDark: "bg-orange-500/25 border-orange-500/40",
     badgeBgLight: "bg-orange-100 border-orange-200",
-    badgeTextDark: "text-orange-300",
+    badgeTextDark: "text-orange-200",
     badgeTextLight: "text-orange-800",
     dotColor: "bg-orange-400",
   },
-  blue: {
-    gradientDark: "from-blue-500/[0.14] via-[#0e0e0e] to-[#080808]",
-    gradientLight: "from-blue-50 via-white to-white",
-    borderDark: "border-blue-500/30 hover:border-blue-500/50",
-    borderLight: "border-blue-200 hover:border-blue-400",
-    badgeBgDark: "bg-blue-500/15 border-blue-500/30",
-    badgeBgLight: "bg-blue-100 border-blue-200",
-    badgeTextDark: "text-blue-300",
-    badgeTextLight: "text-blue-800",
-    dotColor: "bg-blue-400",
-  },
   indigo: {
-    gradientDark: "from-indigo-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "bg-[#202130] hover:bg-[#282a3c]",
     gradientLight: "from-indigo-50 via-white to-white",
-    borderDark: "border-indigo-500/30 hover:border-indigo-500/50",
+    borderDark: "border-indigo-500/40 hover:border-indigo-400/70",
     borderLight: "border-indigo-200 hover:border-indigo-400",
-    badgeBgDark: "bg-indigo-500/15 border-indigo-500/30",
+    badgeBgDark: "bg-indigo-500/25 border-indigo-500/40",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
-    badgeTextDark: "text-indigo-300",
+    badgeTextDark: "text-indigo-200",
     badgeTextLight: "text-indigo-800",
     dotColor: "bg-indigo-400",
+  },
+  blue: {
+    gradientDark: "bg-[#1d2330] hover:bg-[#242d3d]",
+    gradientLight: "from-blue-50 via-white to-white",
+    borderDark: "border-blue-500/40 hover:border-blue-400/70",
+    borderLight: "border-blue-200 hover:border-blue-400",
+    badgeBgDark: "bg-blue-500/25 border-blue-500/40",
+    badgeBgLight: "bg-blue-100 border-blue-200",
+    badgeTextDark: "text-blue-200",
+    badgeTextLight: "text-blue-800",
+    dotColor: "bg-blue-400",
   },
 };
 
@@ -160,80 +161,80 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
   lower_third: {
     label: "Speaker / Title",
     category: "Speaker",
-    gradientDark: "from-cyan-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "from-cyan-500/30 via-[#142226] to-[#10191c]",
     gradientLight: "from-cyan-50 to-white",
-    borderDark: "border-cyan-500/30 hover:border-cyan-500/50",
+    borderDark: "border-cyan-500/40 hover:border-cyan-400/70",
     borderLight: "border-cyan-200 hover:border-cyan-400",
-    badgeBgDark: "bg-cyan-500/15 border-cyan-500/30",
+    badgeBgDark: "bg-cyan-500/25 border-cyan-500/40",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
-    badgeTextDark: "text-cyan-300",
+    badgeTextDark: "text-cyan-200",
     badgeTextLight: "text-cyan-700",
     icon: User,
   },
   key_metric: {
     label: "Key Metric",
     category: "Metric",
-    gradientDark: "from-emerald-500/[0.14] via-[#0e0e0e] to-[#080808]",
-    gradientLight: "from-emerald-50 to-white",
-    borderDark: "border-emerald-500/30 hover:border-emerald-500/50",
-    borderLight: "border-emerald-200 hover:border-emerald-400",
-    badgeBgDark: "bg-emerald-500/15 border-emerald-500/30",
-    badgeBgLight: "bg-emerald-100 border-emerald-200",
-    badgeTextDark: "text-emerald-300",
-    badgeTextLight: "text-emerald-700",
+    gradientDark: "from-neutral-700/60 via-[#202020] to-[#161616]",
+    gradientLight: "from-neutral-100 to-white",
+    borderDark: "border-neutral-700 hover:border-neutral-500",
+    borderLight: "border-neutral-300 hover:border-neutral-400",
+    badgeBgDark: "bg-neutral-700/80 border-neutral-600",
+    badgeBgLight: "bg-neutral-200 border-neutral-300",
+    badgeTextDark: "text-neutral-100",
+    badgeTextLight: "text-neutral-700",
     icon: BarChart2,
   },
   quote: {
     label: "Quote",
     category: "Highlight",
-    gradientDark: "from-purple-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "from-purple-500/30 via-[#22172b] to-[#181420]",
     gradientLight: "from-purple-50 to-white",
-    borderDark: "border-purple-500/30 hover:border-purple-500/50",
+    borderDark: "border-purple-500/40 hover:border-purple-400/70",
     borderLight: "border-purple-200 hover:border-purple-400",
-    badgeBgDark: "bg-purple-500/15 border-purple-500/30",
+    badgeBgDark: "bg-purple-500/25 border-purple-500/40",
     badgeBgLight: "bg-purple-100 border-purple-200",
-    badgeTextDark: "text-purple-300",
+    badgeTextDark: "text-purple-200",
     badgeTextLight: "text-purple-700",
     icon: Quote,
   },
   citation: {
     label: "Citation",
     category: "Reference",
-    gradientDark: "from-amber-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "from-amber-500/30 via-[#261c14] to-[#1c1510]",
     gradientLight: "from-amber-50 to-white",
-    borderDark: "border-amber-500/30 hover:border-amber-500/50",
+    borderDark: "border-amber-500/40 hover:border-amber-400/70",
     borderLight: "border-amber-200 hover:border-amber-400",
-    badgeBgDark: "bg-amber-500/15 border-amber-500/30",
+    badgeBgDark: "bg-amber-500/25 border-amber-500/40",
     badgeBgLight: "bg-amber-100 border-amber-200",
-    badgeTextDark: "text-amber-300",
+    badgeTextDark: "text-amber-200",
     badgeTextLight: "text-amber-700",
     icon: BookOpen,
   },
   agenda_item: {
     label: "Agenda",
     category: "Milestone",
-    gradientDark: "from-indigo-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "from-indigo-500/30 via-[#1a192b] to-[#131220]",
     gradientLight: "from-indigo-50 to-white",
-    borderDark: "border-indigo-500/30 hover:border-indigo-500/50",
+    borderDark: "border-indigo-500/40 hover:border-indigo-400/70",
     borderLight: "border-indigo-200 hover:border-indigo-400",
-    badgeBgDark: "bg-indigo-500/15 border-indigo-500/30",
+    badgeBgDark: "bg-indigo-500/25 border-indigo-500/40",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
-    badgeTextDark: "text-indigo-300",
+    badgeTextDark: "text-indigo-200",
     badgeTextLight: "text-indigo-700",
     icon: List,
   },
   custom_ui: {
     label: "UI Design Block",
     category: "Design",
-    gradientDark: "from-rose-500/[0.14] via-[#0e0e0e] to-[#080808]",
+    gradientDark: "from-rose-500/30 via-[#24171b] to-[#1a1417]",
     gradientLight: "from-rose-50 to-white",
-    borderDark: "border-rose-500/30 hover:border-rose-500/50",
+    borderDark: "border-rose-500/40 hover:border-rose-400/70",
     borderLight: "border-rose-200 hover:border-rose-400",
-    badgeBgDark: "bg-rose-500/15 border-rose-500/30",
+    badgeBgDark: "bg-rose-500/25 border-rose-500/40",
     badgeBgLight: "bg-rose-100 border-rose-200",
-    badgeTextDark: "text-rose-300",
+    badgeTextDark: "text-rose-200",
     badgeTextLight: "text-rose-700",
-    icon: Sparkles,
+    icon: Layout,
   },
   concept: {
     label: "Key Concept",
@@ -306,7 +307,7 @@ export interface ContextIntelligenceFullModalProps {
   cards: AiProducerCard[];
   status: IntelligenceStatus;
   isDarkMode: boolean;
-  provider: "groq" | "openai";
+  provider: AiProvider;
   mode?: "auto" | "manual";
   onToggleMode?: () => void;
   onDismiss: (index: number) => void;
@@ -728,24 +729,31 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                     </button>
                   </div>
 
-                  {/* Right Action: Character Count & ArrowUp Send Button */}
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[9.5px] font-mono ${
-                        isDarkMode ? "text-neutral-500" : "text-neutral-400"
+                  {/* Input draft field to quickly push custom overlay text */}
+                  <div className="flex items-center gap-1.5 flex-1 max-w-xs sm:max-w-sm">
+                    <input
+                      ref={inputRef as any}
+                      type="text"
+                      value={draftText}
+                      onChange={(e) => setDraftText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void commitMessage(draftText);
+                      }}
+                      placeholder="Type or edit message to push..."
+                      className={`w-full px-2.5 py-1 text-xs rounded-lg outline-none transition-all ${
+                        isDarkMode
+                          ? "bg-neutral-900/90 border border-neutral-800 text-white placeholder:text-neutral-600 focus:border-neutral-500"
+                          : "bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500"
                       }`}
-                    >
-                      {draftText.length}/{MAX_LENGTH}
-                    </span>
-
+                    />
                     <button
                       type="button"
                       onClick={() => commitMessage(draftText)}
                       disabled={!draftText.trim()}
-                      className={`h-6.5 w-6.5 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm ${
+                      className={`p-1.5 rounded-lg font-bold text-xs transition-all disabled:opacity-30 cursor-pointer ${
                         isDarkMode
-                          ? "bg-white text-black hover:bg-neutral-200 hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(255,255,255,0.15)]"
-                          : "bg-neutral-900 text-white hover:bg-neutral-800 hover:scale-105 active:scale-95"
+                          ? "bg-white text-black hover:bg-neutral-200"
+                          : "bg-neutral-900 text-white hover:bg-neutral-800"
                       }`}
                       title="Push to live audience screen (Enter)"
                     >
@@ -756,7 +764,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
               </div>
             </div>
 
-            {/* ── Context Intelligence Suggestions Section Underneath (Horizontal Carousel) ─ */}
+            {/* ── Context Intelligence Suggestions Section Underneath (Horizontal Carousel: Latest 3 Cards) ─ */}
             <div className="px-6 pb-4 pt-1 flex flex-col gap-2 shrink-0">
               <div className="flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
@@ -775,7 +783,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                           : "bg-neutral-200 text-neutral-800"
                       }`}
                     >
-                      {cards.length}
+                      {Math.min(cards.length, 3)}
                     </span>
                   )}
                   {status === "analyzing" && (
@@ -806,7 +814,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 )}
               </div>
 
-              {/* Suggestions Horizontal Carousel */}
+              {/* Suggestions Horizontal Carousel (Latest 3 Cards) */}
               {cards.length === 0 ? (
                 <div
                   className={`w-full py-3 px-4 flex items-center justify-center gap-2 text-center border border-dashed rounded-2xl shrink-0 ${
@@ -822,14 +830,13 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-0.5 shrink-0 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-neutral-800 hover:[&::-webkit-scrollbar-thumb]:bg-neutral-700 [&::-webkit-scrollbar-thumb]:rounded-full">
-                  {cards.map((card, index) => {
+                  {cards.slice(0, 3).map((card, index) => {
                     const typeVisual = CARD_VISUALS[card.type] ?? CARD_VISUALS.agenda_item;
-                    const themeKey = (card.themeColor as string)?.toLowerCase();
-                    const themePalette = (themeKey && THEME_PALETTES[themeKey]) || THEME_PALETTES.cyan;
                     const IconComponent = typeVisual.icon;
                     const headline = getHeadline(card);
                     const subline = getSubline(card);
                     const isPushed = pushedIndex === index;
+                    const live = isCardLive(card);
 
                     return (
                       <motion.div
@@ -838,14 +845,22 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.94 }}
                         className={`group relative flex flex-row items-stretch gap-2 w-[240px] sm:w-[255px] h-[108px] shrink-0 rounded-2xl border p-1.5 transition-all duration-200 shadow-sm ${
-                          isDarkMode
-                            ? `bg-gradient-to-b ${themePalette.gradientDark} ${themePalette.borderDark} bg-[#080808]`
-                            : `bg-gradient-to-b ${themePalette.gradientLight} ${themePalette.borderLight} bg-white`
+                          live
+                            ? isDarkMode
+                              ? "bg-neutral-800 border-neutral-600 ring-1 ring-white/20 text-white"
+                              : "bg-neutral-200 border-neutral-400 ring-1 ring-neutral-400/40 text-neutral-900"
+                            : isDarkMode
+                              ? "bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700 text-neutral-100"
+                              : "bg-neutral-100 border-neutral-200 hover:bg-neutral-200 hover:border-neutral-300 text-neutral-900"
                         }`}
                       >
                         {/* Tall Image / Visual taking almost full card height */}
                         {card.imageUrl ? (
-                          <div className="relative w-[72px] sm:w-[78px] shrink-0 self-stretch overflow-hidden rounded-xl border border-neutral-800 shadow-sm bg-black/60">
+                          <div
+                            className={`relative w-[72px] sm:w-[78px] shrink-0 self-stretch overflow-hidden rounded-xl border shadow-sm ${
+                              isDarkMode ? "border-neutral-800 bg-black/60" : "border-neutral-200 bg-white"
+                            }`}
+                          >
                             <img
                               src={card.imageUrl}
                               alt={headline}
@@ -857,54 +872,58 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                           </div>
                         ) : (
                           <div
-                            className={`flex w-[72px] sm:w-[78px] shrink-0 self-stretch items-center justify-center rounded-xl border ${
+                            className={`flex w-[72px] sm:w-[78px] shrink-0 self-stretch items-center justify-center rounded-xl border border-solid shadow-sm ${
                               isDarkMode
-                                ? "bg-neutral-900/80 border-neutral-800 text-neutral-300"
-                                : "bg-neutral-100 border-neutral-200 text-neutral-800"
+                                ? "bg-neutral-950 border-neutral-800 text-neutral-300"
+                                : "bg-white border-neutral-200 text-neutral-700"
                             }`}
                           >
                             <IconComponent className="h-5 w-5" />
                           </div>
                         )}
 
-                        {/* Right Content Column */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                          {/* Top Header Row */}
+                        {/* Content column */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 pr-0.5">
+                          {/* Top: badge row + headline */}
                           <div>
-                            <div className="flex items-center justify-between gap-1 mb-0.5">
+                            <div className="flex items-center justify-between gap-1 mb-1">
                               <div className="flex items-center gap-1 min-w-0">
                                 <span
                                   className={`text-[8px] font-black px-1.5 py-0.5 rounded border leading-none uppercase tracking-wider truncate ${
                                     isDarkMode
-                                      ? `${themePalette.badgeBgDark} ${themePalette.badgeTextDark}`
-                                      : `${themePalette.badgeBgLight} ${themePalette.badgeTextLight}`
+                                      ? "bg-neutral-800 border-neutral-700 text-neutral-300"
+                                      : "bg-white border-neutral-300 text-neutral-700"
                                   }`}
                                 >
                                   {typeVisual.label}
                                 </span>
-                                {card.themeColor && (
-                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${themePalette.dotColor}`} />
+                                {live && (
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 animate-pulse ${
+                                      isDarkMode ? "bg-white" : "bg-neutral-900"
+                                    }`}
+                                  />
                                 )}
                               </div>
 
+                              {/* Dismiss */}
                               <button
                                 type="button"
                                 onClick={() => onDismiss(index)}
-                                className={`opacity-0 group-hover:opacity-100 p-0.5 rounded transition-all ${
+                                className={`opacity-0 group-hover:opacity-100 p-0.5 rounded transition-all cursor-pointer ${
                                   isDarkMode
-                                    ? "text-white/30 hover:text-red-400"
-                                    : "text-neutral-400 hover:text-red-600"
+                                    ? "text-neutral-400 hover:text-red-400 hover:bg-neutral-800"
+                                    : "text-neutral-500 hover:text-red-600 hover:bg-neutral-200"
                                 }`}
-                                title="Dismiss card"
+                                title="Dismiss suggestion"
                               >
                                 <X className="w-2.5 h-2.5" />
                               </button>
                             </div>
 
-                            {/* Headline and Subline */}
                             <p
-                              className={`text-[11.5px] font-black leading-snug line-clamp-1 ${
-                                isDarkMode ? "text-white" : "text-neutral-950"
+                              className={`text-[11.5px] font-bold leading-snug line-clamp-1 ${
+                                isDarkMode ? "text-neutral-100" : "text-neutral-900"
                               }`}
                               title={headline}
                             >
@@ -913,7 +932,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                             {subline && (
                               <p
                                 className={`text-[9.5px] mt-0.5 line-clamp-2 leading-tight ${
-                                  isDarkMode ? "text-white/70" : "text-neutral-600"
+                                  isDarkMode ? "text-neutral-400" : "text-neutral-600"
                                 }`}
                                 title={subline}
                               >
@@ -922,49 +941,55 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                             )}
                           </div>
 
-                          {/* Footer Action Row */}
+                          {/* Bottom action row: Confidence + Actions */}
                           <div
-                            className={`flex items-center justify-between pt-1 border-t ${
-                              isDarkMode ? "border-white/[0.06]" : "border-neutral-200/80"
+                            className={`flex items-center justify-between pt-1 border-t mt-auto ${
+                              isDarkMode ? "border-neutral-800" : "border-neutral-200"
                             }`}
                           >
                             <span
-                              className={`text-[8.5px] font-mono font-semibold ${
-                                isDarkMode ? "text-white/40" : "text-neutral-400"
+                              className={`text-[8px] font-bold ${
+                                isDarkMode ? "text-neutral-400" : "text-neutral-500"
                               }`}
                             >
-                              {Math.round(card.confidence * 100)}% match
+                              {Math.round((card.confidence ?? 0.95) * 100)}% Match
                             </span>
 
                             <div className="flex items-center gap-1">
+                              {/* Copy */}
                               <button
                                 type="button"
                                 onClick={() => handleCardInsert(card)}
-                                className={`p-1 rounded transition-colors ${
+                                className={`p-1 rounded transition-colors cursor-pointer ${
                                   isDarkMode
-                                    ? "text-white/40 hover:text-white hover:bg-white/10"
-                                    : "text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100"
+                                    ? "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                                    : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200"
                                 }`}
-                                title="Copy into input"
+                                title="Copy to input"
                               >
-                                <Copy className="w-2.5 h-2.5" />
+                                <Copy className="w-3 h-3" />
                               </button>
 
+                              {/* Push / Live */}
                               <button
                                 type="button"
                                 onClick={() => handleCardPush(card, index)}
-                                className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold transition-all shadow-sm cursor-pointer ${
-                                  isCardLive(card)
-                                    ? "bg-emerald-500 hover:bg-red-500 text-white"
+                                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-bold transition-all shadow-sm cursor-pointer active:scale-95 border ${
+                                  live
+                                    ? isDarkMode
+                                      ? "bg-neutral-800 text-white border-neutral-600 hover:bg-red-500/20 hover:text-red-300"
+                                      : "bg-neutral-800 text-white border-neutral-700 hover:bg-red-50 hover:text-red-600"
                                     : isPushed
-                                      ? "bg-emerald-500 text-white"
+                                      ? isDarkMode
+                                        ? "bg-neutral-800 text-white border-neutral-600"
+                                        : "bg-neutral-800 text-white border-neutral-700"
                                       : isDarkMode
-                                        ? "bg-white text-black hover:bg-neutral-200 active:scale-95"
-                                        : "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-95"
+                                        ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700"
+                                        : "bg-white hover:bg-neutral-50 text-neutral-800 border-neutral-300"
                                 }`}
-                                title={isCardLive(card) ? "Currently live on projection screen. Click to hide." : "Push to live overlay"}
+                                title={live ? "Currently live on projection screen. Click to hide." : "Push to live overlay"}
                               >
-                                {isCardLive(card) ? (
+                                {live ? (
                                   <>
                                     <EyeOff className="w-2.5 h-2.5" />
                                     <span>Hide</span>
@@ -1001,40 +1026,13 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
             >
               <div className="flex items-center gap-3">
                 <span>
-                  <kbd
-                    className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
-                      isDarkMode
-                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
-                        : "bg-neutral-200 text-neutral-700"
-                    }`}
-                  >
-                    Enter
-                  </kbd>{" "}
-                  Push
+                  <kbd className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-neutral-800 text-neutral-300 border border-neutral-700">Enter</kbd> Push
                 </span>
                 <span>
-                  <kbd
-                    className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
-                      isDarkMode
-                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
-                        : "bg-neutral-200 text-neutral-700"
-                    }`}
-                  >
-                    Ctrl + K
-                  </kbd>{" "}
-                  Toggle
+                  <kbd className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-neutral-800 text-neutral-300 border border-neutral-700">Ctrl + K</kbd> Toggle
                 </span>
                 <span>
-                  <kbd
-                    className={`px-1.5 py-0.2 rounded font-mono text-[9px] ${
-                      isDarkMode
-                        ? "bg-neutral-900 text-neutral-300 border border-neutral-800"
-                        : "bg-neutral-200 text-neutral-700"
-                    }`}
-                  >
-                    Esc
-                  </kbd>{" "}
-                  Close
+                  <kbd className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-neutral-800 text-neutral-300 border border-neutral-700">Esc</kbd> Close
                 </span>
               </div>
 
@@ -1045,12 +1043,12 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                     onClick={handleHideOverlay}
                     className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[9.5px] transition-all cursor-pointer shadow-sm border active:scale-95 ${
                       isDarkMode
-                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-300"
-                        : "bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                        ? "bg-neutral-900 border-neutral-800 text-neutral-200 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-300"
+                        : "bg-white border-neutral-300 text-neutral-800 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
                     }`}
                     title="Projection overlay is currently live. Click to hide."
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                     <EyeOff className="w-3 h-3" />
                     <span>Hide Screen</span>
                   </button>

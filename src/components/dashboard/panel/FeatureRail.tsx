@@ -8,6 +8,7 @@ interface FeatureRailProps {
   onSelectView: (view: FeatureView) => void;
   isImageMenuOpen: boolean;
   onToggleImageMenu: () => void;
+  aiCardsCount?: number;
 }
 
 interface RailItem {
@@ -19,8 +20,9 @@ interface RailItem {
 
 const railItems: RailItem[] = [
   { id: "autofit", title: "Main Layout", isCustomIcon: true },
+  { id: "captions", title: "AI Speech & Smart Cards", iconSrc: "./caption.png" },
   { id: "overlay", title: "Text Overlay", iconSrc: "./sendmessage.png" },
-  { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
+  // { id: "timer", title: "Timer Feature", iconSrc: "./countdown.png" },
   { id: "remote", title: "Remote Screens", iconSrc: "./smart-tv.png" },
   { id: "image", title: "Images", iconSrc: "./gallery.png" },
 ];
@@ -30,6 +32,7 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
   onSelectView,
   isImageMenuOpen,
   onToggleImageMenu,
+  aiCardsCount = 0,
 }) => {
   const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
 
@@ -85,6 +88,15 @@ export const FeatureRail: React.FC<FeatureRailProps> = ({
                       : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                   }`}
                 />
+              )}
+              {item.id === "captions" && aiCardsCount > 0 && (
+                <span
+                  className={`absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[9px] font-black shadow-md ${
+                    isDarkMode ? "bg-white text-black" : "bg-neutral-900 text-white"
+                  }`}
+                >
+                  {aiCardsCount}
+                </span>
               )}
               {isActive && (
                 <span

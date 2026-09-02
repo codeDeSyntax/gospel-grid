@@ -163,6 +163,8 @@ export class AssemblyAiLiveTranscriber {
     this.apiEndpoint = `${API_ENDPOINT_BASE_URL}?${params.toString()}`;
   }
 
+  private audioQueue: Buffer[] = [];
+
   get isRunning() {
     return (
       !!this.ws && this.ws.readyState === WebSocket.OPEN && !this.stopRequested
@@ -185,6 +187,15 @@ export class AssemblyAiLiveTranscriber {
 
     this.ws.on("open", () => {
       this.options.onEvent?.({ type: "begin", sessionId: "", expiresAt: 0 });
+      // Flush any audio chunks that were queued while connecting
+      while (this.audioQueue.length > 0) {
+        const queued = this.audioQueue.shift();
+        if (queued && this.ws && this.ws.readyState === WebSocket.OPEN) {
+          try {
+            this.ws.send(queued);
+          } catch {}
+        }
+      }
       if (!this.options.useExternalAudioInput) {
         this.startMicrophone();
       }
@@ -204,9 +215,19 @@ export class AssemblyAiLiveTranscriber {
           return;
         }
 
-        if (msgType === "Turn") {
-          const transcript = payload.transcript || "";
-          const isFormatted = !!payload.turn_is_formatted;
+        const transcript =
+          payload.transcript ||
+          payload.text ||
+          (Array.isArray(payload.words)
+            ? payload.words.map((w: any) => w.text || w.word || "").join(" ")
+            : "");
+        const isFormatted = !!(
+          payload.turn_is_formatted ||
+          payload.message_type === "FinalTranscript" ||
+          payload.type === "FinalTranscript"
+        );
+
+        if (transcript) {
           this.options.onTranscript?.(transcript, isFormatted);
           this.options.onEvent?.({
             type: "turn",
@@ -234,17 +255,26 @@ export class AssemblyAiLiveTranscriber {
     this.ws.on("error", (error: unknown) => {
       this.options.onError?.(error);
       this.options.onEvent?.({ type: "error", error });
-      void this.stop();
     });
 
     this.ws.on("close", () => {
-      void this.stop();
+      if (!this.stopRequested) {
+        this.ws = null;
+        setTimeout(() => {
+          if (!this.stopRequested && !this.ws) {
+            void this.start();
+          }
+        }, 1000);
+      } else {
+        void this.stop();
+      }
     });
   }
 
   async stop() {
     if (this.stopRequested) return;
     this.stopRequested = true;
+    this.audioQueue = [];
 
     await this.saveWavFileIfEnabled();
 
@@ -280,18 +310,37 @@ export class AssemblyAiLiveTranscriber {
   }
 
   sendAudioChunk(data: Buffer) {
-    if (
-      !this.ws ||
-      this.ws.readyState !== WebSocket.OPEN ||
-      this.stopRequested
-    ) {
+    if (this.stopRequested) {
       return false;
     }
 
     const chunk = Buffer.from(data);
     this.recordedFrames.push(chunk);
-    this.ws.send(chunk);
-    return true;
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      // Flush backlog first
+      while (this.audioQueue.length > 0) {
+        const queued = this.audioQueue.shift();
+        if (queued) {
+          try {
+            this.ws.send(queued);
+          } catch {}
+        }
+      }
+      try {
+        this.ws.send(chunk);
+        return true;
+      } catch {
+        this.audioQueue.push(chunk);
+        return false;
+      }
+    } else {
+      // Buffer up to 150 frames while connecting (~15s audio)
+      if (this.audioQueue.length < 150) {
+        this.audioQueue.push(chunk);
+      }
+      return true;
+    }
   }
 
   private startMicrophone() {

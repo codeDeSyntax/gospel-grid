@@ -259,7 +259,7 @@ export function registerAssemblyAiIpc() {
   });
 
   ipcMain.on("assembly-send-audio-chunk", (_event, chunkLike: unknown) => {
-    if (!transcriber || !status.isConnected) {
+    if (!transcriber) {
       return;
     }
 
