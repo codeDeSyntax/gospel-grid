@@ -858,22 +858,25 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 />
 
                 {assignedIds.length === 0 ? (
-                  <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
-                    <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                      <div className="flex items-center gap-3 text-left">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-theme-primary-800/60 border border-theme-primary-500/30 text-primary-400 shadow-inner">
-      <Tv size={26} strokeWidth={2.2} />
-    </div>
+                  <div className="absolute inset-0 flex items-center justify-center p-3 text-center">
+                    <div className="w-full max-w-[300px] box-border rounded-2xl border border-white/10 bg-[#12151b]/85 p-4 sm:p-[18px] backdrop-blur-md shadow-[0_12px_36px_rgba(0,0,0,0.6)] ring-1 ring-white/5">
+                      <div className="flex items-center gap-3.5 text-left">
+                        <img
+                          src="./smart-tv.png"
+                          alt="Drag from left panel"
+                          className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] opacity-95"
+                          draggable={false}
+                        />
                         <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-semibold tracking-wide uppercase text-theme-primary-100/90">
+                          <p className="text-[11px] font-bold tracking-wider uppercase text-white">
                             Waiting For Window Drop
                           </p>
-                          <p className="mt-1 text-[10px] text-theme-primary-300/70 leading-relaxed">
+                          <p className="mt-1 text-[10px] text-neutral-300 leading-relaxed font-normal">
                             Drag a window card from the left panel and drop it
                             here.
                           </p>
-                          <div className="mt-2 h-px w-full bg-gradient-to-r from-transparent via-theme-primary-500/35 to-transparent" />
-                          <p className="mt-2 text-[9px] text-theme-primary-300/55">
+                          <div className="my-2 h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                          <p className="text-[9px] text-neutral-400">
                             You can drop multiple windows per display.
                           </p>
                         </div>

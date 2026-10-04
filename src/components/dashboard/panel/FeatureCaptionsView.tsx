@@ -237,10 +237,10 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
 
         {/* ── Composer Card (modal-style) ───────────────────────────────────────── */}
         <div
-          className={`relative w-full rounded-[22px] p-4 flex flex-col justify-between min-h-[120px] transition-all duration-300 ${
+          className={`relative w-full rounded-[22px] p-4 flex flex-col justify-between min-h-[120px] transition-all duration-300 shadow-none ${
             isDarkMode
-              ? "bg-[#0c0c0c] shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
-              : "bg-[#f5f6f8] border border-neutral-300/80 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+              ? "bg-[#141414] border border-white/10"
+              : "bg-white border border-neutral-300"
           }`}
         >
           {/* Textarea */}
@@ -280,7 +280,7 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                 className={`h-6 w-6 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                   isDarkMode
                     ? "bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
                 }`}
                 title="Clear text"
               >
@@ -293,10 +293,10 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                 onClick={handleToggleMic}
                 className={`h-6 px-3 rounded-full flex items-center gap-1.5 text-[10.5px] font-semibold transition-all cursor-pointer ${
                   isMicStreaming
-                    ? "bg-primary-500 text-white shadow-sm"
+                    ? "bg-primary-500 text-white"
                     : isDarkMode
                       ? "bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                      : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900"
+                      : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-950 border border-neutral-200"
                 }`}
                 title={isMicStreaming ? "Stop mic" : "Start mic captions"}
               >
@@ -315,7 +315,7 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                 className={`h-6 px-3 rounded-full flex items-center gap-1.5 text-[10.5px] font-semibold transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed ${
                   isDarkMode
                     ? "bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-950 border border-neutral-200"
                 }`}
                 title="Extract AI context cards from text"
               >
@@ -336,7 +336,7 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                     ? "bg-primary-500/15 text-primary-400"
                     : isDarkMode
                       ? "bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white"
-                      : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900"
+                      : "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-950 border border-neutral-200"
                 }`}
                 title={aiMode === "auto" ? "Auto Pick — click to switch to manual" : "Manual — click for Auto Pick"}
               >
@@ -354,7 +354,7 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                 type="button"
                 onClick={handleSubmit}
                 disabled={!draftText.trim()}
-                className={`h-6 w-6 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm cursor-pointer ${
+                className={`h-6 w-6 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
                   isDarkMode
                     ? "bg-white text-black hover:bg-neutral-200 hover:scale-105 active:scale-95"
                     : "bg-neutral-900 text-white hover:bg-neutral-800 hover:scale-105 active:scale-95"

@@ -165,7 +165,7 @@ export const WindowList: React.FC<WindowListProps> = ({
   }, [windows, searchTerm, intelligenceByWindowId]);
 
   return (
-    <div className="relative h-full flex flex-col pt-3 bg-theme-primary-900 overflow-hidden">
+    <div className="relative h-full flex flex-col pt-0 bg-theme-primary-900 overflow-hidden">
       {/* Soft top-left ambient light aura */}
       <div
         className="pointer-events-none absolute -top-12 -left-12 w-64 h-48 rounded-full blur-3xl opacity-10 dark:opacity-5 z-0"
@@ -173,29 +173,29 @@ export const WindowList: React.FC<WindowListProps> = ({
           background: "radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 80%)",
         }}
       />
-      {/* Fixed Header Section */}
-      <div className="flex-shrink-0 mb-2 px-3.5 space-y-2">
+      {/* Fixed Sleek, Soft Header Section */}
+      <div className="flex-shrink-0 px-3 py-1.5 space-y-1 border-none bg-theme-primary-950/60 backdrop-blur-sm">
         {/* Title row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AppWindow className="h-5 w-5 text-theme-primary-300" />
-            <span className="font-[impact] text-sm tracking-wide text-theme-primary-200">
+          <div className="flex items-center gap-1.5">
+            <AppWindow className="h-3.5 w-3.5 text-primary-400/90" />
+            <span className="text-[11.5px] font-medium tracking-tight text-theme-primary-200/90">
               Available Windows
             </span>
           </div>
 
-          {/* Timer + Refresh — gamified */}
-          <div className="flex items-center gap-2">
+          {/* Timer + Refresh — sleek, soft & sharp */}
+          <div className="flex items-center gap-1.5">
             {countdownTime > 0 && (
-              <div className="flex h-8 items-center gap-1.5 rounded-full bg-theme-primary-800 px-1.5 text-theme-primary-200">
-                <span className="relative flex h-8 w-8 items-center justify-center">
-                  <svg className="h-6 w-6 -rotate-90" viewBox="0 0 24 24">
+              <div className="flex h-5 items-center gap-1.5 rounded-none bg-theme-primary-900/60 dark:bg-white/[0.04] px-1.5 text-theme-primary-300">
+                <span className="relative flex h-3.5 w-3.5 items-center justify-center">
+                  <svg className="h-3.5 w-3.5 -rotate-90" viewBox="0 0 24 24">
                     <circle
                       cx="12"
                       cy="12"
                       r="9"
                       fill="none"
-                      stroke="rgb(var(--theme-primary-700) / 0.72)"
+                      stroke="rgb(var(--theme-primary-700) / 0.5)"
                       strokeWidth="2"
                     />
                     <circle
@@ -221,12 +221,12 @@ export const WindowList: React.FC<WindowListProps> = ({
                   </svg>
                   {isLoading && (
                     <AiOutlineLoading3Quarters
-                      size={14}
-                      className="absolute animate-spin text-primary-500"
+                      size={9}
+                      className="absolute animate-spin text-primary-400"
                     />
                   )}
                 </span>
-                <span className="w-7 text-right text-[11px] font-semibold tabular-nums leading-none text-theme-primary-100">
+                <span className="w-5 text-right text-[10px] font-mono font-medium leading-none text-theme-primary-200/90">
                   {Math.ceil(countdownTime)}s
                 </span>
                 {onManualRefresh && (
@@ -234,9 +234,9 @@ export const WindowList: React.FC<WindowListProps> = ({
                     type="button"
                     onClick={onManualRefresh}
                     title="Refresh now"
-                    className="flex items-center justify-center p-1 rounded-full text-neutral-400 transition-colors hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white"
+                    className="flex items-center justify-center p-0.5 rounded-none text-theme-primary-400 transition-colors hover:bg-black/5 dark:hover:bg-white/10 hover:text-theme-primary-100 cursor-pointer"
                   >
-                    <RefreshCcwDot size={14} className="text-neutral-700 dark:text-neutral-200" />
+                    <RefreshCcwDot size={10.5} />
                   </button>
                 )}
               </div>
@@ -245,23 +245,23 @@ export const WindowList: React.FC<WindowListProps> = ({
         </div>
 
         {error && (
-          <div className="p-2 rounded-lg bg-red-500/10 border border-red-400/25 flex items-center gap-1.5 text-red-300/80">
-            <MdError size={12} />
-            <span className="text-[11px]">{error}</span>
+          <div className="p-1.5 rounded-none bg-red-500/10 border border-red-400/25 flex items-center gap-1.5 text-red-300/80">
+            <MdError size={11} />
+            <span className="text-[10px]">{error}</span>
           </div>
         )}
 
         {selectedRiskWindows.length > 0 && (
           <div
-            className={`rounded-2xl border px-2.5 py-1.5 ${
+            className={`rounded-none border px-2 py-1 ${
               isLightMode
                 ? "border-neutral-200 bg-neutral-100/90 text-neutral-800"
                 : "border-white/10 bg-white/[0.05] text-neutral-300"
             }`}
           >
-            <div className="flex items-start gap-1.5">
-              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500 dark:text-amber-400" />
-              <p className="text-[11px] leading-snug">
+            <div className="flex items-start gap-1">
+              <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0 text-amber-500 dark:text-amber-400" />
+              <p className="text-[10px] leading-snug">
                 Privacy check: {selectedRiskWindows.length} selected window
                 {selectedRiskWindows.length === 1 ? "" : "s"} may expose
                 sensitive content.
@@ -295,7 +295,7 @@ export const WindowList: React.FC<WindowListProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-0 w-full border-solid border-t border-b-0 border-l-0 border-r-0 border-t-neutral-200 dark:border-t-neutral-700">
+          <div className="space-y-0 w-full border-solid border-t border-b-0 border-l-0 border-r-0 border-t-neutral-300 dark:border-t-neutral-700">
             <AnimatePresence mode="popLayout">
               {filteredWindows.map((window, index) => {
                 const isCaptionsWindow =
@@ -397,10 +397,10 @@ export const WindowList: React.FC<WindowListProps> = ({
                     border-solid border-t-0 border-l-0 border-r-0 border-b ${
                       window.isSelected
                         ? isLightMode
-                          ? "border-b-neutral-300 bg-black/[0.06] hover:bg-black/[0.08]"
+                          ? "border-b-neutral-400/80 bg-black/[0.06] hover:bg-black/[0.08]"
                           : "border-b-neutral-600 bg-white/[0.09] hover:bg-white/[0.12]"
                         : isLightMode
-                          ? "border-b-neutral-200 hover:bg-black/[0.03]"
+                          ? "border-b-neutral-300 hover:bg-black/[0.03]"
                           : "border-b-neutral-700 hover:bg-white/[0.04]"
                     }
                     ${draggedWindow?.id === window.id ? "opacity-50" : ""}
@@ -447,7 +447,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                               transition-all duration-150
                               hover:bg-white/10 active:bg-white/15
                               border-solid border-t-0 border-b-0 border-l-0 border-r ${
-                                isLightMode ? "border-r-neutral-200" : "border-r-neutral-700"
+                                isLightMode ? "border-r-neutral-300" : "border-r-neutral-700"
                               }
                               ${draggedWindow?.id === window.id ? "cursor-grabbing bg-white/20" : ""}
                             `}
@@ -517,7 +517,9 @@ export const WindowList: React.FC<WindowListProps> = ({
                           <div
                             className={`relative flex-shrink-0 w-7 h-7 rounded-full z-10 flex items-center justify-center overflow-hidden transition-all duration-200 ${
                               isCaptionsWindow
-                                ? "bg-primary-500/25 border border-primary-400/40 text-primary-400 shadow-[0_0_10px_rgba(94,172,36,0.25)]"
+                                ? isLightMode
+                                  ? "bg-white border border-neutral-300 shadow-sm text-primary-600"
+                                  : "bg-primary-500/25 border border-primary-400/40 text-primary-400 shadow-[0_0_10px_rgba(94,172,36,0.25)]"
                                 : window.isSelected
                                   ? isLightMode
                                     ? "bg-white border border-neutral-400 shadow-sm ring-1 ring-black/10 text-neutral-900"
@@ -566,22 +568,21 @@ export const WindowList: React.FC<WindowListProps> = ({
                             {/* Window Title / Description */}
                             {isCaptionsWindow ? (
                               <div
-                                className={`text-[12px] font-[impact] tracking-[0.1em] uppercase truncate leading-tight transition-colors duration-200 ${
+                                className={`text-[11px] font-semibold tracking-wide uppercase truncate leading-tight transition-colors duration-200 ${
                                   isLightMode
                                     ? "text-neutral-900"
-                                    : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
+                                    : "text-white/95"
                                 }`}
                               >
                                 {window.name}
                               </div>
                             ) : isTimerWindow ? (
                               <div
-                                className={`text-[20px] tabular-nums truncate leading-none transition-colors duration-200 ${
+                                className={`text-[16px] font-medium font-mono tabular-nums tracking-wide truncate leading-none transition-colors duration-200 ${
                                   isLightMode
-                                    ? "font-thin tracking-[0.03em] text-neutral-900 group-hover:text-neutral-950"
-                                    : "font-[impact] tracking-[0.08em] text-white group-hover:text-neutral-100"
+                                    ? "text-neutral-900 group-hover:text-neutral-950"
+                                    : "text-white/95 group-hover:text-white"
                                 }`}
-                                style={{ opacity: isLightMode ? 0.96 : 0.9 }}
                               >
                                 {timerText}
                               </div>
@@ -655,7 +656,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                             } transition-all duration-150 ${
                               window.isSelected
                                 ? isLightMode
-                                  ? "opacity-100 bg-black/[0.05] hover:bg-black/[0.08]"
+                                  ? "opacity-100 bg-white hover:bg-neutral-50"
                                   : "opacity-100 bg-white/[0.08] hover:bg-white/[0.12]"
                                 : isLightMode
                                   ? "opacity-100 bg-white hover:bg-neutral-100/80"

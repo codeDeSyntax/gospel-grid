@@ -318,13 +318,17 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
             {/* ── Top Modern Chat Input Bar ────────────────────────────────── */}
             <div className="p-4 sm:p-5 border-b border-white/[0.08] bg-black/20">
               <div
-                className={`relative flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all ${
+                className={`relative flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 transition-all shadow-none ${
                   isDarkMode
-                    ? "bg-[#141414] border-white/12 focus-within:border-neutral-500 focus-within:ring-1 focus-within:ring-neutral-600/30"
-                    : "bg-neutral-50 border-neutral-300 focus-within:border-neutral-700"
+                    ? "bg-[#141414] border-white/12 focus-within:border-neutral-500 focus-within:ring-1 focus-within:ring-neutral-600/30 text-white"
+                    : "bg-white border-neutral-300 focus-within:border-neutral-700 text-neutral-900"
                 }`}
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-neutral-300">
+                <div
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                    isDarkMode ? "bg-white/5 text-neutral-300" : "bg-neutral-100 text-neutral-600"
+                  }`}
+                >
                   <Mic className="h-3.5 w-3.5 animate-pulse" />
                 </div>
 
@@ -340,14 +344,20 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                     }
                   }}
                   placeholder="Live speech appears here, or type overlay message..."
-                  className="w-full bg-transparent text-xs sm:text-sm text-white placeholder:text-white/35 outline-none font-normal"
+                  className={`w-full bg-transparent text-xs sm:text-sm outline-none font-normal ${
+                    isDarkMode
+                      ? "text-white placeholder:text-white/35"
+                      : "text-neutral-900 placeholder:text-neutral-400"
+                  }`}
                 />
 
                 {inputText && (
                   <button
                     type="button"
                     onClick={() => setInputText("")}
-                    className="p-1 text-white/40 hover:text-white transition-colors"
+                    className={`p-1 transition-colors ${
+                      isDarkMode ? "text-white/40 hover:text-white" : "text-neutral-400 hover:text-neutral-800"
+                    }`}
                     title="Clear text"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -358,7 +368,11 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                   type="button"
                   onClick={handlePushInputToOverlay}
                   disabled={!inputText.trim()}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold bg-white text-black hover:bg-neutral-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer shadow-none ${
+                    isDarkMode
+                      ? "bg-white text-black hover:bg-neutral-200"
+                      : "bg-neutral-900 text-white hover:bg-neutral-800"
+                  }`}
                   title="Push to screen overlay (Enter)"
                 >
                   <span>Push</span>
