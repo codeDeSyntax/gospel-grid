@@ -526,7 +526,7 @@ export const ContextIntelligenceModal: React.FC<ContextIntelligenceModalProps> =
                   <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[9.5px]">Esc</kbd> to close
                 </span>
               </div>
-              <span className="text-[10px] text-[#76cb01]/80 font-medium">
+              <span className="text-[10px] text-primary-400 font-medium">
                 Wingrid Live AI
               </span>
             </div>

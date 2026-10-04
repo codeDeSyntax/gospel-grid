@@ -451,127 +451,13 @@ const safeDOM = {
 };
 
 function useLoading() {
-  const className = `wingrid-loading`;
-
-  const THEME_CONFIGS = {
-    "cosmic-blue": {
-      primary: {
-        400: "#60a5fa",
-        500: "#3b82f6",
-        600: "#2563eb",
-        700: "#1d4ed8",
-      },
-    },
-    "matrix-green": {
-      primary: {
-        400: "#4ade80",
-        500: "#22c55e",
-        600: "#16a34a",
-        700: "#15803d",
-      },
-    },
-    "fire-red": {
-      primary: {
-        400: "#f87171",
-        500: "#ef4444",
-        600: "#dc2626",
-        700: "#b91c1c",
-      },
-    },
-    "steel-gray": {
-      primary: {
-        400: "#9ca3af",
-        500: "#6b7280",
-        600: "#4b5563",
-        700: "#374151",
-      },
-    },
-    "earth-brown": {
-      primary: {
-        400: "#a3a3a3",
-        500: "#737373",
-        600: "#525252",
-        700: "#404040",
-      },
-    },
-  } as const;
-
-  type ThemeKey = keyof typeof THEME_CONFIGS;
-
-  let currentTheme: ThemeKey = "cosmic-blue";
-  try {
-    const savedTheme = (localStorage.getItem("wingrid-color-theme") ||
-      localStorage.getItem("wingrid-theme")) as ThemeKey;
-    if (savedTheme && THEME_CONFIGS[savedTheme]) {
-      currentTheme = savedTheme;
-    }
-  } catch (error) {
-    console.log("Could not read theme from localStorage, using default", error);
-  }
-
-  const themeColors = THEME_CONFIGS[currentTheme];
-
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (result) {
-      return `${parseInt(result[1], 16)}, ${parseInt(
-        result[2],
-        16,
-      )}, ${parseInt(result[3], 16)}`;
-    }
-    return "0, 0, 0";
-  };
-
-  const defaultTheme = {
-    primary400: hexToRgb(themeColors.primary[400]),
-    primary500: hexToRgb(themeColors.primary[500]),
-    primary600: hexToRgb(themeColors.primary[600]),
-    primary700: hexToRgb(themeColors.primary[700]),
-  };
-
-  const styleContent = `
-:root {
-  --theme-primary-400: ${defaultTheme.primary400};
-  --theme-primary-500: ${defaultTheme.primary500};
-  --theme-primary-600: ${defaultTheme.primary600};
-  --theme-primary-700: ${defaultTheme.primary700};
-}
-
-.${className} {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: #050607;
-}
-`;
-
-  const oStyle = document.createElement("style");
-  const oDiv = document.createElement("div");
-
-  oStyle.id = "wingrid-loading-style";
-  oStyle.innerHTML = styleContent;
-  oDiv.className = `${className}`;
-  oDiv.innerHTML = "";
-
   return {
-    appendLoading() {
-      safeDOM.append(document.head, oStyle);
-      safeDOM.append(document.body, oDiv);
-    },
-    removeLoading() {
-      safeDOM.remove(document.head, oStyle);
-      safeDOM.remove(document.body, oDiv);
-    },
+    appendLoading() {},
+    removeLoading() {},
   };
 }
-
-// ----------------------------------------------------------------------
 
 const { appendLoading, removeLoading } = useLoading();
-domReady().then(appendLoading);
-
 window.onmessage = (ev) => {
-  ev.data.payload === "removeLoading" && removeLoading();
+  ev.data?.payload === "removeLoading" && removeLoading();
 };
-
-setTimeout(removeLoading, 9999);

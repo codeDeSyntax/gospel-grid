@@ -69,20 +69,20 @@ interface ThemeVisual {
 const THEME_PALETTES: Record<string, ThemeVisual> = {
   emerald: {
     gradientDark: "bg-[#222226] hover:bg-[#2a2a2f]",
-    gradientLight: "from-neutral-100 via-white to-white",
+    gradientLight: "from-neutral-200/90 via-[#f0f2f5] to-[#e8ebef]",
     borderDark: "border-neutral-700 hover:border-neutral-500",
     borderLight: "border-neutral-300 hover:border-neutral-400",
     badgeBgDark: "bg-neutral-700/80 border-neutral-600",
     badgeBgLight: "bg-neutral-200 border-neutral-300",
     badgeTextDark: "text-neutral-100",
     badgeTextLight: "text-neutral-800",
-    dotColor: "bg-neutral-300",
+    dotColor: "bg-neutral-400",
   },
   rose: {
     gradientDark: "bg-[#281e22] hover:bg-[#322429]",
-    gradientLight: "from-rose-50 via-white to-white",
+    gradientLight: "from-rose-100/70 via-[#f5f0f2] to-[#e8ebef]",
     borderDark: "border-rose-500/40 hover:border-rose-400/70",
-    borderLight: "border-rose-200 hover:border-rose-400",
+    borderLight: "border-rose-200 hover:border-rose-300",
     badgeBgDark: "bg-rose-500/25 border-rose-500/40",
     badgeBgLight: "bg-rose-100 border-rose-200",
     badgeTextDark: "text-rose-200",
@@ -91,9 +91,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   purple: {
     gradientDark: "bg-[#251e2c] hover:bg-[#2f2538]",
-    gradientLight: "from-purple-50 via-white to-white",
+    gradientLight: "from-purple-100/70 via-[#f3f0f6] to-[#e8ebef]",
     borderDark: "border-purple-500/40 hover:border-purple-400/70",
-    borderLight: "border-purple-200 hover:border-purple-400",
+    borderLight: "border-purple-200 hover:border-purple-300",
     badgeBgDark: "bg-purple-500/25 border-purple-500/40",
     badgeBgLight: "bg-purple-100 border-purple-200",
     badgeTextDark: "text-purple-200",
@@ -102,9 +102,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   amber: {
     gradientDark: "bg-[#28211a] hover:bg-[#332920]",
-    gradientLight: "from-amber-50 via-white to-white",
+    gradientLight: "from-amber-100/70 via-[#f6f2ee] to-[#e8ebef]",
     borderDark: "border-amber-500/40 hover:border-amber-400/70",
-    borderLight: "border-amber-200 hover:border-amber-400",
+    borderLight: "border-amber-200 hover:border-amber-300",
     badgeBgDark: "bg-amber-500/25 border-amber-500/40",
     badgeBgLight: "bg-amber-100 border-amber-200",
     badgeTextDark: "text-amber-200",
@@ -113,9 +113,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   cyan: {
     gradientDark: "bg-[#1c262a] hover:bg-[#223035]",
-    gradientLight: "from-cyan-50 via-white to-white",
+    gradientLight: "from-cyan-100/70 via-[#eef4f6] to-[#e8ebef]",
     borderDark: "border-cyan-500/40 hover:border-cyan-400/70",
-    borderLight: "border-cyan-200 hover:border-cyan-400",
+    borderLight: "border-cyan-200 hover:border-cyan-300",
     badgeBgDark: "bg-cyan-500/25 border-cyan-500/40",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
     badgeTextDark: "text-cyan-200",
@@ -124,9 +124,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   orange: {
     gradientDark: "bg-[#29201a] hover:bg-[#342820]",
-    gradientLight: "from-orange-50 via-white to-white",
+    gradientLight: "from-orange-100/70 via-[#f6f1ee] to-[#e8ebef]",
     borderDark: "border-orange-500/40 hover:border-orange-400/70",
-    borderLight: "border-orange-200 hover:border-orange-400",
+    borderLight: "border-orange-200 hover:border-orange-300",
     badgeBgDark: "bg-orange-500/25 border-orange-500/40",
     badgeBgLight: "bg-orange-100 border-orange-200",
     badgeTextDark: "text-orange-200",
@@ -135,9 +135,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   indigo: {
     gradientDark: "bg-[#202130] hover:bg-[#282a3c]",
-    gradientLight: "from-indigo-50 via-white to-white",
+    gradientLight: "from-indigo-100/70 via-[#f1f1f7] to-[#e8ebef]",
     borderDark: "border-indigo-500/40 hover:border-indigo-400/70",
-    borderLight: "border-indigo-200 hover:border-indigo-400",
+    borderLight: "border-indigo-200 hover:border-indigo-300",
     badgeBgDark: "bg-indigo-500/25 border-indigo-500/40",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
     badgeTextDark: "text-indigo-200",
@@ -146,9 +146,9 @@ const THEME_PALETTES: Record<string, ThemeVisual> = {
   },
   blue: {
     gradientDark: "bg-[#1d2330] hover:bg-[#242d3d]",
-    gradientLight: "from-blue-50 via-white to-white",
+    gradientLight: "from-blue-100/70 via-[#eff3f8] to-[#e8ebef]",
     borderDark: "border-blue-500/40 hover:border-blue-400/70",
-    borderLight: "border-blue-200 hover:border-blue-400",
+    borderLight: "border-blue-200 hover:border-blue-300",
     badgeBgDark: "bg-blue-500/25 border-blue-500/40",
     badgeBgLight: "bg-blue-100 border-blue-200",
     badgeTextDark: "text-blue-200",
@@ -162,91 +162,91 @@ const CARD_VISUALS: Record<AiProducerCard["type"], CardVisualMeta> = {
     label: "Speaker / Title",
     category: "Speaker",
     gradientDark: "from-cyan-500/30 via-[#142226] to-[#10191c]",
-    gradientLight: "from-cyan-50 to-white",
+    gradientLight: "from-cyan-100/70 via-[#eef4f6] to-[#e8ebef]",
     borderDark: "border-cyan-500/40 hover:border-cyan-400/70",
     borderLight: "border-cyan-200 hover:border-cyan-400",
     badgeBgDark: "bg-cyan-500/25 border-cyan-500/40",
     badgeBgLight: "bg-cyan-100 border-cyan-200",
     badgeTextDark: "text-cyan-200",
-    badgeTextLight: "text-cyan-700",
+    badgeTextLight: "text-cyan-800",
     icon: User,
   },
   key_metric: {
     label: "Key Metric",
     category: "Metric",
     gradientDark: "from-neutral-700/60 via-[#202020] to-[#161616]",
-    gradientLight: "from-neutral-100 to-white",
+    gradientLight: "from-neutral-200/90 via-[#f0f2f5] to-[#e8ebef]",
     borderDark: "border-neutral-700 hover:border-neutral-500",
     borderLight: "border-neutral-300 hover:border-neutral-400",
     badgeBgDark: "bg-neutral-700/80 border-neutral-600",
     badgeBgLight: "bg-neutral-200 border-neutral-300",
     badgeTextDark: "text-neutral-100",
-    badgeTextLight: "text-neutral-700",
+    badgeTextLight: "text-neutral-800",
     icon: BarChart2,
   },
   quote: {
     label: "Quote",
     category: "Highlight",
     gradientDark: "from-purple-500/30 via-[#22172b] to-[#181420]",
-    gradientLight: "from-purple-50 to-white",
+    gradientLight: "from-purple-100/70 via-[#f3f0f6] to-[#e8ebef]",
     borderDark: "border-purple-500/40 hover:border-purple-400/70",
     borderLight: "border-purple-200 hover:border-purple-400",
     badgeBgDark: "bg-purple-500/25 border-purple-500/40",
     badgeBgLight: "bg-purple-100 border-purple-200",
     badgeTextDark: "text-purple-200",
-    badgeTextLight: "text-purple-700",
+    badgeTextLight: "text-purple-800",
     icon: Quote,
   },
   citation: {
     label: "Citation",
     category: "Reference",
     gradientDark: "from-amber-500/30 via-[#261c14] to-[#1c1510]",
-    gradientLight: "from-amber-50 to-white",
+    gradientLight: "from-amber-100/70 via-[#f6f2ee] to-[#e8ebef]",
     borderDark: "border-amber-500/40 hover:border-amber-400/70",
     borderLight: "border-amber-200 hover:border-amber-400",
     badgeBgDark: "bg-amber-500/25 border-amber-500/40",
     badgeBgLight: "bg-amber-100 border-amber-200",
     badgeTextDark: "text-amber-200",
-    badgeTextLight: "text-amber-700",
+    badgeTextLight: "text-amber-800",
     icon: BookOpen,
   },
   agenda_item: {
     label: "Agenda",
     category: "Milestone",
     gradientDark: "from-indigo-500/30 via-[#1a192b] to-[#131220]",
-    gradientLight: "from-indigo-50 to-white",
+    gradientLight: "from-indigo-100/70 via-[#f1f1f7] to-[#e8ebef]",
     borderDark: "border-indigo-500/40 hover:border-indigo-400/70",
     borderLight: "border-indigo-200 hover:border-indigo-400",
     badgeBgDark: "bg-indigo-500/25 border-indigo-500/40",
     badgeBgLight: "bg-indigo-100 border-indigo-200",
     badgeTextDark: "text-indigo-200",
-    badgeTextLight: "text-indigo-700",
+    badgeTextLight: "text-indigo-800",
     icon: List,
   },
   custom_ui: {
     label: "UI Design Block",
     category: "Design",
     gradientDark: "from-rose-500/30 via-[#24171b] to-[#1a1417]",
-    gradientLight: "from-rose-50 to-white",
+    gradientLight: "from-rose-100/70 via-[#f5f0f2] to-[#e8ebef]",
     borderDark: "border-rose-500/40 hover:border-rose-400/70",
     borderLight: "border-rose-200 hover:border-rose-400",
     badgeBgDark: "bg-rose-500/25 border-rose-500/40",
     badgeBgLight: "bg-rose-100 border-rose-200",
     badgeTextDark: "text-rose-200",
-    badgeTextLight: "text-rose-700",
+    badgeTextLight: "text-rose-800",
     icon: Layout,
   },
   concept: {
     label: "Key Concept",
     category: "Knowledge",
     gradientDark: "from-blue-500/[0.14] via-[#0e0e0e] to-[#080808]",
-    gradientLight: "from-blue-50 to-white",
+    gradientLight: "from-blue-100/70 via-[#eff3f8] to-[#e8ebef]",
     borderDark: "border-blue-500/30 hover:border-blue-500/50",
     borderLight: "border-blue-200 hover:border-blue-400",
     badgeBgDark: "bg-blue-500/15 border-blue-500/30",
     badgeBgLight: "bg-blue-100 border-blue-200",
     badgeTextDark: "text-blue-300",
-    badgeTextLight: "text-blue-700",
+    badgeTextLight: "text-blue-800",
     icon: Lightbulb,
   },
 };
@@ -533,7 +533,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
             className={`pointer-events-auto relative w-[94vw] sm:w-[590px] max-w-2xl h-[420px] sm:h-[450px] flex flex-col justify-between rounded-[28px] border shadow-[0_24px_80px_rgba(0,0,0,0.95)] overflow-hidden origin-bottom-right transition-colors duration-200 backdrop-blur-xl ${
               isDarkMode
                 ? "border-neutral-800 bg-black text-white"
-                : "border-neutral-200 bg-white/95 text-neutral-900"
+                : "border-neutral-300 bg-[#f0f2f5]/98 text-neutral-900"
             }`}
           >
             {/* ── Top Header Bar ───────────────────────────────────────────── */}
@@ -546,11 +546,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       : "bg-neutral-100 border border-neutral-200"
                   }`}
                 >
-                  <img
-                    src="./caption.png"
-                    alt="Captions"
-                    className="h-4 w-4 object-contain"
-                  />
+                  <Sparkles className="h-4 w-4 text-primary-500" strokeWidth={2.2} />
                 </div>
                 <div>
                   <h1 className="text-xs sm:text-sm font-bold tracking-tight flex items-center gap-1.5">
@@ -622,7 +618,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                 className={`relative w-full h-full rounded-[22px] p-4 flex flex-col justify-between min-h-[130px] transition-all duration-300 ${
                   isDarkMode
                     ? "bg-[#0c0c0c] shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
-                    : "bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+                    : "bg-[#f5f6f8] border border-neutral-300/80 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
                 } ${
                   isMicStreaming
                     ? isDarkMode
@@ -675,7 +671,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                       className={`h-6.5 w-6.5 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
                         isDarkMode
                           ? "bg-[#181818] hover:bg-[#222222] border-neutral-800 text-neutral-300 hover:text-white"
-                          : "bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700 hover:text-neutral-900"
+                          : "bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700 hover:text-neutral-900"
                       }`}
                       title="Clear text"
                     >
@@ -691,7 +687,7 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
                           ? "bg-primary-500 text-white font-bold border-primary-400 shadow-sm"
                           : isDarkMode
                             ? "bg-[#181818] hover:bg-[#222222] border-neutral-800 text-neutral-300 hover:text-white"
-                            : "bg-white hover:bg-neutral-100 border-neutral-300 text-neutral-700 hover:text-neutral-900"
+                            : "bg-neutral-100 hover:bg-neutral-200 border-neutral-300 text-neutral-700 hover:text-neutral-900"
                       }`}
                       title={isMicStreaming ? "Stop Microphone Captions" : "Start Live Microphone Captions"}
                     >

@@ -51,25 +51,15 @@ export const CaptionsTileCard: React.FC<CaptionsTileCardProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-0 flex flex-col justify-between ${paddingClasses} overflow-hidden select-none transition-colors duration-200 ${
-        isDarkMode
-          ? "bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]"
-          : "bg-gradient-to-b from-stone-100 via-neutral-50 to-stone-200"
-      }`}
+      className={`absolute inset-0 z-0 flex flex-col justify-between ${paddingClasses} overflow-hidden select-none transition-colors duration-200 bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]`}
     >
       {/* Top Header Live Pill & Waveform */}
       <div className="relative z-10 w-full flex items-center justify-between shrink-0">
         <div
-          className={`inline-flex items-center gap-1.5 rounded-full border shadow-sm ${headerPillClasses} ${
-            isDarkMode
-              ? "border-primary-500/30 bg-primary-500/15 text-white"
-              : "border-primary-500/40 bg-primary-100/90 text-primary-900 font-bold"
-          }`}
+          className={`inline-flex items-center gap-1.5 rounded-full border shadow-sm ${headerPillClasses} border-primary-500/30 bg-primary-500/15 text-white`}
         >
           <span
-            className={`h-1.5 w-1.5 rounded-full animate-pulse shrink-0 ${
-              isDarkMode ? "bg-primary-400" : "bg-primary-600"
-            }`}
+            className="h-1.5 w-1.5 rounded-full animate-pulse shrink-0 bg-primary-400"
           />
           <span className="font-thin tracking-wider uppercase leading-none truncate">
             Live AI Captions
@@ -82,9 +72,7 @@ export const CaptionsTileCard: React.FC<CaptionsTileCardProps> = ({
             <span
               key={i}
               style={{ height: `${h * (isSingle ? 4 : isDual ? 3 : 2.2)}px` }}
-              className={`w-0.5 sm:w-1 rounded-full animate-pulse ${
-                isDarkMode ? "bg-primary-400/80" : "bg-primary-600/80"
-              }`}
+              className="w-0.5 sm:w-1 rounded-full animate-pulse bg-primary-400/80"
             />
           ))}
         </div>
@@ -94,18 +82,14 @@ export const CaptionsTileCard: React.FC<CaptionsTileCardProps> = ({
       <div className="relative z-10 flex-1 min-h-0 w-full flex items-center justify-center text-center px-2 py-2 my-auto">
         {words.length === 0 ? (
           <div
-            className={`italic font-thin flex items-center justify-center ${emptyTextClasses} ${
-              isDarkMode ? "text-white/40" : "text-neutral-400"
-            }`}
+            className={`italic font-thin flex items-center justify-center ${emptyTextClasses} text-white/40`}
           >
             <Mic size={micSize} className="animate-pulse text-primary-400 shrink-0" />
             <span className="truncate">Listening for speech...</span>
           </div>
         ) : (
           <p
-            className={`${textClasses} break-words ${
-              isDarkMode ? "text-white/95" : "text-neutral-900"
-            }`}
+            className={`${textClasses} break-words text-white/95`}
           >
             {trimmed}
             <span

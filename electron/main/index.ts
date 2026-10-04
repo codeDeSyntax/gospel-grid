@@ -1,3 +1,26 @@
+﻿// ── Suppress Chromium GPU/WGC internal log spam (must be first) ─────────────
+// "ProcessFrame failed" / wgc_capture_session errors come from Chromium's C++
+// GPU process via stderr. They are NOT from app code and cannot be silenced via
+// flags alone. This filter lets all your own console.log/error output through.
+{
+  const _origWrite = process.stderr.write.bind(process.stderr);
+  (process.stderr as any).write = (chunk: any, enc?: any, cb?: any): boolean => {
+    const t = typeof chunk === "string" ? chunk : chunk?.toString?.() ?? "";
+    if (
+      t.includes("wgc_capture_session") ||
+      t.includes("ProcessFrame failed") ||
+      t.includes("wgc_capturer_win") ||
+      t.includes("desktop_capture_win") ||
+      t.includes("[ERROR:gpu_") ||
+      t.includes("[ERROR:wgc_")
+    ) {
+      if (typeof enc === "function") enc();
+      else if (typeof cb === "function") cb();
+      return true;
+    }
+    return _origWrite(chunk, enc, cb);
+  };
+}
 import {
   app,
   BrowserWindow,
@@ -315,6 +338,34 @@ const captureDebounceMap = new Map<
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
+function createSplashWindow(db: { x: number; y: number; width: number; height: number }) {
+  splashWindow = new BrowserWindow({
+    x: db.x,
+    y: db.y,
+    width: db.width,
+    height: db.height,
+    frame: false,
+    transparent: false,
+    resizable: false,
+    alwaysOnTop: true,
+    show: false,
+    backgroundColor: '#080c10',
+    icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  const splashFile = path.join(process.env.VITE_PUBLIC || "public", "splash.html");
+  splashWindow.loadFile(splashFile);
+
+  splashWindow.once("ready-to-show", () => {
+    splashWindow?.show();
+    console.log("🚀 Microsoft Word style full-background splash shown");
+  });
+}
+
 async function createWindow() {
   const controllerDisplay = detectInternalDisplay();
 
@@ -325,8 +376,9 @@ async function createWindow() {
   });
 
   const db = controllerDisplay.bounds;
+  createSplashWindow(db);
 
-  // ── Main window — opens maximized seamlessly with in-app WhatsApp-style splash ──
+  // ── Main workspace window — loads in background while mini splash is active ──
   win = new BrowserWindow({
     title: "Wingrid",
     icon: path.join(process.env.VITE_PUBLIC || "public", "wingrid.ico"),
@@ -337,17 +389,11 @@ async function createWindow() {
     width: db.width,
     height: db.height,
     show: false,
-    backgroundColor: '#1d1d1d',
+    backgroundColor: '#10161c',
     webPreferences: { preload },
   });
 
   win.setMenuBarVisibility(false);
-  win.maximize();
-
-  win.once("ready-to-show", () => {
-    win?.show();
-    console.log("🪟 Main window ready and shown");
-  });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
@@ -367,8 +413,20 @@ async function createWindow() {
   update(win);
 }
 
-// ── IPC: React app ready ───────────────────────────────────────────────────
+// ── IPC: React app ready → switch from mini splash to main workspace ──────
 ipcMain.handle("splash-ready", () => {
+  if (win && !win.isVisible()) {
+    win.maximize();
+    win.show();
+    win.focus();
+    console.log("🪟 Main workspace window revealed");
+  }
+  if (splashWindow) {
+    setTimeout(() => {
+      splashWindow?.close();
+      splashWindow = null;
+    }, 250);
+  }
   return true;
 });
 

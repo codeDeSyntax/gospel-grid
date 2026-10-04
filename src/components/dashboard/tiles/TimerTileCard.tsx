@@ -29,11 +29,7 @@ export const TimerTileCard: React.FC<TimerTileCardProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 z-0 flex items-center justify-center p-2 sm:p-3 overflow-hidden select-none transition-colors duration-200 ${
-        isDark
-          ? "bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]"
-          : "bg-gradient-to-b from-stone-100 via-neutral-50 to-stone-200"
-      }`}
+      className="absolute inset-0 z-0 flex items-center justify-center p-2 sm:p-3 overflow-hidden select-none transition-colors duration-200 bg-gradient-to-b from-[#141414] via-black to-[#0d0d0d]"
     >
       {/* Center Flip Clock Blocks */}
       <div className="relative z-10 w-full flex items-center justify-center my-auto">
@@ -41,11 +37,7 @@ export const TimerTileCard: React.FC<TimerTileCardProps> = ({
           {blocks.map((block, idx) => (
             <div key={idx} className="flex flex-col items-center gap-0.5 min-w-0 w-full">
               <div
-                className={`relative overflow-hidden border rounded-lg w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center shadow-md ${
-                  isDark
-                    ? "border-theme-primary-200/25 bg-gradient-to-b from-theme-primary-700/80 via-theme-primary-800/90 to-theme-primary-950 text-white"
-                    : "border-theme-primary-300/70 bg-gradient-to-b from-theme-primary-50 via-theme-primary-100 to-theme-primary-200 text-neutral-900"
-                }`}
+                className="relative overflow-hidden border rounded-lg w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 flex items-center justify-center shadow-md border-theme-primary-200/25 bg-gradient-to-b from-theme-primary-700/80 via-theme-primary-800/90 to-theme-primary-950 text-white"
               >
                 {/* Center Seam */}
                 <div className="absolute inset-x-0 top-1/2 h-px bg-black/60" />
@@ -56,7 +48,7 @@ export const TimerTileCard: React.FC<TimerTileCardProps> = ({
                 </span>
               </div>
 
-              <span className={`text-[7px] sm:text-[8px] font-bold uppercase tracking-wide truncate ${isDark ? "text-white/60" : "text-neutral-600"}`}>
+              <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-wide truncate text-white/60">
                 {block.label}
               </span>
             </div>

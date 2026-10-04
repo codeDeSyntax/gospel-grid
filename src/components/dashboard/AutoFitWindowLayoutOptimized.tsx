@@ -61,11 +61,11 @@ import { FiRefreshCcw } from "react-icons/fi";
 import type { AutoDirectorMode } from "./ai/AutoDirectorBar";
 
 /**
- * PREVIEW PANEL — one-time snapshot approach (debounced).
+ * PREVIEW PANEL � one-time snapshot approach (debounced).
  *
  * Shows a static thumbnail of selected windows (max 4) so the user can verify
  * their selection before publishing.  Deliberately does NOT use the live
- * MediaStream/getUserMedia path — that is reserved for the projection window
+ * MediaStream/getUserMedia path � that is reserved for the projection window
  * (LiveWindowGrid).  Running two concurrent WGC capture sessions for the same
  * window handle causes ProcessFrame errors on Windows.
  *
@@ -141,7 +141,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
   const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
 
-  // ── AI Context Intelligence & Auto-Director ────────────────────────────
+  // -- AI Context Intelligence & Auto-Director ----------------------------
   const [autoDirectorMode, setAutoDirectorMode] = useState<AutoDirectorMode>(() => {
     return (localStorage.getItem("wingrid:auto-director-mode") as AutoDirectorMode) || "suggest";
   });
@@ -252,11 +252,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
 
   useEffect(() => {
     loadDisplays(true);
+    // Back off during projection: main process is busy with GPU MediaStream capture.
+    const interval = isProjectionOn ? 15000 : 2500;
     const timer = setInterval(() => {
       loadDisplays(false);
-    }, 2500);
+    }, interval);
     return () => clearInterval(timer);
-  }, [loadDisplays]);
+  }, [loadDisplays, isProjectionOn]);
 
   const refreshPublicationState = useCallback(async () => {
     try {
@@ -300,10 +302,12 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
         // Still check, but much less aggressively
         refreshPublicationState();
       }
-    }, isProjectionOn ? 5000 : 1500);
+    // Stable interval via ref; avoids timer recreation on every toggle.
+    // Idle: 1.5s | Live projection: 8s.
+    }, isProjectionOnRef.current ? 8000 : 1500);
     return () => clearInterval(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshPublicationState, isProjectionOn]);
+  }, [refreshPublicationState]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -373,7 +377,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     return map;
   }, [windows]);
 
-  // ── Auto-Director Active Frame & Slide Change Monitor ─────────────────────
+  // -- Auto-Director Active Frame & Slide Change Monitor ---------------------
   const prevThumbnailsRef = useRef<Record<string, string>>({});
   const prevTitlesRef = useRef<Record<string, string>>({});
   const isCapturingRef = useRef<boolean>(false);
@@ -385,17 +389,18 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     const monitorFrames = async () => {
       if (isCancelled) return;
 
-      // ── PERFORMANCE GUARD ────────────────────────────────────────────────
+      // -- PERFORMANCE GUARD ------------------------------------------------
       // When a projection is live, LiveWindowGrid is already running a
       // getUserMedia() WGC capture stream per window. Firing an additional
       // batchCaptureThumbnails() call on the same HWND causes two concurrent
       // WGC sessions, which stalls the GPU compositor and creates app-wide lag.
-      // Back off to a 5s poll while projection is active — changes will be
+      // Back off to a 5s poll while projection is active � changes will be
       // detected soon after the user ends the projection.
+      // FIX: Do NOT reschedule while projection is live. The useEffect
+      // dependency on `isProjectionOn` will restart monitorFrames when
+      // projection ends. Concurrent getSources()+getUserMedia() on the same
+      // HWND causes dual WGC sessions = GPU stall = `app not responding`.
       if (isProjectionOn) {
-        if (!isCancelled) {
-          timerId = setTimeout(monitorFrames, 5000);
-        }
         return;
       }
 
@@ -580,27 +585,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
     }
   }, [dispatch, displayAssignments, windowMap]);
 
-  useEffect(() => {
-    if (displays.length === 0) return;
-    if (windows.length === 0) return;
 
-    const hasAnyAssignment = Object.values(displayAssignments).some(
-      (windowIds) => windowIds.length > 0,
-    );
-    if (hasAnyAssignment) return;
-
-    const firstWindow =
-      windows.find((windowInfo) => !isFeatureWindowId(windowInfo.id)) ??
-      windows[0];
-
-    if (!firstWindow) return;
-
-    dispatch(
-      setDisplayAssignments({
-        [displays[0].id]: [firstWindow.id],
-      }),
-    );
-  }, [dispatch, displayAssignments, displays, windows]);
 
   const handleDragOverDisplay = (displayId: number, e: React.DragEvent) => {
     e.preventDefault();
@@ -768,7 +753,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   const getGridClasses = (count: number) => {
-    if (count <= 1) return "grid-cols-1";
+    if (count <= 1) return "grid-cols-2 grid-rows-2";
     if (count === 2) return "grid-cols-2";
     if (count <= 4) return "grid-cols-2 grid-rows-2";
     if (count <= 6) return "grid-cols-3 grid-rows-2";
@@ -785,17 +770,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       : "hover:ring-1 hover:ring-theme-primary-400/40";
 
     const base =
-      "group relative min-w-0 overflow-hidden rounded-xl transition-all duration-200 bg-stone-100 dark:bg-black border-0";
+      "group relative min-w-0 overflow-hidden rounded-none transition-all duration-200 bg-stone-100 dark:bg-black border-0";
 
-    if (assignedCount === 1) {
-      return `${base} w-full h-full aspect-[16/9] ${focusRing}`;
-    }
-
-    if (assignedCount === 2) {
-      return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
-    }
-
-    return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
+    return `${base} w-full h-full ${focusRing}`;
   };
 
   const routedDisplayCount = displays.filter(
@@ -814,76 +791,64 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
           isDarkMode ? "border-l-white/20" : "border-l-neutral-300"
         }`}
       >
-        <div className="flex min-h-[56px] items-center justify-between gap-4 px-5 py-2.5">
+        <div className="flex min-h-[46px] items-center justify-between gap-3 px-4 py-1.5">
           {/* Left Title & Icon */}
-          <div className="flex min-w-0 items-center gap-3.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-theme-primary-700/60 bg-theme-primary-900/80 text-theme-primary-100 p-1.5 shadow-sm transition-transform hover:scale-105">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-theme-primary-700/50 bg-theme-primary-900/60 text-theme-primary-100 p-1 shadow-sm transition-transform hover:scale-105">
               <img src="./screen.png" alt="Workspace" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-bold tracking-tight text-theme-primary-50">
+                <p className="truncate text-xs sm:text-sm font-semibold tracking-tight text-theme-primary-50">
                   Display Workspace
                 </p>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-normal uppercase tracking-wider bg-primary-100/80 dark:bg-primary-900/60 text-primary-950 dark:text-primary-300 border border-primary-500/30">
+                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-medium tracking-wide uppercase bg-primary-500/10 text-primary-300 border border-primary-500/20">
                   Live Multi-Display
                 </span>
               </div>
-              <p className="mt-0.5 truncate text-[11px] font-normal text-theme-primary-300/80">
+              <p className="truncate text-[10.5px] font-normal text-theme-primary-300/75 leading-tight">
                 Drop windows onto screens to manage audience projections in real time.
               </p>
             </div>
           </div>
 
-          {/* Right Stats Pills & Refresh Action */}
-          <div className="flex shrink-0 items-center gap-3">
-            {/* Stat Capsules matching feature rail */}
-            <div className="hidden md:flex items-center gap-1 rounded-full p-1 border border-theme-primary-700/50 bg-theme-primary-900/60 shadow-inner">
-              <div className="px-3 py-1 text-center">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
-                  Screens
-                </p>
-                <p className="mt-0.5 text-xs font-bold leading-none text-theme-primary-50">
-                  {displays.length}
-                </p>
+          {/* Right Stats & Refresh Action */}
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Sleek inline metrics */}
+            <div className="hidden sm:flex items-center rounded-lg border border-theme-primary-800/60 bg-theme-primary-900/40 px-1 py-0.5 text-xs backdrop-blur-sm shadow-xs">
+              <div className="flex items-center gap-1.5 px-2 py-0.5">
+                <span className="text-[9.5px] font-medium uppercase tracking-wider text-theme-primary-400">Screens</span>
+                <span className="text-xs font-semibold text-theme-primary-100">{displays.length}</span>
               </div>
 
-              <div className="h-5 w-px bg-theme-primary-700/50" />
+              <div className="h-3 w-px bg-theme-primary-700/40" />
 
-              <div className="px-3 py-1 text-center">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
-                  Routed
-                </p>
-                <p className={`mt-0.5 text-xs font-bold leading-none ${routedDisplayCount > 0 ? "text-primary-400 font-extrabold" : "text-theme-primary-50"}`}>
+              <div className="flex items-center gap-1.5 px-2 py-0.5">
+                <span className="text-[9.5px] font-medium uppercase tracking-wider text-theme-primary-400">Routed</span>
+                <span className={`text-xs font-semibold ${routedDisplayCount > 0 ? "text-primary-300" : "text-theme-primary-100"}`}>
                   {routedDisplayCount}
-                </p>
+                </span>
               </div>
 
-              <div className="h-5 w-px bg-theme-primary-700/50" />
+              <div className="h-3 w-px bg-theme-primary-700/40" />
 
-              <div className="px-3 py-1 text-center">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-theme-primary-400">
-                  Windows
-                </p>
-                <p className="mt-0.5 text-xs font-bold leading-none text-theme-primary-50">
-                  {assignedWindowCount}
-                </p>
+              <div className="flex items-center gap-1.5 px-2 py-0.5">
+                <span className="text-[9.5px] font-medium uppercase tracking-wider text-theme-primary-400">Windows</span>
+                <span className="text-xs font-semibold text-theme-primary-100">{assignedWindowCount}</span>
               </div>
             </div>
-
-
 
             {/* Refresh Displays Action */}
             <button
               type="button"
               onClick={() => loadDisplays(true)}
-              className="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold border border-theme-primary-600/40 bg-theme-primary-900/80 hover:bg-theme-primary-800 text-theme-primary-100 hover:text-white backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
+              className="h-7 px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-medium border border-theme-primary-700/50 bg-theme-primary-900/50 hover:bg-theme-primary-800/80 text-theme-primary-200 hover:text-white backdrop-blur-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95 shadow-xs"
               title="Refresh connected displays"
             >
               <FiRefreshCcw
-                className={`h-3.5 w-3.5 transition-transform ${loadingDisplays ? "animate-spin text-primary-400" : "opacity-80"}`}
+                className={`h-3 w-3 transition-transform ${loadingDisplays ? "animate-spin text-primary-400" : "opacity-80"}`}
               />
-              <span>Refresh</span>
+              <span className="text-[11px]">Refresh</span>
             </button>
           </div>
         </div>
@@ -935,7 +900,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 onDragOver={(e) => handleDragOverDisplay(display.id, e)}
                 onDragLeave={() => handleDragLeaveDisplay(display.id)}
                 onDrop={(e) => handleDropOnDisplay(display.id, e)}
-                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-y-[6px] border-x-2 border-neutral-200 dark:border-neutral-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-white dark:bg-black `}
+                className={`relative isolate w-full max-w-full h-auto max-h-full aspect-[16/9] place-self-start rounded-xl border-solid border-y-[6px] border-x-2 border-neutral-700/80 dark:border-neutral-700/80 overflow-visible transition-all duration-200 ${getCellClasses(displays.length, index)} bg-black shadow-2xl `}
               >
                 <div 
                   data-screen-menu-root={display.id}
@@ -951,7 +916,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           : "bg-primary-100 border-primary-400 text-primary-900"
                         : isDarkMode
                           ? "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
-                          : "bg-white/90 hover:bg-neutral-100 border-neutral-300/90 text-neutral-700 hover:text-neutral-950"
+                          : "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
                     }`}
                     title="Screen options"
                   >
@@ -964,7 +929,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                       className={`absolute right-0 top-9 z-30 w-48 overflow-hidden rounded-xl border p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 ${
                         isDarkMode
                           ? "bg-[#181818]/95 border-white/15 text-white"
-                          : "bg-white/95 border-neutral-200 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
+                          : "bg-[#f5f6f8]/98 border-neutral-300 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
                       }`}
                     >
                       <div className="px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-60">
@@ -986,7 +951,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                         className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                           isDarkMode
                             ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
@@ -1009,7 +974,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                         className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer ${
                           isDarkMode
                             ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
@@ -1048,7 +1013,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`absolute inset-0 p-2.5 grid gap-2.5 ${getGridClasses(assignedIds.length)} content-start items-start overflow-hidden`}
+                    className={`absolute inset-0 p-2 grid gap-2 ${getGridClasses(assignedIds.length)} overflow-hidden`}
                   >
                     {assignedIds.map((windowId) => {
                       const isTimerFeature = windowId.startsWith(
@@ -1095,7 +1060,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             assignedIds.length,
                             focusedWindowId === windowId,
                           )}
-                          title={`${win.app} • ${win.name}`}
+                          title={`${win.app} � ${win.name}`}
                         >
                           {isCaptionsFeature ? (
                             <CaptionsTileCard
@@ -1116,13 +1081,13 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             <img
                               src={thumbnail}
                               alt={`${win.app} thumbnail`}
-                              className="absolute inset-0 h-full w-full object-cover bg-primary-50 dark:bg-primary-950/50 z-0"
+                              className="absolute inset-0 h-full w-full object-contain bg-black z-0"
                               draggable={false}
                             />
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/95 via-black/85 to-black/70 z-0">
                               <div className="flex flex-col items-center gap-2 text-center px-2">
-                                <div className="rounded-full bg-black/55 p-2 border border-white/10 theme-text-on-overlay">
+                                <div className="rounded-md bg-black/55 p-2 border border-white/10 theme-text-on-overlay">
                                   {getWindowFallbackIcon(win, 18)}
                                 </div>
                                 <span className="text-[10px] theme-text-on-overlay truncate max-w-[92%] opacity-80">
@@ -1141,7 +1106,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
 
                           {!isTimerFeature && !isCaptionsFeature && (
-                            <div className="absolute bottom-1.5 right-1.5 z-10 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md ">
+                            <div className="absolute bottom-1.5 right-1.5 z-10 rounded-md border border-white/12 bg-black/70 p-1.5 backdrop-blur-md ">
                               {win.icon ? (
                                 <>
                                   <img
@@ -1197,7 +1162,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             className={`absolute bottom-1.5 left-1.5 z-30 h-6 w-6 rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 border backdrop-blur-md shadow-md cursor-pointer ${
                               isDarkMode
                                 ? "bg-[#181818]/90 hover:bg-red-500 border-white/20 text-white/80 hover:text-white hover:border-red-400"
-                                : "bg-white/90 hover:bg-red-500 border-neutral-300/90 text-neutral-700 hover:text-white hover:border-red-400"
+                                : "bg-neutral-100/90 hover:bg-red-500 border-neutral-300/90 text-neutral-700 hover:text-white hover:border-red-400"
                             }`}
                             title="Remove window from screen"
                           >

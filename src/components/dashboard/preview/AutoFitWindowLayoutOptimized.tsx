@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Cast, Monitor, RefreshCcw, X, MonitorOff, MoreHorizontal, Settings } from "lucide-react";
+import { Cast, Monitor, RefreshCcw, X, MonitorOff, MoreHorizontal, Settings, Tv } from "lucide-react";
 import { type WindowInfo } from "../picker/WindowPicker";
 import { getWindowFallbackIcon } from "@/utils/appIconMapping";
 import { DepthButton } from "@/shared/DepthButton";
@@ -651,7 +651,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   };
 
   const getGridClasses = (count: number) => {
-    if (count <= 1) return "grid-cols-1";
+    if (count <= 1) return "grid-cols-2 grid-rows-2";
     if (count === 2) return "grid-cols-2";
     if (count <= 4) return "grid-cols-2 grid-rows-2";
     if (count <= 6) return "grid-cols-3 grid-rows-2";
@@ -668,17 +668,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
       : "hover:ring-1 hover:ring-theme-primary-400/40";
 
     const base =
-      "group relative min-w-0 overflow-hidden rounded-xl transition-all duration-200 bg-stone-100 dark:bg-black border-0";
+      "group relative min-w-0 overflow-hidden rounded-none transition-all duration-200 bg-stone-100 dark:bg-black border-0";
 
-    if (assignedCount === 1) {
-      return `${base} w-full h-full aspect-[16/9] ${focusRing}`;
-    }
-
-    if (assignedCount === 2) {
-      return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
-    }
-
-    return `${base} w-full aspect-[16/9] self-start ${focusRing}`;
+    return `${base} w-full h-full ${focusRing}`;
   };
 
   return (
@@ -780,7 +772,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           : "bg-primary-100 border-primary-400 text-primary-900"
                         : isDarkMode
                           ? "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
-                          : "bg-white/90 hover:bg-neutral-100 border-neutral-300/90 text-neutral-700 hover:text-neutral-950"
+                          : "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
                     }`}
                     title="Screen options"
                   >
@@ -793,7 +785,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                       className={`absolute right-0 top-9 z-30 w-48 overflow-hidden rounded-xl border p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 ${
                         isDarkMode
                           ? "bg-[#181818]/95 border-white/15 text-white"
-                          : "bg-white/95 border-neutral-200 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
+                          : "bg-[#f5f6f8]/98 border-neutral-300 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
                       }`}
                     >
                       <div className="px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-60">
@@ -815,7 +807,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                         className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                           isDarkMode
                             ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
@@ -838,7 +830,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                         className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer ${
                           isDarkMode
                             ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
+                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
@@ -869,12 +861,9 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center">
                     <div className="w-full max-w-[300px] rounded-2xl border border-theme-primary-500/25 bg-theme-primary-900/45 p-4 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                       <div className="flex items-center gap-3 text-left">
-                        <img
-                          src="./smart-tv.png"
-                          alt="Drag from left panel"
-                          className="h-14 w-14 shrink-0 object-contain opacity-95"
-                          draggable={false}
-                        />
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-theme-primary-800/60 border border-theme-primary-500/30 text-primary-400 shadow-inner">
+      <Tv size={26} strokeWidth={2.2} />
+    </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-[11px] font-semibold tracking-wide uppercase text-theme-primary-100/90">
                             Waiting For Window Drop
@@ -893,7 +882,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                   </div>
                 ) : (
                   <div
-                    className={`absolute inset-0 p-2.5 grid gap-2.5 ${getGridClasses(assignedIds.length)} content-start items-start overflow-hidden`}
+                    className={`absolute inset-0 p-2 grid gap-2 ${getGridClasses(assignedIds.length)} overflow-hidden`}
                   >
                     {assignedIds.map((windowId) => {
                       const win = windowMap.get(windowId);
@@ -959,7 +948,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-black/95 via-black/85 to-black/70 z-0">
                               <div className="flex flex-col items-center gap-2 text-center px-2">
-                                <div className="rounded-full bg-black/55 p-2 border border-white/10 theme-text-on-overlay">
+                                <div className="rounded-md bg-black/55 p-2 border border-white/10 theme-text-on-overlay">
                                   {getWindowFallbackIcon(win, 18)}
                                 </div>
                                 <span className="text-[10px] theme-text-on-overlay truncate max-w-[92%] opacity-80">
@@ -984,7 +973,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           )}
 
                           {!isTimerFeature && !isCaptionsFeature && (
-                            <div className="absolute bottom-1.5 right-1.5 z-20 rounded-full border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
+                            <div className="absolute bottom-1.5 right-1.5 z-20 rounded-md border border-white/12 bg-black/70 p-1.5 backdrop-blur-md shadow-[0_6px_14px_rgba(0,0,0,0.28)]">
                               {win.icon ? (
                                 <>
                                   <img
@@ -1024,7 +1013,7 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                             className={`absolute bottom-1.5 left-1.5 z-30 h-6 w-6 rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 border backdrop-blur-md shadow-md cursor-pointer ${
                               isDarkMode
                                 ? "bg-[#181818]/90 hover:bg-red-500 border-white/20 text-white/80 hover:text-white hover:border-red-400"
-                                : "bg-white/90 hover:bg-red-500 border-neutral-300/90 text-neutral-700 hover:text-white hover:border-red-400"
+                                : "bg-neutral-100/90 hover:bg-red-500 border-neutral-300/90 text-neutral-700 hover:text-white hover:border-red-400"
                             }`}
                             title="Remove window from screen"
                           >

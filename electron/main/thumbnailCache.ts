@@ -1,4 +1,4 @@
-import { WindowThumbnail, ThumbnailOptions } from "./thumbnailCapture";
+﻿import { WindowThumbnail, ThumbnailOptions } from "./thumbnailCapture";
 
 interface CacheEntry {
   thumbnail: WindowThumbnail;
@@ -147,7 +147,6 @@ class ThumbnailCache {
     this.cache.set(key, entry);
 
     this.stats.hits++;
-    console.log(`Cache hit for ${windowId} (${windowTitle})`);
     return entry.thumbnail;
   }
 

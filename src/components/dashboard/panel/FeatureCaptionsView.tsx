@@ -240,7 +240,7 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
           className={`relative w-full rounded-[22px] p-4 flex flex-col justify-between min-h-[120px] transition-all duration-300 ${
             isDarkMode
               ? "bg-[#0c0c0c] shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
-              : "bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
+              : "bg-[#f5f6f8] border border-neutral-300/80 shadow-[0_8px_24px_rgba(0,0,0,0.06)]"
           }`}
         >
           {/* Textarea */}

@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ThemeProvider } from "./utils/themeContext";
 import { Welcome } from "./components/welcome/Welcome";
 import { Dashboard } from "./components/dashboard/Dashboard";
-import { AppSplash } from "./components/splash/AppSplash";
+
 import { ProjectionLayout } from "./components/dashboard/projection/ProjectionLayout";
 import { PublishedLayoutLoadingScreen } from "./components/dashboard/projection/PublishedLayoutLoadingScreen";
 import { type WindowInfo } from "./components/dashboard/picker/WindowPicker";
@@ -46,9 +46,6 @@ const slideVariants = {
 function App() {
   const dispatch = useAppDispatch();
   const [currentScreen, setCurrentScreen] = useState<AppScreen>("dashboard");
-  const [showSplash, setShowSplash] = useState(
-    () => !new URLSearchParams(window.location.search).get("layoutId"),
-  );
   const [navigationDirection, setNavigationDirection] = useState(1);
   const [isPublishedLayoutLoading, setIsPublishedLayoutLoading] =
     useState(false);
@@ -190,13 +187,13 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!showSplash) return;
-    const timer = window.setTimeout(() => {
-      setShowSplash(false);
+    // Notify preload splash screen & Electron main process that React is ready
+    const timer = setTimeout(() => {
+      window.postMessage({ payload: "removeLoading" }, "*");
       (window as any).windowControls?.splashReady?.();
-    }, 1400);
-    return () => window.clearTimeout(timer);
-  }, [showSplash]);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleGetStarted = () => {
     systemLogger.log(
@@ -251,7 +248,6 @@ function App() {
         return (
           <Dashboard
             onHomeClick={handleBackToWelcome}
-            isSplashLoading={showSplash}
           />
         );
       case "published":
@@ -312,7 +308,6 @@ function App() {
             {renderScreen()}
           </motion.div>
         </AnimatePresence>
-        <AnimatePresence>{showSplash && <AppSplash />}</AnimatePresence>
       </div>
     </ThemeProvider>
   );

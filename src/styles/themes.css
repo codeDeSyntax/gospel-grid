@@ -1,5 +1,5 @@
 /* Wingrid Theme - Light/Dark Mode
-   Primary is the lime accent for actions and status.
+   Primary is the Ocean Blue accent (#006089) for actions and status.
    Theme-primary is the neutral workspace/chrome scale.
 */
 
@@ -9,65 +9,65 @@
 :root {
   color-scheme: light;
 
-  /* Primary Color Shades (Lime accent #5eac24) */
-  --primary-50: 244 251 234;
-  --primary-100: 230 245 208;
-  --primary-200: 207 238 167;
-  --primary-300: 171 224 112;
-  --primary-400: 133 202 62;
-  --primary-500: 94 172 36;
-  --primary-600: 74 140 26;
-  --primary-700: 59 107 25;
-  --primary-800: 51 85 26;
-  --primary-900: 45 72 26;
-  --primary-950: 20 39 10;
+  /* Primary Color Shades (Ocean Blue #006089) */
+  --primary-50: 237 247 252;
+  --primary-100: 214 238 248;
+  --primary-200: 176 223 241;
+  --primary-300: 120 199 230;
+  --primary-400: 57 168 211;
+  --primary-500: 0 130 182;
+  --primary-600: 0 96 137;
+  --primary-700: 0 77 110;
+  --primary-800: 0 63 90;
+  --primary-900: 0 52 75;
+  --primary-950: 0 31 47;
 
   /* Primary Colors */
-  --primary-color: #5eac24;
-  --primary-hover: #4a8c1a;
-  --primary-active: #3b6b19;
+  --primary-color: #006089;
+  --primary-hover: #004d6e;
+  --primary-active: #003f5a;
 
-  /* Workspace / chrome neutral scale */
-  --theme-primary-50: 24 24 24;
-  --theme-primary-100: 38 38 38;
-  --theme-primary-200: 64 64 64;
-  --theme-primary-300: 82 82 82;
-  --theme-primary-400: 115 115 115;
-  --theme-primary-500: 163 163 163;
-  --theme-primary-600: 212 212 212;
-  --theme-primary-700: 229 229 229;
-  --theme-primary-800: 238 238 238;
-  --theme-primary-900: 245 245 245;
-  --theme-primary-950: 250 250 250;
+  /* Workspace / chrome neutral scale (softer ash & neutral white palette) */
+  --theme-primary-50: 16 18 22;
+  --theme-primary-100: 28 32 38;
+  --theme-primary-200: 48 53 62;
+  --theme-primary-300: 74 80 92;
+  --theme-primary-400: 108 114 126;
+  --theme-primary-500: 148 154 166;
+  --theme-primary-600: 190 195 204;
+  --theme-primary-700: 208 212 220;
+  --theme-primary-800: 222 225 231;
+  --theme-primary-900: 232 235 239;
+  --theme-primary-950: 240 242 245;
 
-  /* Background Colors */
-  --bg-primary: #f7f7f7;
-  --bg-secondary: #eeeeee;
-  --bg-tertiary: #e3e3e3;
-  --bg-elevated: #ffffff;
+  /* Background Colors (calm ash / neutral tone, eliminating harsh glare) */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #e8ebef;
+  --bg-tertiary: #dee1e7;
+  --bg-elevated: #f5f6f8;
 
   /* Surface Colors */
-  --surface-primary: #ffffff;
-  --surface-secondary: #f9f9f9;
-  --surface-tertiary: #f0f0f0;
-  --surface-hover: #e8e8e8;
-  --surface-active: #dcdcdc;
+  --surface-primary: #f5f6f8;
+  --surface-secondary: #e8ebef;
+  --surface-tertiary: #dee1e7;
+  --surface-hover: #d0d4dc;
+  --surface-active: #bec3cc;
 
   /* Text Colors */
-  --text-primary: #1a1a1a;
-  --text-secondary: #666666;
-  --text-tertiary: #999999;
-  --text-muted: #cccccc;
-  --text-inverse: #ffffff;
+  --text-primary: #101216;
+  --text-secondary: #4a505c;
+  --text-tertiary: #6c727e;
+  --text-muted: #949aa6;
+  --text-inverse: #f5f6f8;
 
   /* Border Colors */
-  --border-primary: #e0e0e0;
-  --border-secondary: #d0d0d0;
-  --border-accent: #5eac24;
+  --border-primary: #bec3cc;
+  --border-secondary: #d0d4dc;
+  --border-accent: #006089;
 
-  --studio-bg: #f7f7f7;
-  --card-bg: #ffffff;
-  --card-bg-alt: #f2f2f2;
+  --studio-bg: #f0f2f5;
+  --card-bg: #f5f6f8;
+  --card-bg-alt: #e8ebef;
   --select-bg: rgb(var(--theme-primary-950));
   --select-bg-alt: rgb(var(--theme-primary-900));
   --select-hover: rgb(var(--theme-primary-800));
@@ -75,18 +75,18 @@
   --select-border-hover: rgb(var(--theme-primary-500));
   --focus-border: var(--primary-color);
   --kbd-bg: rgb(var(--theme-primary-800));
-  --theme-text-main: #181818;
-  --theme-text-soft: #404040;
-  --theme-text-muted: #737373;
+  --theme-text-main: #101216;
+  --theme-text-soft: #30353e;
+  --theme-text-muted: #6c727e;
   --theme-text-on-overlay: #ffffff;
 
   /* Status Colors */
-  --success-bg: #f0fdf4;
-  --success-text: #166534;
-  --success-border: #86efac;
+  --success-bg: #ecfdf5;
+  --success-text: #065f46;
+  --success-border: #6ee7b7;
 
   --error-bg: #fef2f2;
-  --error-text: #b91c1c;
+  --error-text: #991b1b;
   --error-border: #fca5a5;
 
   --warning-bg: #fffbeb;
@@ -104,23 +104,23 @@
 .dark {
   color-scheme: dark;
 
-  /* Primary Color Shades (Lime accent #5eac24) */
-  --primary-50: 244 251 234;
-  --primary-100: 230 245 208;
-  --primary-200: 207 238 167;
-  --primary-300: 171 224 112;
-  --primary-400: 133 202 62;
-  --primary-500: 94 172 36;
-  --primary-600: 74 140 26;
-  --primary-700: 59 107 25;
-  --primary-800: 51 85 26;
-  --primary-900: 45 72 26;
-  --primary-950: 20 39 10;
+  /* Primary Color Shades (Ocean Blue #006089) */
+  --primary-50: 237 247 252;
+  --primary-100: 214 238 248;
+  --primary-200: 176 223 241;
+  --primary-300: 120 199 230;
+  --primary-400: 57 168 211;
+  --primary-500: 0 130 182;
+  --primary-600: 0 96 137;
+  --primary-700: 0 77 110;
+  --primary-800: 0 63 90;
+  --primary-900: 0 52 75;
+  --primary-950: 0 31 47;
 
   /* Primary Colors */
-  --primary-color: #5eac24;
-  --primary-hover: #4a8c1a;
-  --primary-active: #3b6b19;
+  --primary-color: #006089;
+  --primary-hover: #004d6e;
+  --primary-active: #003f5a;
 
   /* Workspace / chrome neutral scale */
   --theme-primary-50: 250 250 250;
@@ -158,7 +158,7 @@
   /* Border Colors */
   --border-primary: #383838;
   --border-secondary: #464646;
-  --border-accent: #5eac24;
+  --border-accent: #006089;
 
   --studio-bg: #1d1d1d;
   --card-bg: #252525;

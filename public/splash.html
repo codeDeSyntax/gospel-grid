@@ -10,110 +10,129 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: transparent;
+      margin: 0;
+      padding: 0;
+      background: #060a0e url('splash-bg.jpg') no-repeat center center / cover;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
       user-select: none;
       -webkit-app-region: drag;
     }
 
-    /* ── Clean Minimal Obsidian Card (420×270) ── */
-    .card {
-      position: relative;
-      width: 420px;
-      height: 270px;
-      background: linear-gradient(145deg, #181d16 0%, #0e120c 60%, #070906 100%);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 
-        0 24px 60px rgba(0, 0, 0, 0.65),
-        0 0 0 1px rgba(133, 202, 62, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      opacity: 0;
-      transform: scale(0.95);
-      animation: cardEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    /* Ambient dark vignette */
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 15, 25, 0.2) 0%, rgba(0, 10, 18, 0.65) 100%);
+      pointer-events: none;
     }
 
-    @keyframes cardEnter {
+    /* ── Crisp Long White Splash Bar (700px × 88px) ── */
+    .word-card {
+      position: relative;
+      z-index: 10;
+      width: 700px;
+      height: 88px;
+      background: #ffffff;
+      border-radius: 0px;
+      border: none;
+      box-shadow: 
+        0 24px 70px rgba(0, 0, 0, 0.65),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 36px;
+      color: #111827;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.97);
+      animation: wordCardEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes wordCardEnter {
       to {
         opacity: 1;
         transform: scale(1);
       }
     }
 
-    /* ── Subtle Ambient Glow Behind Icon ── */
-    .ambient-glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 220px;
-      height: 220px;
-      background: radial-gradient(circle, rgba(133, 202, 62, 0.22) 0%, rgba(94, 172, 36, 0.06) 50%, transparent 70%);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* ── Center Content ── */
-    .content {
+    /* Centered Brand Items: Logo + Title */
+    .brand-content {
       position: relative;
-      z-index: 10;
+      z-index: 2;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 16px;
+      gap: 18px;
     }
 
-    .icon-wrap {
-      position: relative;
-      width: 90px;
-      height: 90px;
+    .logo-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 0px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: float 3s ease-in-out infinite alternate;
+      padding: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
-    @keyframes float {
-      0% { transform: translateY(0); filter: drop-shadow(0 8px 24px rgba(133, 202, 62, 0.3)); }
-      100% { transform: translateY(-4px); filter: drop-shadow(0 14px 32px rgba(133, 202, 62, 0.45)); }
-    }
-
-    .app-icon {
+    .logo-img {
       width: 100%;
       height: 100%;
       object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
     }
 
-    .version-text {
+    .title-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .top-tag {
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.12em;
-      color: rgba(255, 255, 255, 0.55);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 3px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #6b7280;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .main-title {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      color: #111827;
+      line-height: 1;
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .main-title span {
+      color: #006089;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div class="ambient-glow"></div>
-    <div class="content">
-      <div class="icon-wrap">
-        <img class="app-icon" src="wingrid.png" alt="Wingrid"/>
+  <div class="bg-overlay"></div>
+
+  <!-- Crisp Long White Splash Bar -->
+  <div class="word-card">
+    <!-- Centered: Logo + App Name -->
+    <div class="brand-content">
+      <div class="logo-box">
+        <img src="wingrid.png" alt="Wingrid" class="logo-img"/>
       </div>
-      <span class="version-text">v2.2.42</span>
+      <div class="title-col">
+        <span class="top-tag">Office</span>
+        <h1 class="main-title">Win<span>grid</span></h1>
+      </div>
     </div>
   </div>
 

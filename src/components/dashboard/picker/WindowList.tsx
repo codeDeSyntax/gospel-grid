@@ -650,14 +650,16 @@ export const WindowList: React.FC<WindowListProps> = ({
 
                           {/* Select / Check Handle — right side */}
                           <div
-                            className={`absolute right-0 top-0 w-7 h-full flex items-center justify-center border-solid border-t-0 border-b-0 border-r-0 border-l ${
+                            className={`absolute right-0 top-0 ${window.isSelected ? "w-7" : "w-4"} h-full flex items-center justify-center border-solid border-t-0 border-b-0 border-r-0 border-l ${
                               isLightMode ? "border-l-neutral-200" : "border-l-neutral-700"
                             } transition-all duration-150 ${
                               window.isSelected
                                 ? isLightMode
                                   ? "opacity-100 bg-black/[0.05] hover:bg-black/[0.08]"
                                   : "opacity-100 bg-white/[0.08] hover:bg-white/[0.12]"
-                                : "opacity-0 group-hover:opacity-100 hover:bg-white/[0.06]"
+                                : isLightMode
+                                  ? "opacity-100 bg-white hover:bg-neutral-100/80"
+                                  : "opacity-100 bg-black/40 hover:bg-black/60"
                             }`}
                           >
                             <div
@@ -667,7 +669,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                               }}
-                              className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                              className={`${window.isSelected ? "w-5 h-5" : "w-3.5 h-full"} rounded flex items-center justify-center transition-all duration-200 cursor-grab active:cursor-grabbing ${
                                 window.isSelected
                                   ? isLightMode
                                     ? "text-neutral-900"
@@ -688,7 +690,7 @@ export const WindowList: React.FC<WindowListProps> = ({
                                   className="h-6 w-6"
                                 />
                               ) : (
-                                <MdDragIndicator size={17} />
+                                <MdDragIndicator size={13} />
                               )}
                             </div>
                           </div>

@@ -5,21 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Lime accent for actions, success states, and selected highlights.
+        // Ocean Blue accent (#006089) for actions, highlights, and active states.
         primary: {
-          50: "#f4fbea",
-          100: "#e6f5d0",
-          200: "#cfeea7",
-          300: "#abe070",
-          400: "#85ca3e",
-          500: "#5eac24",
-          600: "#4a8c1a",
-          700: "#3b6b19",
-          800: "#33551a",
-          900: "#2d481a",
-          950: "#14270a",
+          50: "#edf7fc",
+          100: "#d6eef8",
+          200: "#b0dff1",
+          300: "#78c7e6",
+          400: "#39a8d3",
+          500: "#0082b6",
+          600: "#006089",
+          700: "#004d6e",
+          800: "#003f5a",
+          900: "#00344b",
+          950: "#001f2f",
         },
-        // Neutral workspace scale. Most app chrome uses this, not the green accent.
+        // Neutral workspace scale. Most app chrome uses this, not the blue accent.
         "theme-primary": {
           50: "rgb(var(--theme-primary-50) / <alpha-value>)",
           100: "rgb(var(--theme-primary-100) / <alpha-value>)",
@@ -86,30 +86,30 @@ export default {
 
         // Semantic colors for light/dark mode
         background: {
-          light: "#ffffff",
-          DEFAULT: "#f5f5f5", // light mode bg
-          secondary: "#eeeeee",
-          tertiary: "#e0e0e0",
+          light: "#f5f6f8",
+          DEFAULT: "#f0f2f5", // light mode bg
+          secondary: "#e8ebef",
+          tertiary: "#dee1e7",
         },
         surface: {
-          light: "#ffffff",
-          DEFAULT: "#f9f9f9", // light mode
-          secondary: "#f0f0f0",
-          tertiary: "#e8e8e8",
-          hover: "#e0e0e0",
-          active: "#d0d0d0",
+          light: "#f5f6f8",
+          DEFAULT: "#e8ebef", // light mode
+          secondary: "#dee1e7",
+          tertiary: "#d0d4dc",
+          hover: "#bec3cc",
+          active: "#adb3bd",
         },
         text: {
-          light: "#ffffff",
-          DEFAULT: "#1a1a1a", // light mode text
-          secondary: "#666666",
-          tertiary: "#999999",
-          muted: "#cccccc",
+          light: "#f5f6f8",
+          DEFAULT: "#101216", // light mode text
+          secondary: "#4a505c",
+          tertiary: "#6c727e",
+          muted: "#949aa6",
         },
         border: {
-          light: "#e0e0e0",
-          DEFAULT: "#d0d0d0", // light mode
-          secondary: "#cccccc",
+          light: "#bec3cc",
+          DEFAULT: "#d0d4dc", // light mode
+          secondary: "#bec3cc",
           dark: "#333333",
         },
       },
@@ -170,27 +170,27 @@ export default {
       // Add CSS custom properties for theme colors
       addBase({
         ":root": {
-          // Light theme colors: soft green-white, not pure white.
-          "--color-bg-primary": "245 251 236", // #f5fbec
-          "--color-bg-secondary": "236 245 223", // #ecf5df
-          "--color-bg-tertiary": "225 236 208", // #e1ecd0
-          "--color-bg-elevated": "249 253 243", // #f9fdf3
+          // Light theme colors: soft neutral ash & stone tones, avoiding stark blinding white.
+          "--color-bg-primary": "240 242 245", // #f0f2f5
+          "--color-bg-secondary": "232 235 239", // #e8ebef
+          "--color-bg-tertiary": "222 225 231", // #dee1e7
+          "--color-bg-elevated": "245 246 248", // #f5f6f8
 
-          "--color-surface-primary": "249 253 243", // #f9fdf3
-          "--color-surface-secondary": "245 251 236", // #f5fbec
-          "--color-surface-tertiary": "236 245 223", // #ecf5df
-          "--color-surface-hover": "227 239 212", // #e3efd4
-          "--color-surface-active": "216 231 197", // #d8e7c5
+          "--color-surface-primary": "245 246 248", // #f5f6f8
+          "--color-surface-secondary": "232 235 239", // #e8ebef
+          "--color-surface-tertiary": "222 225 231", // #dee1e7
+          "--color-surface-hover": "208 212 220", // #d0d4dc
+          "--color-surface-active": "190 195 204", // #bec3cc
 
-          "--color-border-primary": "219 232 201", // #dbe8c9
-          "--color-border-secondary": "204 220 184", // #ccdcb8
-          "--color-border-accent": "94 172 36", // primary-500
+          "--color-border-primary": "190 195 204", // #bec3cc
+          "--color-border-secondary": "208 212 220", // #d0d4dc
+          "--color-border-accent": "0 96 137", // primary-600 #006089
 
-          "--color-text-primary": "15 23 42", // slate-900
-          "--color-text-secondary": "71 85 105", // slate-600
-          "--color-text-tertiary": "148 163 184", // slate-400
-          "--color-text-accent": "94 172 36", // primary-500
-          "--color-text-inverse": "255 255 255", // white
+          "--color-text-primary": "16 18 22", // #101216
+          "--color-text-secondary": "74 80 92", // #4a505c
+          "--color-text-tertiary": "108 114 126", // #6c727e
+          "--color-text-accent": "0 96 137", // primary-600 #006089
+          "--color-text-inverse": "245 246 248", // #f5f6f8
         },
         ".dark": {
           // Dark theme colors: WhatsApp-inspired charcoal surfaces.
@@ -207,12 +207,12 @@ export default {
 
           "--color-border-primary": "56 56 56", // #383838
           "--color-border-secondary": "70 70 70", // #464646
-          "--color-border-accent": "94 172 36", // primary-500
+          "--color-border-accent": "0 96 137", // primary-600 #006089
 
           "--color-text-primary": "242 242 242", // #f2f2f2
           "--color-text-secondary": "200 200 200", // #c8c8c8
           "--color-text-tertiary": "155 155 155", // #9b9b9b
-          "--color-text-accent": "94 172 36", // primary-500
+          "--color-text-accent": "0 130 182", // primary-500
           "--color-text-inverse": "15 23 42", // slate-900
         },
       });

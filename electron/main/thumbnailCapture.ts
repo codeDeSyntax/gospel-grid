@@ -1,4 +1,4 @@
-import { desktopCapturer, NativeImage, type DesktopCapturerSource } from "electron";
+﻿import { desktopCapturer, NativeImage, type DesktopCapturerSource } from "electron";
 import { createHash } from "node:crypto";
 import { thumbnailCache } from "./thumbnailCache";
 
@@ -335,18 +335,12 @@ export async function batchCaptureThumbnails(
 
   // ── Extract thumbnails from the single snapshot ─────────────────────
   const results: (WindowThumbnail | null)[] = windowIds.map((windowId) => {
-    // Check cache first (unless force refresh). If a source exists for this
-    // window, compute a quick image hash and use it to validate the cache.
+    // PERF: Do NOT SHA1-hash in batch mode. toPNG() + createHash() runs
+    // synchronously on the main thread and blocks IPC for 100-300ms per window
+    // while getUserMedia projection streams are active on the same HWNDs.
+    // The 2-second TTL in ThumbnailCache handles staleness adequately.
     const src = sourceMap.get(windowId);
-    let imageHash: string | undefined;
-    if (src && src.thumbnail && !src.thumbnail.isEmpty()) {
-      try {
-        const png = src.thumbnail.toPNG();
-        imageHash = createHash("sha1").update(png).digest("hex");
-      } catch (err) {
-        imageHash = undefined;
-      }
-    }
+    const imageHash: string | undefined = undefined;
 
     if (!forceRefresh) {
       const cached = thumbnailCache.get(
