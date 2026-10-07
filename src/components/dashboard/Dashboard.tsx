@@ -3,9 +3,10 @@ import { WindowPicker, type WindowInfo } from "./picker/WindowPicker";
 import { CosmicBackground } from "./background/CosmicBackground";
 import { InspectorPanel } from "./inspector/InspectorPanel";
 import { AiCardToast } from "./ai/AiCardToast";
-import { ContextIntelligenceFullModal } from "./ai/ContextIntelligenceFullModal";
 import type { FeatureView } from "./RightPanel/types";
 import { useContextIntelligence } from "@/hooks/useContextIntelligence";
+import { globalSpeechService } from "@/services/ai/globalSpeechService";
+import { useGlobalSpeechStreaming } from "@/hooks/useGlobalSpeechStreaming";
 import { Sparkles, Loader2 } from "lucide-react";
 import type { PanelView } from "./inspector/types";
 import { TitleBar } from "@/shared/TitleBar";
@@ -220,6 +221,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const captionsFeatureWindow = useMemo(() => buildCaptionsFeatureWindow(), []);
 
   // ── AI Context Intelligence & Captions Modal State ────────────────────────
+  const { isStreaming: isSpeechStreaming } = useGlobalSpeechStreaming();
   const [isContextModalOpen, setIsContextModalOpen] = useState(false);
   const [activeAiProvider, setActiveAiProvider] = useState<AiProvider>(() => {
     const stored = localStorage.getItem("wingrid:ai-provider");
@@ -256,6 +258,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
         setIsContextModalOpen((prev) => !prev);
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.altKey && (e.key === "a" || e.key === "A")) ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "l" || e.key === "L"))
+      ) {
+        e.preventDefault();
+        void globalSpeechService.toggle();
       }
     };
 
@@ -1379,83 +1387,76 @@ function formatFriendlyUpdateStatus(rawMsg: string | undefined | null): string {
         onClose={() => setWindowLimitModal(null)}
       />
 
-      {/* Floating AI orb toggler */}
-      {!isSplashLoading && activeFeatureView !== "captions" && (
-        <div className="fixed bottom-3 right-3 z-50 pointer-events-auto">
+      {/* Floating AI orb modal toggler at the bottom of the feature rail */}
+      {!isSplashLoading && (
+        <div className="fixed bottom-3 right-2 z-50 pointer-events-auto">
           <button
             type="button"
-            onClick={() => setActiveFeatureView("captions")}
-            aria-label="AI Context Cards"
-            title="AI Context Cards"
-            className={`relative flex h-10 w-10 p-0.5 items-center justify-center rounded-full transition-all duration-300 cursor-pointer active:scale-90 shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-visible ${
-              aiCards.length > 0
-                ? "bg-primary-500/20 shadow-[0_0_0_3px_rgba(94,172,36,0.25),0_4px_20px_rgba(0,0,0,0.5)]"
-                : isDarkMode
-                  ? "bg-white/8 hover:bg-white/14"
-                  : "bg-black/6 hover:bg-black/10"
+            onClick={() => setIsContextModalOpen((prev) => !prev)}
+            aria-label="Toggle Smart AI Context Cards Modal"
+            title={
+              isSpeechStreaming
+                ? "AI Speech Listening Active (Click to toggle Recent Cards modal)"
+                : "Toggle Recent AI Cards Modal (Ctrl+K)"
+            }
+            className={`group relative flex items-center justify-center h-11 w-11 rounded-full transition-all duration-200 ease-out cursor-pointer outline-none active:scale-95 ${
+              isSpeechStreaming
+                ? "ring-2 ring-emerald-400 bg-emerald-950/40 text-emerald-300 shadow-[0_0_16px_rgba(52,211,153,0.4)] border border-emerald-400/50"
+                : isContextModalOpen
+                  ? isDarkMode
+                    ? "bg-[#383838] hover:bg-[#424242] text-white shadow-md border border-white/30 scale-105"
+                    : "bg-neutral-200 hover:bg-neutral-300 text-neutral-900 shadow-md border-2 border-neutral-400/90 scale-105"
+                  : isDarkMode
+                    ? "bg-[#202020] hover:bg-[#2a2a2a] border border-white/10 hover:border-white/20 text-neutral-400 hover:text-white"
+                    : "bg-white hover:bg-neutral-100 border border-neutral-300 hover:border-neutral-400 text-neutral-600 hover:text-neutral-900 shadow-sm"
             }`}
           >
-            {/* Subtle frosted ring */}
-            <span
-              className={`absolute inset-0 rounded-full border border-solid transition-colors ${
-                aiCards.length > 0
-                  ? "border-primary-500/40"
-                  : isDarkMode
-                  ? "border-white/10"
-                  : "border-black/10"
-              }`}
-            />
-
             <img
               src="./caption.png"
               alt="AI"
-              className={`relative z-10 w-full h-full rounded-full object-cover p-0.5 transition-opacity ${
-                aiCards.length > 0 ? "opacity-100" : "opacity-85"
+              draggable={false}
+              className={`h-7 w-7 object-contain transition-all duration-200 pointer-events-none drop-shadow-sm ${
+                isSpeechStreaming
+                  ? "opacity-100 scale-110 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                  : isContextModalOpen
+                    ? "opacity-100 scale-105 drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]"
+                    : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
               }`}
             />
 
-            {/* Card count badge */}
-            {aiCards.length > 0 && (
-              <span className="absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[8.5px] font-black bg-primary-500 text-white shadow-md">
-                {aiCards.length}
+            {/* Listening beacon dot */}
+            {isSpeechStreaming && (
+              <span className="absolute -bottom-0.5 -right-0.5 z-20 flex h-3.5 w-3.5 items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 border border-black/40" />
               </span>
             )}
 
-            {/* Pulse ring when analyzing */}
-            {aiStatus === "analyzing" && (
-              <span className="absolute inset-0 rounded-full animate-ping bg-primary-400/25" />
+            {/* Card count badge */}
+            {aiCards.length > 0 && (
+              <span
+                className={`absolute -top-1 -right-1 z-20 flex h-4 min-w-4 px-1 items-center justify-center rounded-full text-[9px] font-black shadow-md ${
+                  isDarkMode ? "bg-white text-black" : "bg-neutral-900 text-white"
+                }`}
+              >
+                {aiCards.length}
+              </span>
             )}
           </button>
         </div>
       )}
 
-      {!isSplashLoading && activeFeatureView !== "captions" && (
+      {/* Recent AI Context Cards Modal (toggled by floating AI orb at the bottom of feature rail) */}
+      {!isSplashLoading && (
         <AiCardToast
+          isOpen={isContextModalOpen}
+          onClose={() => setIsContextModalOpen(false)}
           cards={aiCards}
-          isDarkMode={isDarkMode}
           onDismiss={handleDismissAiCard}
-          onClearAll={handleClearAiCards}
           onPush={handlePushAiCard}
           onHide={handleHideAiCardOverlay}
         />
       )}
-
-      {/* Context Intelligence Live Modal */}
-      <ContextIntelligenceFullModal
-        isOpen={isContextModalOpen}
-        onClose={() => setIsContextModalOpen(false)}
-        cards={aiCards}
-        status={aiStatus}
-        isDarkMode={isDarkMode}
-        mode={aiMode}
-        onToggleMode={() => setAiMode(aiMode === "auto" ? "manual" : "auto")}
-        onDismiss={handleDismissAiCard}
-        onClear={handleClearAiCards}
-        onPush={handlePushAiCard}
-        onHide={handleHideAiCardOverlay}
-        onGenerateFromText={handleGenerateFromText}
-        provider={activeAiProvider}
-      />
     </div>
   );
 };

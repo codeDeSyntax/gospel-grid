@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { EyeOff, Check, Tv, X } from "lucide-react";
+import { EyeOff, Check, Tv, X, Sparkles } from "lucide-react";
 import { useAppSelector } from "@/store/hooks";
 import type { AiProducerCard } from "@/services/ai/types";
 import {
@@ -11,16 +11,18 @@ import {
   isCardLive,
 } from "./cardVisuals";
 
-interface AiCardToastProps {
+export interface AiCardToastProps {
+  isOpen: boolean;
+  onClose: () => void;
   cards: AiProducerCard[];
-  isDarkMode: boolean;
   onDismiss: (index: number) => void;
-  onClearAll?: () => void;
   onPush: (card: AiProducerCard) => void;
   onHide: () => void;
 }
 
 export const AiCardToast: React.FC<AiCardToastProps> = ({
+  isOpen,
+  onClose,
   cards,
   onDismiss,
   onPush,
@@ -29,18 +31,8 @@ export const AiCardToast: React.FC<AiCardToastProps> = ({
   const overlayText = useAppSelector((s) => s.app.overlayText);
   const overlayVisible = useAppSelector((s) => s.app.overlayVisible);
   const [pushedIndex, setPushedIndex] = useState<number | null>(null);
-  const [isToastHidden, setIsToastHidden] = useState(false);
-  const [lastCardCount, setLastCardCount] = useState(cards.length);
 
-  // If new cards arrive, automatically unhide the toast
-  if (cards.length > lastCardCount) {
-    setIsToastHidden(false);
-    setLastCardCount(cards.length);
-  } else if (cards.length < lastCardCount) {
-    setLastCardCount(cards.length);
-  }
-
-  const lastThree = cards.slice(-3).reverse();
+  const recentCards = cards.slice(0, 6);
 
   const handlePushToggle = (card: AiProducerCard, idx: number) => {
     if (isCardLive(card, overlayText, overlayVisible)) {
@@ -52,166 +44,168 @@ export const AiCardToast: React.FC<AiCardToastProps> = ({
     }
   };
 
-  const isDarkMode = useAppSelector((s) => s.app.isDarkMode);
-
-  if (typeof document === "undefined" || cards.length === 0 || isToastHidden) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed bottom-16 right-3 z-[99999] pointer-events-none">
+    <div className="fixed bottom-16 right-3 z-[99999] pointer-events-none select-none">
       <AnimatePresence>
-        {cards.length > 0 && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-auto flex flex-col w-[310px] rounded-2xl border border-neutral-200/80 bg-white/95 text-neutral-900 p-3.5 gap-2 overflow-hidden backdrop-blur-2xl shadow-[0_12px_36px_rgba(0,0,0,0.16)]"
+            className="pointer-events-auto flex flex-col w-[310px] max-h-[470px] rounded-2xl border border-gray-200 bg-white text-gray-900 p-3 gap-2 overflow-hidden shadow-none"
           >
-            {/* Header with Card Count and Hide All Button */}
-            <div className="flex items-center justify-between pb-1.5 px-0.5 border-b border-neutral-200/80">
+            {/* Header with Card Count and Close Button */}
+            <div className="flex items-center justify-between pb-1.5 px-0.5 border-b border-gray-100">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-700">
-                  AI Context Cards
+                <Sparkles size={13} className="text-primary-600" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-900">
+                  Recent AI Cards
                 </span>
-                <span className="flex items-center justify-center h-3.5 min-w-3.5 px-1 rounded-full text-[8px] font-bold bg-neutral-200 text-neutral-700">
-                  {cards.length}
-                </span>
+                {cards.length > 0 && (
+                  <span className="flex items-center justify-center h-3.5 min-w-3.5 px-1 rounded-full text-[8px] font-bold bg-primary-50 text-primary-700 border border-primary-200">
+                    {Math.min(cards.length, 6)}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
-                onClick={() => setIsToastHidden(true)}
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-all cursor-pointer"
-                title="Hide toast (cards remain saved)"
+                onClick={onClose}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all cursor-pointer"
+                title="Hide modal"
               >
-                <span>Hide all</span>
+                <span>Hide</span>
                 <X size={10} />
               </button>
             </div>
-            <AnimatePresence mode="popLayout">
-              {lastThree.map((card) => {
-                const idx = cards.lastIndexOf(card);
-                const typeVisual =
-                  CARD_VISUALS[card.type] ?? CARD_VISUALS.agenda_item;
-                const IconComponent = typeVisual.icon;
-                const headline = getHeadline(card);
-                const subline = getSubline(card);
-                const live = isCardLive(card, overlayText, overlayVisible);
-                const isPushed = pushedIndex === idx;
 
-                return (
-                  <motion.div
-                    key={`${idx}-${headline}`}
-                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className={`group relative flex items-center gap-2.5 w-full h-[54px] rounded-xl px-2.5 py-1.5 border transition-all duration-150 overflow-hidden ${
-                      live
-                        ? "bg-neutral-200/80 border-neutral-400 ring-1 ring-neutral-400/40 shadow-sm"
-                        : "bg-neutral-100/60 border-neutral-200/70 hover:bg-neutral-100 hover:border-neutral-300"
-                    }`}
-                  >
-                    {/* Left: image or icon thumbnail */}
-                    {card.imageUrl ? (
-                      <div className="relative w-9 h-9 shrink-0 overflow-hidden rounded-lg border bg-white border-neutral-200/80">
-                        <img
-                          src={card.imageUrl}
-                          alt={headline}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex w-9 h-9 shrink-0 items-center justify-center rounded-lg border bg-white border-neutral-200/80 text-neutral-700">
-                        <IconComponent className="h-4 w-4" />
-                      </div>
-                    )}
+            {cards.length === 0 ? (
+              <div className="py-5 px-2 flex flex-col items-center justify-center text-center text-gray-500 gap-1.5">
+                <div className="h-8 w-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-primary-600 mb-0.5">
+                  <Sparkles size={14} />
+                </div>
+                <p className="text-[11px] font-semibold text-gray-900">No context cards yet</p>
+                <p className="text-[9.5px] text-gray-500 leading-relaxed max-w-[220px]">
+                  Speak into mic or type to generate live cards.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col overflow-y-auto max-h-[410px] pr-0.5 no-scrollbar">
+                <AnimatePresence mode="popLayout">
+                  {recentCards.map((card, index) => {
+                    const idx = cards.indexOf(card) !== -1 ? cards.indexOf(card) : index;
+                    const typeVisual =
+                      CARD_VISUALS[card.type] ?? CARD_VISUALS.agenda_item;
+                    const IconComponent = typeVisual.icon;
+                    const headline = getHeadline(card);
+                    const subline = getSubline(card);
+                    const live = isCardLive(card, overlayText, overlayVisible);
+                    const isPushed = pushedIndex === idx;
 
-                    {/* Middle: text content */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[7.5px] font-bold uppercase px-1.5 py-0.2 rounded border leading-none tracking-wider truncate bg-white text-neutral-700 border-neutral-200/80">
-                          {typeVisual.label}
-                        </span>
-                        {live && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-bold text-neutral-900">
-                            <span className="h-1 w-1 rounded-full animate-pulse bg-neutral-900" />
-                            Live
-                          </span>
-                        )}
-                      </div>
-
-                      <p
-                        className="text-[11px] font-bold leading-tight truncate text-neutral-900"
-                        title={headline}
-                      >
-                        {headline}
-                      </p>
-                      {subline && (
-                        <p
-                          className={`text-[8.5px] leading-tight truncate mt-0.5 font-medium ${
-                            live ? "text-neutral-700" : "text-neutral-600"
-                          }`}
-                          title={subline}
-                        >
-                          {subline}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      {/* Push Button */}
-                      <button
-                        type="button"
+                    return (
+                      <motion.div
+                        key={`${idx}-${headline}`}
+                        initial={{ opacity: 0, y: 4, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                        transition={{ duration: 0.12, ease: "easeOut" }}
                         onClick={() => handlePushToggle(card, idx)}
-                        className={`flex items-center gap-1 h-6.5 px-2.5 rounded-lg text-[9px] font-bold transition-all duration-150 cursor-pointer active:scale-95 border ${
+                        className={`group relative flex items-center gap-2 w-full py-2 px-1.5 border-t-0 border-l-0 border-r-0 border-b border-solid border-gray-100 last:border-b-0 transition-all duration-150 cursor-pointer select-none active:scale-[0.99] ${
                           live
-                            ? "bg-neutral-800 border-neutral-700 text-white hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                            : isPushed
-                              ? "bg-neutral-800 border-neutral-700 text-white"
-                              : "bg-white hover:bg-neutral-50 text-neutral-800 border-neutral-300 shadow-sm"
+                            ? "bg-primary-50/70 hover:bg-primary-100/70"
+                            : "hover:bg-gray-50/90 bg-transparent"
                         }`}
                         title={
                           live
                             ? "Currently Live (Click to hide)"
-                            : "Push to Screen"
+                            : "Click to push to screen"
                         }
                       >
-                        {live ? (
-                          <>
-                            <EyeOff size={10} className="shrink-0" />
-                            <span>Live</span>
-                          </>
-                        ) : isPushed ? (
-                          <>
-                            <Check size={10} className="shrink-0" />
-                            <span>Pushed</span>
-                          </>
+                        {/* Left: wider image or icon thumbnail */}
+                        {card.imageUrl ? (
+                          <div className="relative w-12 h-9 min-w-12 max-w-12 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                            <img
+                              src={card.imageUrl}
+                              alt={headline}
+                              className="w-full h-full object-cover block"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          </div>
                         ) : (
-                          <>
-                            <Tv size={10} className="shrink-0" />
-                            <span>Push</span>
-                          </>
+                          <div className="flex w-12 h-9 min-w-12 max-w-12 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-primary-600">
+                            <IconComponent className="h-3.5 w-3.5" />
+                          </div>
                         )}
-                      </button>
 
-                      {/* Dismiss Button */}
-                      <button
-                        type="button"
-                        onClick={() => onDismiss(idx)}
-                        className="opacity-0 group-hover:opacity-100 flex items-center justify-center h-5.5 w-5.5 rounded-md transition-all cursor-pointer text-neutral-500 hover:text-red-600 hover:bg-neutral-200"
-                        title="Dismiss card"
-                      >
-                        <X size={10} />
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                        {/* Middle: text content */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[7px] font-bold uppercase px-1 py-0.2 rounded border leading-none tracking-wider truncate bg-gray-50 border-gray-200 text-gray-600">
+                              {typeVisual.label}
+                            </span>
+                            {live && (
+                              <span className="flex items-center gap-0.5 text-[7.5px] font-bold text-emerald-600">
+                                <span className="h-1 w-1 rounded-full animate-pulse bg-emerald-500" />
+                                Live
+                              </span>
+                            )}
+                            {isPushed && !live && (
+                              <span className="flex items-center gap-0.5 text-[7.5px] font-bold text-primary-600">
+                                <Check size={8} />
+                                Pushed
+                              </span>
+                            )}
+                          </div>
+
+                          <p
+                            className="text-[11px] font-semibold leading-snug line-clamp-1 text-gray-900 group-hover:text-primary-700 transition-colors"
+                            title={headline}
+                          >
+                            {headline}
+                          </p>
+                          {subline && (
+                            <p
+                              className="text-[8.5px] leading-tight line-clamp-1 text-gray-500 mt-0.2"
+                              title={subline}
+                            >
+                              {subline}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Right: Actions */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Live indicator badge */}
+                          {live && (
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300">
+                              <EyeOff size={8} />
+                              <span>Live</span>
+                            </span>
+                          )}
+
+                          {/* Dismiss Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDismiss(idx);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 flex items-center justify-center h-5 w-5 rounded transition-all cursor-pointer text-gray-400 hover:text-red-500 hover:bg-gray-100"
+                            title="Dismiss card"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -219,3 +213,5 @@ export const AiCardToast: React.FC<AiCardToastProps> = ({
     document.body,
   );
 };
+
+

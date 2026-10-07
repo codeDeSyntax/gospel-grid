@@ -5,7 +5,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Cast, Monitor, RefreshCcw, X, MonitorOff, MoreHorizontal, Settings, Tv } from "lucide-react";
+import { Cast, Monitor, RefreshCcw, X, MonitorOff, MoreHorizontal, Settings, Tv, Mic } from "lucide-react";
+import { useGlobalSpeechStreaming } from "@/hooks/useGlobalSpeechStreaming";
 import { type WindowInfo } from "../picker/WindowPicker";
 import { getWindowFallbackIcon } from "@/utils/appIconMapping";
 import { DepthButton } from "@/shared/DepthButton";
@@ -111,6 +112,8 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
   const windowThumbnails =
     useAppSelector((state) => state.grid.windowThumbnails) ?? {};
   const isDarkMode = useAppSelector((state) => state.app.isDarkMode);
+  const { isStreaming: isSpeechStreaming, toggle: toggleSpeechStreaming } =
+    useGlobalSpeechStreaming();
 
   const timerPreviewMap = useMemo(() => {
     const collection = loadFeatureTimerCollection();
@@ -695,17 +698,48 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => loadDisplays(true)}
-            className="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold border border-theme-primary-600/40 bg-theme-primary-900/80 hover:bg-theme-primary-800 text-theme-primary-100 hover:text-white backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
-            title="Refresh connected displays"
-          >
-            <RefreshCcw
-              className={`w-3.5 h-3.5 transition-transform ${loadingDisplays ? "animate-spin text-primary-400" : "opacity-80"}`}
-            />
-            <span>Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Smart AI Listening Button */}
+            <button
+              type="button"
+              onClick={toggleSpeechStreaming}
+              className={`h-8 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold border backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm ${
+                isSpeechStreaming
+                  ? "border-emerald-500/50 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 ring-2 ring-emerald-500/20"
+                  : "border-theme-primary-600/40 bg-theme-primary-900/80 hover:bg-theme-primary-800 text-theme-primary-100 hover:text-white"
+              }`}
+              title={
+                isSpeechStreaming
+                  ? "AI Speech Listening Active across app (Click to Stop)"
+                  : "Start AI Speech Listening (Listens in background across all views)"
+              }
+            >
+              {isSpeechStreaming ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <Mic className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-[11px] font-semibold text-emerald-200">AI Listening</span>
+                </>
+              ) : (
+                <>
+                  <Mic className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                  <span className="text-[11px]">AI Listen</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => loadDisplays(true)}
+              className="h-8 px-3.5 rounded-full flex items-center gap-1.5 text-xs font-semibold border border-theme-primary-600/40 bg-theme-primary-900/80 hover:bg-theme-primary-800 text-theme-primary-100 hover:text-white backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
+              title="Refresh connected displays"
+            >
+              <RefreshCcw
+                className={`w-3.5 h-3.5 transition-transform ${loadingDisplays ? "animate-spin text-primary-400" : "opacity-80"}`}
+              />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -760,42 +794,65 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.34))] pointer-events-none" />
                 <div 
                   data-screen-menu-root={display.id}
-                  className="absolute right-4 top-4 z-20 pointer-events-auto"
+                  className="absolute right-3.5 top-3.5 z-20 pointer-events-auto"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenScreenMenuId(openScreenMenuId === display.id ? null : display.id)}
-                    className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 border backdrop-blur-md transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md ${
+                    className={`h-6.5 w-6.5 rounded-lg flex items-center justify-center shrink-0 border backdrop-blur-md transition-all cursor-pointer active:scale-95 shadow-sm ${
                       openScreenMenuId === display.id
                         ? isDarkMode
-                          ? "bg-primary-500/20 border-primary-400/50 text-white"
-                          : "bg-primary-100 border-primary-400 text-primary-900"
+                          ? "bg-primary-500/25 border-primary-400/60 text-primary-400 ring-2 ring-primary-500/20"
+                          : "bg-primary-500/20 border-primary-500 text-primary-600 ring-2 ring-primary-500/20"
                         : isDarkMode
-                          ? "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
-                          : "bg-[#181818]/90 hover:bg-[#252525] border-white/20 text-white/80 hover:text-white"
+                          ? "bg-black/60 hover:bg-black/85 border-white/15 text-white/80 hover:text-white hover:border-white/30"
+                          : "bg-black/50 hover:bg-black/75 border-white/20 text-white/90 hover:text-white"
                     }`}
                     title="Screen options"
                   >
-                    <MoreHorizontal className="h-4 w-4" strokeWidth={2.4} />
+                    <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={2.2} />
                   </button>
 
                   {openScreenMenuId === display.id && (
                     <div
                       role="menu"
-                      className={`absolute right-0 top-9 z-30 w-48 overflow-hidden rounded-xl border p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 ${
+                      className={`absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-xl border p-1 backdrop-blur-2xl ring-1 animate-in fade-in-0 zoom-in-95 slide-in-from-top-1 duration-150 select-none ${
                         isDarkMode
-                          ? "bg-[#181818]/95 border-white/15 text-white"
-                          : "bg-[#f5f6f8]/98 border-neutral-300 text-neutral-900 shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
+                          ? "bg-[#18191c]/95 border-white/10 text-neutral-100 ring-white/5 shadow-[0_16px_36px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]"
+                          : "bg-white/98 border-neutral-200 text-neutral-800 ring-black/5 shadow-[0_16px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)]"
                       }`}
                     >
-                      <div className="px-2.5 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-60">
-                        <span className="truncate">
-                          {display.isPrimary ? "My PC (Primary)" : display.label || `Display ${index + 1}`}
-                        </span>
+                      {/* Compact Header */}
+                      <div className="px-2 py-1.5 flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Monitor className={`w-3 h-3 shrink-0 ${isDarkMode ? "text-neutral-400" : "text-neutral-500"}`} />
+                          <span className={`text-[10px] font-semibold uppercase tracking-wider truncate ${
+                            isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                          }`}>
+                            {display.isPrimary ? "Primary Screen" : display.label || `Display ${index + 1}`}
+                          </span>
+                        </div>
+                        {isPublished ? (
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                            isDarkMode
+                              ? "text-emerald-400 bg-emerald-500/15"
+                              : "text-emerald-700 bg-emerald-100"
+                          }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            LIVE
+                          </span>
+                        ) : (
+                          <span className={`text-[9px] font-medium shrink-0 ${
+                            isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                          }`}>
+                            {assignedIds.length} {assignedIds.length === 1 ? "win" : "wins"}
+                          </span>
+                        )}
                       </div>
 
-                      <div className="my-1 h-px bg-black/[0.06] dark:bg-white/[0.08]" />
+                      <div className={`my-1 h-px ${isDarkMode ? "bg-white/[0.08]" : "bg-neutral-200/80"}`} />
                       
+                      {/* Toggle Projection */}
                       <button
                         type="button"
                         role="menuitem"
@@ -804,22 +861,27 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           handleToggleDisplayProjection(display.id);
                           setOpenScreenMenuId(null);
                         }}
-                        className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-                          isDarkMode
-                            ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
+                        className={`w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11.5px] font-medium transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed ${
+                          isPublished
+                            ? isDarkMode
+                              ? "hover:bg-rose-500/15 text-rose-400 hover:text-rose-300"
+                              : "hover:bg-rose-50 text-rose-600 hover:text-rose-700"
+                            : isDarkMode
+                              ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
+                              : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
                           {isPublished ? (
-                            <MonitorOff className="w-3.5 h-3.5 text-red-400" />
+                            <MonitorOff className="w-3.5 h-3.5 text-rose-500" />
                           ) : (
                             <Cast className="w-3.5 h-3.5 text-primary-500" />
                           )}
                         </span>
-                        <span className="truncate font-semibold">{isPublished ? "Stop Projection" : "Project Screen"}</span>
+                        <span className="truncate">{isPublished ? "Stop Projection" : "Project Screen"}</span>
                       </button>
 
+                      {/* Manage Layout */}
                       <button
                         type="button"
                         role="menuitem"
@@ -827,16 +889,23 @@ export const AutoFitWindowLayout: React.FC<AutoFitWindowLayoutProps> = ({
                           setOpenManageDisplayId(display.id);
                           setOpenScreenMenuId(null);
                         }}
-                        className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer ${
+                        className={`w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11.5px] font-medium transition-all cursor-pointer ${
                           isDarkMode
                             ? "hover:bg-white/[0.08] text-white/90 hover:text-white"
-                            : "hover:bg-neutral-200/80 text-neutral-800 hover:text-neutral-950"
+                            : "hover:bg-neutral-100 text-neutral-800 hover:text-neutral-950"
                         }`}
                       >
                         <span className="flex h-4 w-4 items-center justify-center shrink-0">
                           <Settings className="w-3.5 h-3.5 text-primary-500" />
                         </span>
-                        <span className="font-semibold">Manage Layout</span>
+                        <span className="truncate">Manage Layout</span>
+                        <span className={`ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                          isDarkMode
+                            ? "bg-white/10 text-neutral-300"
+                            : "bg-neutral-100 text-neutral-600 border border-neutral-200/60"
+                        }`}>
+                          {assignedIds.length}
+                        </span>
                       </button>
                     </div>
                   )}

@@ -4,7 +4,7 @@ import { DepthSurface } from "@/shared/DepthSurface";
 import { DepthButton } from "@/shared/DepthButton";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { replaceCaptionsState } from "@/store/slices/captionsSlice";
-import { startRendererMicStreaming } from "../audio/micCapture";
+import { globalSpeechService } from "@/services/ai/globalSpeechService";
 import {
   FEATURE_CAPTIONS_EVENT,
   loadFeatureCaptionsState,
@@ -13,17 +13,10 @@ import {
   type FeatureCaptionsState,
 } from "../RightPanel/featureCaptionsState";
 
-const TARGET_SAMPLE_RATE = 16000;
-
-type CaptionsMicCapture = {
-  stop: () => void;
-};
-
 export const FloatingCaptionsOrb: React.FC = () => {
   const dispatch = useAppDispatch();
   const [isExpanded, setIsExpanded] = useState(false);
   const captionsState = useAppSelector((s) => s.captions.state);
-  const micCaptureRef = useRef<CaptionsMicCapture | null>(null);
   const pendingSpeechRef = useRef<string | null>(null);
   const speechDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -103,76 +96,17 @@ export const FloatingCaptionsOrb: React.FC = () => {
       flushPendingSpeech();
       offSpeech?.();
       offStatus?.();
-      micCaptureRef.current?.stop();
-      micCaptureRef.current = null;
       window.removeEventListener(FEATURE_CAPTIONS_EVENT, sync);
       window.removeEventListener("storage", sync);
     };
   }, [dispatch]);
 
   const handleStart = async () => {
-    const current = loadFeatureCaptionsState();
-    const result = await window.speechToTextAPI.startStreaming({
-      sampleRate: TARGET_SAMPLE_RATE,
-    });
-
-    if (!result?.success) {
-      saveFeatureCaptionsState({
-        ...current,
-        isStreaming: false,
-        isPaused: false,
-        lastError: result?.error || "Failed to start captions",
-        updatedAtMs: Date.now(),
-      });
-      dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
-      return;
-    }
-
-    try {
-      const capture = await startRendererMicStreaming({
-        targetSampleRate: TARGET_SAMPLE_RATE,
-      });
-      micCaptureRef.current?.stop();
-      micCaptureRef.current = capture;
-    } catch (error) {
-      await window.speechToTextAPI.stopStreaming();
-      saveFeatureCaptionsState({
-        ...current,
-        isStreaming: false,
-        isPaused: false,
-        lastError:
-          error instanceof Error
-            ? error.message
-            : "Unable to access microphone",
-        updatedAtMs: Date.now(),
-      });
-      dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
-      return;
-    }
-
-    saveFeatureCaptionsState({
-      ...current,
-      isStreaming: true,
-      isPaused: false,
-      lastError: null,
-      updatedAtMs: Date.now(),
-    });
-    dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+    await globalSpeechService.start();
   };
 
   const handleStop = async () => {
-    micCaptureRef.current?.stop();
-    micCaptureRef.current = null;
-    await window.speechToTextAPI.stopStreaming();
-
-    const current = loadFeatureCaptionsState();
-    saveFeatureCaptionsState({
-      ...current,
-      isStreaming: false,
-      isPaused: false,
-      updatedAtMs: Date.now(),
-    });
-    dispatch(replaceCaptionsState(loadFeatureCaptionsState()));
+    await globalSpeechService.stop();
   };
 
   return (

@@ -28,7 +28,7 @@ import type { IntelligenceStatus } from "@/services/ai/contextIntelligenceServic
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import type { RootState } from "@/store";
 import { setOverlayText, setOverlayVisible } from "@/store/slices/appSlice";
-import { startRendererMicStreaming } from "@/components/dashboard/audio/micCapture";
+import { globalSpeechService } from "@/services/ai/globalSpeechService";
 import {
   loadFeatureCaptionsState,
   saveFeatureCaptionsState,
@@ -337,11 +337,17 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
   const overlayVisible = useAppSelector((s: RootState) => s.app.overlayVisible);
 
   const [draftText, setDraftText] = useState(() => (isStructuredOrHtml(overlayText) ? "" : overlayText || ""));
-  const [isMicStreaming, setIsMicStreaming] = useState(false);
+  const [isMicStreaming, setIsMicStreaming] = useState(() => globalSpeechService.getIsStreaming());
   const [pushedIndex, setPushedIndex] = useState<number | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const micCaptureRef = useRef<{ stop: () => void } | null>(null);
+
+  // Synchronize mic streaming state with global speech service
+  useEffect(() => {
+    return globalSpeechService.subscribe((streaming) => {
+      setIsMicStreaming(streaming);
+    });
+  }, []);
 
   // Listen for speech recognition results & update captions + input only while modal is open
   useEffect(() => {
@@ -353,7 +359,6 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
         if (state.text) {
           setDraftText(state.text);
         }
-        setIsMicStreaming(Boolean(state.isStreaming));
       } catch {}
     };
 
@@ -394,40 +399,10 @@ export const ContextIntelligenceFullModal: React.FC<ContextIntelligenceFullModal
     }
   }, [isOpen]);
 
-  // ── Speech-to-Text Mic Streaming Controls ──────────────────────────────────
+  // ── Speech-to-Text Mic Streaming Controls (Global Persistent) ──────────────
 
   const handleToggleMic = async () => {
-    if (isMicStreaming) {
-      micCaptureRef.current?.stop();
-      micCaptureRef.current = null;
-      await window.speechToTextAPI?.stopStreaming?.();
-      const current = loadFeatureCaptionsState();
-      saveFeatureCaptionsState({ ...current, isStreaming: false, isPaused: false });
-      setIsMicStreaming(false);
-    } else {
-      const result = await window.speechToTextAPI?.startStreaming?.({
-        sampleRate: TARGET_SAMPLE_RATE,
-      });
-
-      if (!result?.success) {
-        console.error("Failed to start speech streaming:", result?.error);
-        return;
-      }
-
-      try {
-        const capture = await startRendererMicStreaming({
-          targetSampleRate: TARGET_SAMPLE_RATE,
-        });
-        micCaptureRef.current?.stop();
-        micCaptureRef.current = capture;
-        const current = loadFeatureCaptionsState();
-        saveFeatureCaptionsState({ ...current, isStreaming: true, isPaused: false });
-        setIsMicStreaming(true);
-      } catch (err) {
-        console.error("Mic access error:", err);
-        await window.speechToTextAPI?.stopStreaming?.();
-      }
-    }
+    await globalSpeechService.toggle();
   };
 
   const handleGenerateFromCurrentInput = async () => {

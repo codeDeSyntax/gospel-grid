@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
   Sparkles,
-  Send,
   EyeOff,
   Copy,
   Check,
@@ -12,7 +11,6 @@ import {
   Trash2,
   Radio,
   ArrowUp,
-  X,
   Tv,
   Square,
   Plus,
@@ -20,7 +18,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { replaceCaptionsState } from "@/store/slices/captionsSlice";
 import { setOverlayText, setOverlayVisible } from "@/store/slices/appSlice";
-import { startRendererMicStreaming } from "@/components/dashboard/audio/micCapture";
+import { globalSpeechService } from "@/services/ai/globalSpeechService";
 import {
   CAPTIONS_FEATURE_WINDOW_ID,
   FEATURE_CAPTIONS_EVENT,
@@ -80,10 +78,17 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
   const [draftText, setDraftText] = useState("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [pushedIndex, setPushedIndex] = useState<number | null>(null);
-  const [isMicStreaming, setIsMicStreaming] = useState(false);
+  const [isMicStreaming, setIsMicStreaming] = useState(() => globalSpeechService.getIsStreaming());
+  const [viewMode, setViewMode] = useState<"recent" | "all">("recent");
 
-  const micCaptureRef = useRef<{ stop: () => void } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Synchronize mic streaming state with global speech service
+  useEffect(() => {
+    return globalSpeechService.subscribe((streaming) => {
+      setIsMicStreaming(streaming);
+    });
+  }, []);
 
   const isAssigned = useMemo(
     () =>
@@ -138,50 +143,12 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
       },
     );
 
-    const offStatus = window.speechToTextAPI?.onWhisperStatus?.(
-      (status: { isConnected?: boolean; isConnecting?: boolean }) => {
-        const streaming = Boolean(status?.isConnected || status?.isConnecting);
-        setIsMicStreaming(streaming);
-        applyState({ ...loadFeatureCaptionsState(), isStreaming: streaming, isPaused: !streaming, updatedAtMs: Date.now() });
-      },
-    );
-
-    return () => { offSpeech?.(); offStatus?.(); };
+    return () => { offSpeech?.(); };
   }, [applyState]);
 
   const handleToggleMic = async () => {
-    console.log("🎙️ [FeatureCaptionsView:handleToggleMic] isMicStreaming current state:", isMicStreaming);
-    if (isMicStreaming) {
-      console.log("🛑 [FeatureCaptionsView] Stopping mic capture and speech streaming...");
-      micCaptureRef.current?.stop();
-      micCaptureRef.current = null;
-      await window.speechToTextAPI?.stopStreaming?.();
-      setIsMicStreaming(false);
-      applyState({ ...captionsState, isStreaming: false, isPaused: false, updatedAtMs: Date.now() });
-    } else {
-      console.log("🚀 [FeatureCaptionsView] Requesting startStreaming from speech API...");
-      const result = await window.speechToTextAPI?.startStreaming?.({ sampleRate: TARGET_SAMPLE_RATE });
-      console.log("📡 [FeatureCaptionsView] speechToTextAPI.startStreaming result:", result);
-
-      if (!result?.success) {
-        console.warn("⚠️ [FeatureCaptionsView] startStreaming failed:", result?.error);
-        applyState({ ...captionsState, isStreaming: false, lastError: result?.error || "Failed to start", updatedAtMs: Date.now() });
-        return;
-      }
-      try {
-        console.log("🎤 [FeatureCaptionsView] Starting renderer mic streaming (AudioContext)...");
-        const capture = await startRendererMicStreaming({ targetSampleRate: TARGET_SAMPLE_RATE });
-        micCaptureRef.current?.stop();
-        micCaptureRef.current = capture;
-        setIsMicStreaming(true);
-        applyState({ ...captionsState, isStreaming: true, isPaused: false, lastError: null, updatedAtMs: Date.now() });
-        console.log("%c✅ [FeatureCaptionsView] Mic listening active & streaming audio frames!", "color:#22c55e;font-weight:bold;");
-      } catch (micErr) {
-        console.error("❌ [FeatureCaptionsView] Renderer mic capture failed:", micErr);
-        await window.speechToTextAPI?.stopStreaming?.();
-        applyState({ ...captionsState, isStreaming: false, lastError: micErr instanceof Error ? micErr.message : "Mic access denied", updatedAtMs: Date.now() });
-      }
-    }
+    console.log("🎙️ [FeatureCaptionsView:handleToggleMic] Toggling global speech streaming...");
+    await globalSpeechService.toggle();
   };
 
   const handleSubmit = async () => {
@@ -222,12 +189,12 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto no-scrollbar bg-theme-primary-900 px-8 py-8 text-theme-primary-50">
-      <div className="mx-auto max-w-2xl space-y-8">
+    <div className="h-full w-full overflow-y-auto no-scrollbar bg-theme-primary-900 px-6 sm:px-8 py-8 pb-16 text-theme-primary-50">
+      <div className="mx-auto max-w-2xl space-y-8 pb-16">
 
         {/* ── Page Title ───────────────────────────────────────────────────────── */}
         <div>
-          <h1 className="text-2xl font-semibold text-theme-primary-100 tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight text-theme-primary-100">
             AI Context Cards
           </h1>
           {captionsState.lastError && (
@@ -387,27 +354,41 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
           }
 
           return (
-            <div className="flex items-center justify-between rounded-2xl px-4 py-2.5 shadow-sm border border-theme-primary-700 bg-theme-primary-800 transition-all">
+            <div
+              className={`flex items-center justify-between rounded-2xl px-4 py-2.5 shadow-sm border transition-all ${
+                isDarkMode
+                  ? "border-neutral-800 bg-neutral-900/90 text-neutral-100"
+                  : "border-neutral-200 bg-white text-neutral-900 shadow-sm"
+              }`}
+            >
               <div className="flex items-center gap-2.5 text-sm min-w-0">
                 <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
                 <Radio
                   size={14}
-                  className="shrink-0 text-primary-500 animate-pulse"
+                  className="shrink-0 text-emerald-500 animate-pulse"
                 />
-                <span className="font-semibold shrink-0 text-theme-primary-50">
+                <span className={`font-semibold shrink-0 ${isDarkMode ? "text-neutral-100" : "text-neutral-900"}`}>
                   Currently live on screen
                 </span>
-                <span className="text-xs truncate max-w-xs sm:max-w-sm font-medium text-theme-primary-400">
+                <span
+                  className={`text-xs truncate max-w-xs sm:max-w-sm font-medium ${
+                    isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                  }`}
+                >
                   "{displayText.slice(0, 60)}{displayText.length > 60 ? "..." : ""}"
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => hideOverlay()}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border bg-theme-primary-700 hover:bg-theme-primary-600 text-theme-primary-100 border-theme-primary-600 shadow-sm"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                  isDarkMode
+                    ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300 shadow-sm"
+                }`}
               >
                 <EyeOff size={13} />
                 <span>Take down</span>
@@ -418,18 +399,84 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
 
         {/* ── Cards Section ─────────────────────────────────────────────────────── */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-theme-primary-300 tracking-wide">
-              {cards.length > 0 ? `Generated Cards · ${Math.min(cards.length, 3)}` : "Generate a card"}
-            </h2>
+          {/* Header with View Mode Switcher and Clear All */}
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <h2
+                className={`text-sm font-semibold tracking-wide flex items-center gap-2 ${
+                  isDarkMode ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
+                <span>Generated Cards</span>
+                {cards.length > 0 && (
+                  <span
+                    className={`h-5 px-2 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                      isDarkMode
+                        ? "bg-white/10 text-white"
+                        : "bg-neutral-200 text-neutral-800"
+                    }`}
+                  >
+                    {cards.length}
+                  </span>
+                )}
+              </h2>
+
+              {/* View Switcher: Carousel vs All Cards */}
+              {cards.length > 0 && (
+                <div
+                  className={`flex items-center rounded-lg p-0.5 border ${
+                    isDarkMode
+                      ? "border-neutral-800 bg-neutral-900"
+                      : "border-neutral-300 bg-neutral-100"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("recent")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-all cursor-pointer ${
+                      viewMode === "recent"
+                        ? isDarkMode
+                          ? "bg-white text-black font-bold shadow-sm"
+                          : "bg-neutral-900 text-white font-bold shadow-sm"
+                        : isDarkMode
+                          ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
+                          : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200"
+                    }`}
+                  >
+                    Carousel (Top 3)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("all")}
+                    className={`px-2.5 py-1 rounded-md text-[10.5px] font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                      viewMode === "all"
+                        ? isDarkMode
+                          ? "bg-white text-black font-bold shadow-sm"
+                          : "bg-neutral-900 text-white font-bold shadow-sm"
+                        : isDarkMode
+                          ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
+                          : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200"
+                    }`}
+                  >
+                    <span>All Cards ({cards.length})</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {cards.length > 0 && (
               <button
                 type="button"
                 onClick={clearCards}
-                className="text-xs text-theme-primary-400 hover:text-red-400 transition-colors cursor-pointer flex items-center gap-1"
+                className={`text-xs transition-colors cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded-md ${
+                  isDarkMode
+                    ? "text-neutral-400 hover:text-red-400 hover:bg-red-500/10"
+                    : "text-neutral-500 hover:text-red-600 hover:bg-red-50"
+                }`}
+                title="Delete all generated cards"
               >
-                <Trash2 size={12} />
-                Clear all
+                <Trash2 size={13} />
+                <span>Clear all</span>
               </button>
             )}
           </div>
@@ -452,19 +499,31 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                     setDraftText(item.sample);
                     generateFromText(item.sample);
                   }}
-                  className="group relative overflow-hidden rounded-2xl border text-left p-4 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] border-theme-primary-700 bg-theme-primary-900 hover:border-black/50 hover:bg-theme-primary-800"
+                  className={`group relative overflow-hidden rounded-2xl border text-left p-4 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
+                    isDarkMode
+                      ? "border-neutral-800 bg-neutral-900/60 hover:bg-neutral-800 hover:border-neutral-700"
+                      : "border-neutral-200 bg-white hover:bg-neutral-50 hover:border-neutral-300 shadow-sm"
+                  }`}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-theme-primary-400 mb-2">
+                  <p
+                    className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${
+                      isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                    }`}
+                  >
                     {item.label}
                   </p>
-                  <p className="text-xs text-theme-primary-200 leading-relaxed line-clamp-3">
+                  <p
+                    className={`text-xs leading-relaxed line-clamp-3 ${
+                      isDarkMode ? "text-neutral-200" : "text-neutral-700"
+                    }`}
+                  >
                     {item.sample}
                   </p>
                 </button>
               ))}
             </div>
-          ) : (
-            /* ── Cards Grid — horizontal scrolling cards (Latest 3 Cards) ── */
+          ) : viewMode === "recent" ? (
+            /* ── Carousel View (Top 3 Cards with quick access to All) ── */
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-3 pt-1">
               <AnimatePresence>
                 {cards.slice(0, 3).map((card, index) => {
@@ -485,13 +544,23 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                       transition={{ duration: 0.16 }}
                       className={`group relative flex flex-row items-stretch gap-2.5 w-[270px] h-[112px] shrink-0 rounded-2xl border p-2 transition-all duration-200 shadow-sm ${
                         isLive
-                          ? "ring-1 ring-black/50 border-black/60 bg-theme-primary-850"
-                          : "border-theme-primary-700 bg-theme-primary-800 hover:border-theme-primary-600 hover:bg-theme-primary-750"
+                          ? isDarkMode
+                            ? "bg-neutral-800 border-neutral-600 ring-1 ring-white/20 text-white"
+                            : "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-400/40 text-emerald-950"
+                          : isDarkMode
+                            ? "border-neutral-800 bg-neutral-900 hover:border-neutral-700 hover:bg-neutral-800/80 text-neutral-100"
+                            : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50/90 text-neutral-900"
                       }`}
                     >
                       {/* Left: icon panel or image */}
                       {card.imageUrl ? (
-                        <div className="relative w-[84px] shrink-0 self-stretch overflow-hidden rounded-xl border border-theme-primary-700 shadow-sm bg-theme-primary-900">
+                        <div
+                          className={`relative w-[84px] shrink-0 self-stretch overflow-hidden rounded-xl border shadow-sm ${
+                            isDarkMode
+                              ? "border-neutral-800 bg-black/60"
+                              : "border-neutral-200 bg-neutral-100"
+                          }`}
+                        >
                           <img
                             src={card.imageUrl}
                             alt={headline}
@@ -500,7 +569,13 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                           />
                         </div>
                       ) : (
-                        <div className="flex w-[84px] shrink-0 self-stretch items-center justify-center rounded-xl border border-solid border-theme-primary-700 bg-theme-primary-900 text-theme-primary-200">
+                        <div
+                          className={`flex w-[84px] shrink-0 self-stretch items-center justify-center rounded-xl border ${
+                            isDarkMode
+                              ? "border-neutral-800 bg-neutral-950 text-neutral-300"
+                              : "border-neutral-200 bg-neutral-100 text-neutral-700"
+                          }`}
+                        >
                           <IconComponent className="h-5 w-5" />
                         </div>
                       )}
@@ -511,34 +586,48 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                         <div>
                           <div className="flex items-center justify-between gap-1 mb-1">
                             <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-[8px] font-black px-1.5 py-0.5 rounded border border-theme-primary-600 bg-theme-primary-700 text-theme-primary-200 leading-none uppercase tracking-wider truncate">
+                              <span
+                                className={`text-[8px] font-black px-1.5 py-0.5 rounded border leading-none uppercase tracking-wider truncate ${
+                                  isDarkMode
+                                    ? "bg-neutral-800 border-neutral-700 text-neutral-300"
+                                    : "bg-neutral-100 border-neutral-200 text-neutral-700"
+                                }`}
+                              >
                                 {typeVisual.label}
                               </span>
                               {isLive && (
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-white animate-pulse" />
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-emerald-400 animate-pulse" />
                               )}
                             </div>
 
-                            {/* Dismiss */}
+                            {/* Delete / Dismiss - only appears on hover */}
                             <button
                               type="button"
                               onClick={() => dismissCard(index)}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-theme-primary-400 hover:text-red-400 hover:bg-theme-primary-700 transition-all cursor-pointer"
-                              title="Dismiss card"
+                              className={`p-1 rounded transition-all cursor-pointer opacity-0 group-hover:opacity-100 ${
+                                isDarkMode
+                                  ? "text-neutral-400 hover:text-red-400 hover:bg-neutral-800"
+                                  : "text-neutral-400 hover:text-red-600 hover:bg-neutral-100"
+                              }`}
+                              title="Delete card"
                             >
-                              <X className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
                           <p
-                            className="text-[12px] font-bold leading-snug line-clamp-1 text-theme-primary-50"
+                            className={`text-[12px] font-bold leading-snug line-clamp-1 ${
+                              isDarkMode ? "text-neutral-100" : "text-neutral-900"
+                            }`}
                             title={headline}
                           >
                             {headline}
                           </p>
                           {subline && (
                             <p
-                              className="text-[9.5px] mt-0.5 line-clamp-2 leading-tight text-theme-primary-400"
+                              className={`text-[9.5px] mt-0.5 line-clamp-2 leading-tight ${
+                                isDarkMode ? "text-neutral-400" : "text-neutral-600"
+                              }`}
                               title={subline}
                             >
                               {subline}
@@ -547,8 +636,16 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                         </div>
 
                         {/* Footer: confidence + copy + push */}
-                        <div className="flex items-center justify-between pt-1 border-t border-theme-primary-700/60">
-                          <span className="text-[8.5px] font-mono font-semibold text-theme-primary-400">
+                        <div
+                          className={`flex items-center justify-between pt-1 border-t ${
+                            isDarkMode ? "border-neutral-800" : "border-neutral-200"
+                          }`}
+                        >
+                          <span
+                            className={`text-[8.5px] font-mono font-semibold ${
+                              isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                            }`}
+                          >
                             {Math.round(card.confidence * 100)}% match
                           </span>
 
@@ -557,10 +654,18 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleCopyCard(card, index)}
-                              className="p-1 rounded text-theme-primary-400 hover:text-theme-primary-100 hover:bg-theme-primary-700 transition-colors cursor-pointer"
+                              className={`p-1 rounded transition-colors cursor-pointer ${
+                                isDarkMode
+                                  ? "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                                  : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100"
+                              }`}
                               title="Copy to clipboard"
                             >
-                              {isCopied ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
+                              {isCopied ? (
+                                <Check className={`w-3 h-3 ${isDarkMode ? "text-white" : "text-neutral-900"}`} />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
                             </button>
 
                               {/* Push / Hide */}
@@ -596,6 +701,218 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
                     </motion.div>
                   );
                 })}
+
+                {/* Quick card to switch to All Cards view if > 3 cards */}
+                {cards.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("all")}
+                    className={`flex flex-col items-center justify-center gap-1.5 w-[110px] h-[112px] shrink-0 rounded-2xl border border-dashed transition-all cursor-pointer group ${
+                      isDarkMode
+                        ? "border-neutral-700 bg-neutral-900/60 hover:bg-neutral-800 hover:border-neutral-600 text-neutral-300 hover:text-white"
+                        : "border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-400 text-neutral-600 hover:text-neutral-900"
+                    }`}
+                    title="View all cards"
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                        isDarkMode
+                          ? "bg-neutral-800 group-hover:bg-neutral-700 text-neutral-100"
+                          : "bg-neutral-200 group-hover:bg-neutral-300 text-neutral-800"
+                      }`}
+                    >
+                      +{cards.length - 3}
+                    </div>
+                    <span className="text-[10px] font-semibold tracking-wide text-center">
+                      All ({cards.length})
+                    </span>
+                  </button>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            /* ── All Cards View (Compact Modal-style List with Bottom Border Only) ── */
+            <div className="flex flex-col overflow-y-auto no-scrollbar pb-10">
+              <AnimatePresence>
+                {cards.map((card, originalIndex) => {
+                  const typeVisual = CARD_VISUALS[card.type] ?? CARD_VISUALS.agenda_item;
+                  const IconComponent = typeVisual.icon;
+                  const headline = getHeadline(card);
+                  const subline = getSubline(card);
+                  const isLive = isCardLive(card, overlayText, overlayVisible);
+                  const isCopied = copiedIndex === originalIndex;
+                  const isPushed = pushedIndex === originalIndex;
+
+                  return (
+                    <motion.div
+                      key={(card as any).id || originalIndex}
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.12 }}
+                      className={`group relative flex items-center justify-between gap-3 py-2 px-1 border-0 border-b border-solid transition-colors ${
+                        isDarkMode
+                          ? "border-neutral-800 hover:bg-neutral-900/60"
+                          : "border-neutral-200 hover:bg-neutral-50"
+                      }`}
+                    >
+                      {/* Left: Thumbnail/Icon + Text Details */}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Thumbnail / Icon */}
+                        {card.imageUrl ? (
+                          <div
+                            className={`w-7 h-7 shrink-0 rounded-md overflow-hidden border ${
+                              isDarkMode
+                                ? "border-neutral-800 bg-neutral-950"
+                                : "border-neutral-200 bg-neutral-100"
+                            }`}
+                          >
+                            <img
+                              src={card.imageUrl}
+                              alt={headline}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-7 h-7 shrink-0 rounded-md border flex items-center justify-center ${
+                              isDarkMode
+                                ? "border-neutral-800 bg-neutral-900 text-neutral-300"
+                                : "border-neutral-200 bg-neutral-100 text-neutral-600"
+                            }`}
+                          >
+                            <IconComponent className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+
+                        {/* Content info */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span
+                              className={`text-[8px] font-bold px-1 py-0.2 rounded border leading-none uppercase tracking-wider ${
+                                isDarkMode
+                                  ? "bg-neutral-800 border-neutral-700 text-neutral-300"
+                                  : "bg-neutral-100 border-neutral-200 text-neutral-600"
+                              }`}
+                            >
+                              {typeVisual.label}
+                            </span>
+                            {isLive && (
+                              <span className="flex items-center gap-1 text-[8.5px] text-emerald-500 font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Live
+                              </span>
+                            )}
+                            <span
+                              className={`text-[9px] font-mono ${
+                                isDarkMode ? "text-neutral-500" : "text-neutral-400"
+                              }`}
+                            >
+                              {Math.round(card.confidence * 100)}%
+                            </span>
+                          </div>
+
+                          <p
+                            className={`text-xs font-semibold truncate leading-snug ${
+                              isDarkMode ? "text-neutral-100" : "text-neutral-900"
+                            }`}
+                            title={headline}
+                          >
+                            {headline}
+                          </p>
+                          {subline && (
+                            <p
+                              className={`text-[10px] truncate leading-tight ${
+                                isDarkMode ? "text-neutral-400" : "text-neutral-500"
+                              }`}
+                              title={subline}
+                            >
+                              {subline}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Insert / Copy to composer */}
+                        <button
+                          type="button"
+                          onClick={() => handleInsert(card)}
+                          className={`p-1 rounded transition-colors cursor-pointer ${
+                            isDarkMode
+                              ? "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                              : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200"
+                          }`}
+                          title="Edit in composer"
+                        >
+                          <CornerDownLeft className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Copy text */}
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCard(card, originalIndex)}
+                          className={`p-1 rounded transition-colors cursor-pointer ${
+                            isDarkMode
+                              ? "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                              : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200"
+                          }`}
+                          title="Copy to clipboard"
+                        >
+                          {isCopied ? (
+                            <Check className={`w-3 h-3 ${isDarkMode ? "text-white" : "text-neutral-900"}`} />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        {/* Push / Live Toggle */}
+                        <button
+                          type="button"
+                          onClick={() => handleCardPushToggle(card, originalIndex)}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9.5px] font-bold transition-all shadow-none cursor-pointer active:scale-95 border ${
+                            isLive
+                              ? isDarkMode
+                                ? "bg-neutral-800 text-white border-neutral-600 hover:bg-red-500/20 hover:text-red-300"
+                                : "bg-neutral-900 text-white border-neutral-800 hover:bg-red-50 hover:text-red-600"
+                              : isPushed
+                                ? isDarkMode
+                                  ? "bg-neutral-800 text-white border-neutral-600"
+                                  : "bg-neutral-900 text-white border-neutral-800"
+                                : isDarkMode
+                                  ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700"
+                                  : "bg-white hover:bg-neutral-100 text-neutral-800 border-neutral-300"
+                          }`}
+                          title={isLive ? "Hide from screen" : "Push to screen"}
+                        >
+                          {isLive ? (
+                            <><EyeOff className="w-2.5 h-2.5" /><span>Hide</span></>
+                          ) : isPushed ? (
+                            <><Check className="w-2.5 h-2.5" /><span>Live</span></>
+                          ) : (
+                            <><Tv className="w-2.5 h-2.5" /><span>Push</span></>
+                          )}
+                        </button>
+
+                        {/* Delete button only appears on hover */}
+                        <button
+                          type="button"
+                          onClick={() => dismissCard(originalIndex)}
+                          className={`p-1 rounded transition-all cursor-pointer opacity-0 group-hover:opacity-100 ${
+                            isDarkMode
+                              ? "text-neutral-400 hover:text-red-400 hover:bg-neutral-800"
+                              : "text-neutral-400 hover:text-red-600 hover:bg-neutral-200"
+                          }`}
+                          title="Delete card"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           )}
@@ -603,11 +920,25 @@ export const FeatureCaptionsView: React.FC<FeatureCaptionsViewProps> = ({
 
         {/* ── Mic transcript strip (when streaming) ───────────────────────────── */}
         {isMicStreaming && captionsState.text && (
-          <div className="rounded-2xl border border-black/40 bg-black/25 px-5 py-4">
-            <p className="text-[10.5px] font-semibold uppercase tracking-widest text-theme-primary-300 mb-2">
+          <div
+            className={`rounded-2xl border px-5 py-4 ${
+              isDarkMode
+                ? "border-neutral-800 bg-neutral-900/60 text-neutral-100"
+                : "border-neutral-200 bg-neutral-100 text-neutral-900"
+            }`}
+          >
+            <p
+              className={`text-[10.5px] font-semibold uppercase tracking-widest mb-2 ${
+                isDarkMode ? "text-neutral-400" : "text-neutral-500"
+              }`}
+            >
               Live Transcript
             </p>
-            <p className="text-sm text-theme-primary-100 leading-relaxed">
+            <p
+              className={`text-sm leading-relaxed ${
+                isDarkMode ? "text-neutral-200" : "text-neutral-800"
+              }`}
+            >
               {captionsState.text}
             </p>
           </div>
